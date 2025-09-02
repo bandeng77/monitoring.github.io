@@ -1004,39 +1004,37 @@
             poCard.className = 'deal-card';
             poCard.dataset.id = po.id;
             
-            // Menghilangkan status PO dari card
-            // let statusColorClass = '';
-            // switch (po.status) {
-            //     case 'pending':
-            //         statusColorClass = 'bg-gray-100 text-gray-800';
-            //         break;
-            //     case 'in-transit':
-            //         statusColorClass = 'bg-blue-100 text-blue-800';
-            //         break;
-            //     case 'delivered':
-            //         statusColorClass = 'bg-green-100 text-green-800';
-            //         break;
-            //     case 'cancelled':
-            //         statusColorClass = 'bg-red-100 text-red-800';
-            //         break;
-            //     case 'on-hold':
-            //         statusColorClass = 'bg-yellow-100 text-yellow-800';
-            //         break;
-            //     default:
-            //         statusColorClass = 'bg-gray-100 text-gray-800';
-            // }
+            let statusColorClass = '';
+            switch (po.status) {
+                case 'pending':
+                    statusColorClass = 'bg-gray-100 text-gray-800';
+                    break;
+                case 'in-transit':
+                    statusColorClass = 'bg-blue-100 text-blue-800';
+                    break;
+                case 'delivered':
+                    statusColorClass = 'bg-green-100 text-green-800';
+                    break;
+                case 'cancelled':
+                    statusColorClass = 'bg-red-100 text-red-800';
+                    break;
+                case 'on-hold':
+                    statusColorClass = 'bg-yellow-100 text-yellow-800';
+                    break;
+                default:
+                    statusColorClass = 'bg-gray-100 text-gray-800';
+            }
 
             poCard.innerHTML = `
                 <div class="flex justify-between items-start">
-                    <h3 class="font-bold text-gray-800">${index + 1}. No. PO: ${po.noPO || '-'}</h3> <!-- Format No. PO -->
-                    <!-- Menghilangkan badge status PO -->
-                    <!-- <span class="priority-badge px-2 py-1 rounded-full ${statusColorClass}">
+                    <h3 class="font-bold text-gray-800">${index + 1}. ${po.noPO || 'No PO'}</h3> <!-- Tambahkan nomor di sini -->
+                    <span class="priority-badge px-2 py-1 rounded-full ${statusColorClass}">
                         ${po.status ? po.status.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Unknown Status'}
-                    </span> -->
+                    </span>
                 </div>
                 <div class="mt-1 text-sm text-gray-600 deal-details">
-                    <p><i class="fas fa-building mr-1"></i> Supplier: ${po.supplierName || '-'}</p> <!-- Menampilkan Nama Supplier -->
-                    <p><i class="fas fa-globe mr-1"></i> COO: ${po.coo || '-'}</p> <!-- Menampilkan COO -->
+                    <p><i class="fas fa-building mr-1"></i> ${po.supplierName || '-'}</p>
+                    <p><i class="fas fa-globe mr-1"></i> COO: ${po.coo || '-'}</p>
                     <p><i class="fas fa-calendar-alt mr-1"></i> Plan Delivery: ${po.planDelivery ? formatDate(po.planDelivery) : '-'}</p>
                 </div>
                 <div class="mt-2 flex justify-between items-center deal-footer">
@@ -1388,17 +1386,7 @@
                     showToast("PO baru berhasil ditambahkan!", 2000);
                 }
                 closePOModal();
-                
-                // --- START MODIFIKASI: Reset semua filter dan kolom pencarian ---
-                document.getElementById('searchPOs').value = '';
-                document.getElementById('filterStatus').value = 'all';
-                document.getElementById('filterSupplier').value = 'all';
-                document.getElementById('filterItemName').value = 'all';
-                document.getElementById('filterAllocation').value = 'all';
-                document.getElementById('filterYear').value = 'all';
-                // --- END MODIFIKASI ---
-
-                await loadPOsFromFirebase(); // Ini akan memuat ulang data dan memanggil filterPOs()
+                await loadPOsFromFirebase();
             } catch (error) {
                 console.error("Error saving PO:", error);
                 showToast("Gagal menyimpan PO. Silakan coba lagi.", 3000);
