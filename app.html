@@ -265,7 +265,8 @@
 
         /* Modals */
         .modal-content-enter-active, .modal-content-leave-active {
-            transition: opacity 0.2s cubic-bezier(0.25, 0.8, 0.25, 1), transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1); /* Transisi lebih cepat */
+            /* Mengurangi durasi transisi untuk respons yang lebih cepat */
+            transition: opacity 0.15s cubic-bezier(0.25, 0.8, 0.25, 1), transform 0.15s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
         #poModalContent, #poDetailModalContent, #deleteModalContent, #filterPanelContent, #successAlertModalContent {
             background-color: #ffffff;
@@ -328,6 +329,10 @@
             width: 40px; /* Lebih besar */
             height: 40px;
             animation: spin 1s linear infinite;
+        }
+        /* Global Loading Overlay */
+        #global-loading-overlay.show {
+            display: flex; /* Pastikan overlay terlihat saat 'show' */
         }
 
         /* Empty State */
@@ -954,13 +959,16 @@
 
         function closeSuccessAlertModal() {
             const modalContent = document.getElementById('successAlertModalContent');
-            if (!modalContent) return;
+            const modal = document.getElementById('successAlertModal'); // Dapatkan elemen modal utama
+            if (!modalContent || !modal) return;
 
             modalContent.classList.remove('modal-content-enter-active');
             modalContent.classList.add('modal-content-leave-active');
             
+            // Sembunyikan modal segera setelah transisi dimulai
+            modal.classList.add('hidden');
+
             modalContent.addEventListener('transitionend', function handler() {
-                document.getElementById('successAlertModal').classList.add('hidden');
                 modalContent.classList.remove('modal-content-leave-active');
                 modalContent.removeEventListener('transitionend', handler);
             }, { once: true });
@@ -1291,13 +1299,16 @@
 
         function closePOModal() {
             const poModalContent = document.getElementById('poModalContent');
-            if (!poModalContent) return;
+            const poModal = document.getElementById('poModal'); // Dapatkan elemen modal utama
+            if (!poModalContent || !poModal) return;
 
             poModalContent.classList.remove('modal-content-enter-active');
             poModalContent.classList.add('modal-content-leave-active');
             
+            // Sembunyikan modal segera setelah transisi dimulai
+            poModal.classList.add('hidden');
+
             poModalContent.addEventListener('transitionend', function handler() {
-                document.getElementById('poModal').classList.add('hidden');
                 poModalContent.classList.remove('modal-content-leave-active');
                 poModalContent.removeEventListener('transitionend', handler);
             }, { once: true });
@@ -1305,8 +1316,18 @@
 
         async function savePO() {
             const poId = document.getElementById('poId').value;
-            const orderConfirmation = document.getElementById('orderConfirmation').value;
             const noPO = document.getElementById('noPO').value;
+
+            if (!noPO) {
+                showCustomAlert("No. PO harus diisi.", "error");
+                return;
+            }
+
+            // Tutup modal segera dan tampilkan loading
+            closePOModal(); 
+            showGlobalLoading(); 
+
+            const orderConfirmation = document.getElementById('orderConfirmation').value;
             const supplierName = document.getElementById('supplierName').value;
             
             const selectedProductId = document.getElementById('selectedProductId').value;
@@ -1339,11 +1360,6 @@
             const revisiHS = document.getElementById('revisiHS').value;
             const note = document.getElementById('note').value;
 
-            if (!noPO) {
-                showCustomAlert("No. PO harus diisi.", "error");
-                return;
-            }
-
             const poData = {
                 orderConfirmation: orderConfirmation,
                 noPO: noPO,
@@ -1368,8 +1384,6 @@
             };
 
             try {
-                closePOModal(); // Tutup modal segera
-                showGlobalLoading(); // Tampilkan loading setelah modal ditutup
                 if (poId) {
                     await dealsCollection.doc(poId).update(poData);
                     showCustomAlert("PO berhasil diperbarui!", "success");
@@ -1383,7 +1397,7 @@
                 console.error("Error saving PO:", error);
                 showCustomAlert("Gagal menyimpan PO. Silakan coba lagi.", "error");
             } finally {
-                hideGlobalLoading(); // Sembunyikan loading setelah operasi Firebase selesai
+                hideGlobalLoading(); 
             }
         }
 
@@ -1406,16 +1420,18 @@
         async function deletePO() {
             if (!poToDeleteId) return;
 
+            // Tutup modal segera dan tampilkan loading
+            closeDeleteModal(); 
+            showGlobalLoading(); 
+
             try {
-                closeDeleteModal(); // Tutup modal segera
-                showGlobalLoading(); // Tampilkan loading setelah modal ditutup
                 await dealsCollection.doc(poToDeleteId).delete();
                 showCustomAlert(`PO "${poToDeleteNo}" berhasil dihapus!`, "success");
             } catch (error) {
                 console.error("Error deleting PO:", error);
                 showCustomAlert("Gagal menghapus PO. Silakan coba lagi.", "error");
             } finally {
-                hideGlobalLoading(); // Sembunyikan loading setelah operasi Firebase selesai
+                hideGlobalLoading(); 
             }
         }
 
@@ -1470,13 +1486,16 @@
 
         function closePODetailModal() {
             const poDetailModalContent = document.getElementById('poDetailModalContent');
-            if (!poDetailModalContent) return;
+            const poDetailModal = document.getElementById('poDetailModal'); // Dapatkan elemen modal utama
+            if (!poDetailModalContent || !poDetailModal) return;
 
             poDetailModalContent.classList.remove('modal-content-enter-active');
             poDetailModalContent.classList.add('modal-content-leave-active');
             
+            // Sembunyikan modal segera setelah transisi dimulai
+            poDetailModal.classList.add('hidden');
+
             poDetailModalContent.addEventListener('transitionend', function handler() {
-                document.getElementById('poDetailModal').classList.add('hidden');
                 poDetailModalContent.classList.remove('modal-content-leave-active');
                 poDetailModalContent.removeEventListener('transitionend', handler);
             }, { once: true });
@@ -1695,7 +1714,8 @@
 
         function closeFilterPanel() {
             const filterPanelContent = document.getElementById('filterPanelContent');
-            if (!filterPanelContent) {
+            const filterPanel = document.getElementById('filterPanel'); // Dapatkan elemen modal utama
+            if (!filterPanelContent || !filterPanel) {
                 console.error("Elemen filterPanelContent tidak ditemukan saat menutup modal.");
                 return;
             }
@@ -1703,8 +1723,10 @@
             filterPanelContent.classList.remove('modal-content-enter-active');
             filterPanelContent.classList.add('modal-content-leave-active');
             
+            // Sembunyikan modal segera setelah transisi dimulai
+            filterPanel.classList.add('hidden');
+
             filterPanelContent.addEventListener('transitionend', function handler() {
-                document.getElementById('filterPanel').classList.add('hidden');
                 filterPanelContent.classList.remove('modal-content-leave-active');
                 filterPanelContent.removeEventListener('transitionend', handler);
             }, { once: true });
@@ -1727,13 +1749,16 @@
 
         function closeDeleteModal() {
             const deleteModalContent = document.getElementById('deleteModalContent');
-            if (!deleteModalContent) return;
+            const deleteModal = document.getElementById('deleteModal'); // Dapatkan elemen modal utama
+            if (!deleteModalContent || !deleteModal) return;
 
             deleteModalContent.classList.remove('modal-content-enter-active');
             deleteModalContent.classList.add('modal-content-leave-active');
             
+            // Sembunyikan modal segera setelah transisi dimulai
+            deleteModal.classList.add('hidden');
+
             deleteModalContent.addEventListener('transitionend', function handler() {
-                document.getElementById('deleteModal').classList.add('hidden');
                 deleteModalContent.classList.remove('modal-content-leave-active');
                 deleteModalContent.removeEventListener('transitionend', handler);
             }, { once: true });
