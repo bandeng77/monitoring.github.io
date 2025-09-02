@@ -1027,18 +1027,17 @@
 
             poCard.innerHTML = `
                 <div class="flex justify-between items-start">
-                    <h3 class="font-bold text-gray-800">${index + 1}. ${po.noPO || 'No PO'}</h3> <!-- Tambahkan nomor di sini -->
+                    <h3 class="font-bold text-gray-800">No. PO: ${po.noPO || 'No PO'}</h3> <!-- Tambahkan label "No. PO:" -->
                     <span class="priority-badge px-2 py-1 rounded-full ${statusColorClass}">
                         ${po.status ? po.status.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Unknown Status'}
                     </span>
                 </div>
                 <div class="mt-1 text-sm text-gray-600 deal-details">
-                    <p><i class="fas fa-building mr-1"></i> ${po.supplierName || '-'}</p>
+                    <p><i class="fas fa-building mr-1"></i> Supplier: ${po.supplierName || '-'}</p> <!-- Tambahkan label "Supplier:" -->
                     <p><i class="fas fa-globe mr-1"></i> COO: ${po.coo || '-'}</p>
                     <p><i class="fas fa-calendar-alt mr-1"></i> Plan Delivery: ${po.planDelivery ? formatDate(po.planDelivery) : '-'}</p>
                 </div>
                 <div class="mt-2 flex justify-between items-center deal-footer">
-                    <span class="text-xs text-gray-500">Dibuat: ${formatDate(po.createdAt)}</span>
                     <div class="flex space-x-1 deal-actions">
                         <button onclick="openPODetailModal('${po.id}')" class="text-blue-600 hover:text-blue-800" title="Lihat Detail">
                             <i class="fas fa-eye"></i>
