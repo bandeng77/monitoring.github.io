@@ -264,9 +264,9 @@
         }
 
         /* Modals */
+        /* Hapus properti transition untuk menghilangkan animasi */
         .modal-content-enter-active, .modal-content-leave-active {
-            /* Mengurangi durasi transisi untuk respons yang lebih cepat */
-            transition: opacity 0.15s cubic-bezier(0.25, 0.8, 0.25, 1), transform 0.15s cubic-bezier(0.25, 0.8, 0.25, 1);
+            /* transition: opacity 0.15s cubic-bezier(0.25, 0.8, 0.25, 1), transform 0.15s cubic-bezier(0.25, 0.8, 0.25, 1); */
         }
         #poModalContent, #poDetailModalContent, #deleteModalContent, #filterPanelContent, #successAlertModalContent {
             background-color: #ffffff;
@@ -953,25 +953,20 @@
             }
 
             modal.classList.remove('hidden');
-            modalContent.classList.remove('modal-content-leave-active');
-            modalContent.classList.add('modal-content-enter-active');
+            // Tidak perlu menambahkan kelas enter-active jika tidak ada transisi
+            // modalContent.classList.remove('modal-content-leave-active');
+            // modalContent.classList.add('modal-content-enter-active');
         }
 
         function closeSuccessAlertModal() {
+            const modal = document.getElementById('successAlertModal');
             const modalContent = document.getElementById('successAlertModalContent');
-            const modal = document.getElementById('successAlertModal'); // Dapatkan elemen modal utama
             if (!modalContent || !modal) return;
 
-            modalContent.classList.remove('modal-content-enter-active');
-            modalContent.classList.add('modal-content-leave-active');
-            
-            // Sembunyikan modal segera setelah transisi dimulai
+            // Langsung sembunyikan modal tanpa transisi
             modal.classList.add('hidden');
-
-            modalContent.addEventListener('transitionend', function handler() {
-                modalContent.classList.remove('modal-content-leave-active');
-                modalContent.removeEventListener('transitionend', handler);
-            }, { once: true });
+            // Hapus kelas yang mungkin tersisa dari animasi sebelumnya (jika ada)
+            // modalContent.classList.remove('modal-content-enter-active', 'modal-content-leave-active');
         }
 
         function showGlobalLoading() {
@@ -1293,25 +1288,20 @@
             }
             
             poModal.classList.remove('hidden');
-            document.getElementById('poModalContent').classList.remove('modal-content-leave-active');
-            document.getElementById('poModalContent').classList.add('modal-content-enter-active');
+            // Tidak perlu menambahkan kelas enter-active jika tidak ada transisi
+            // document.getElementById('poModalContent').classList.remove('modal-content-leave-active');
+            // document.getElementById('poModalContent').classList.add('modal-content-enter-active');
         }
 
         function closePOModal() {
+            const poModal = document.getElementById('poModal');
             const poModalContent = document.getElementById('poModalContent');
-            const poModal = document.getElementById('poModal'); // Dapatkan elemen modal utama
             if (!poModalContent || !poModal) return;
 
-            poModalContent.classList.remove('modal-content-enter-active');
-            poModalContent.classList.add('modal-content-leave-active');
-            
-            // Sembunyikan modal segera setelah transisi dimulai
+            // Langsung sembunyikan modal tanpa transisi
             poModal.classList.add('hidden');
-
-            poModalContent.addEventListener('transitionend', function handler() {
-                poModalContent.classList.remove('modal-content-leave-active');
-                poModalContent.removeEventListener('transitionend', handler);
-            }, { once: true });
+            // Hapus kelas yang mungkin tersisa dari animasi sebelumnya (jika ada)
+            // poModalContent.classList.remove('modal-content-enter-active', 'modal-content-leave-active');
         }
 
         async function savePO() {
@@ -1413,8 +1403,9 @@
             poToDeleteNo = poNo;
             document.getElementById('dealToDeleteName').textContent = poNo;
             document.getElementById('deleteModal').classList.remove('hidden');
-            document.getElementById('deleteModalContent').classList.remove('modal-content-leave-active');
-            document.getElementById('deleteModalContent').classList.add('modal-content-enter-active');
+            // Tidak perlu menambahkan kelas enter-active jika tidak ada transisi
+            // document.getElementById('deleteModalContent').classList.remove('modal-content-leave-active');
+            // document.getElementById('deleteModalContent').classList.add('modal-content-enter-active');
         }
 
         async function deletePO() {
@@ -1480,25 +1471,20 @@
             document.getElementById('detailNote').textContent = po.note || '-';
 
             document.getElementById('poDetailModal').classList.remove('hidden');
-            document.getElementById('poDetailModalContent').classList.remove('modal-content-leave-active');
-            document.getElementById('poDetailModalContent').classList.add('modal-content-enter-active');
+            // Tidak perlu menambahkan kelas enter-active jika tidak ada transisi
+            // document.getElementById('poDetailModalContent').classList.remove('modal-content-leave-active');
+            // document.getElementById('poDetailModalContent').classList.add('modal-content-enter-active');
         }
 
         function closePODetailModal() {
+            const poDetailModal = document.getElementById('poDetailModal');
             const poDetailModalContent = document.getElementById('poDetailModalContent');
-            const poDetailModal = document.getElementById('poDetailModal'); // Dapatkan elemen modal utama
             if (!poDetailModalContent || !poDetailModal) return;
 
-            poDetailModalContent.classList.remove('modal-content-enter-active');
-            poDetailModalContent.classList.add('modal-content-leave-active');
-            
-            // Sembunyikan modal segera setelah transisi dimulai
+            // Langsung sembunyikan modal tanpa transisi
             poDetailModal.classList.add('hidden');
-
-            poDetailModalContent.addEventListener('transitionend', function handler() {
-                poDetailModalContent.classList.remove('modal-content-leave-active');
-                poDetailModalContent.removeEventListener('transitionend', handler);
-            }, { once: true });
+            // Hapus kelas yang mungkin tersisa dari animasi sebelumnya (jika ada)
+            // poDetailModalContent.classList.remove('modal-content-enter-active', 'modal-content-leave-active');
         }
 
         // ==================== FUNGSI SORTABLE ====================
@@ -1708,28 +1694,23 @@
             populateFilterDropdowns();
 
             filterPanel.classList.remove('hidden');
-            filterPanelContent.classList.remove('modal-content-leave-active');
-            filterPanelContent.classList.add('modal-content-enter-active');
+            // Tidak perlu menambahkan kelas enter-active jika tidak ada transisi
+            // filterPanelContent.classList.remove('modal-content-leave-active');
+            // filterPanelContent.classList.add('modal-content-enter-active');
         }
 
         function closeFilterPanel() {
+            const filterPanel = document.getElementById('filterPanel');
             const filterPanelContent = document.getElementById('filterPanelContent');
-            const filterPanel = document.getElementById('filterPanel'); // Dapatkan elemen modal utama
             if (!filterPanelContent || !filterPanel) {
                 console.error("Elemen filterPanelContent tidak ditemukan saat menutup modal.");
                 return;
             }
 
-            filterPanelContent.classList.remove('modal-content-enter-active');
-            filterPanelContent.classList.add('modal-content-leave-active');
-            
-            // Sembunyikan modal segera setelah transisi dimulai
+            // Langsung sembunyikan modal tanpa transisi
             filterPanel.classList.add('hidden');
-
-            filterPanelContent.addEventListener('transitionend', function handler() {
-                filterPanelContent.classList.remove('modal-content-leave-active');
-                filterPanelContent.removeEventListener('transitionend', handler);
-            }, { once: true });
+            // Hapus kelas yang mungkin tersisa dari animasi sebelumnya (jika ada)
+            // filterPanelContent.classList.remove('modal-content-enter-active', 'modal-content-leave-active');
         }
 
         function applyFiltersAndClosePanel() {
@@ -1748,20 +1729,14 @@
         }
 
         function closeDeleteModal() {
+            const deleteModal = document.getElementById('deleteModal');
             const deleteModalContent = document.getElementById('deleteModalContent');
-            const deleteModal = document.getElementById('deleteModal'); // Dapatkan elemen modal utama
             if (!deleteModalContent || !deleteModal) return;
 
-            deleteModalContent.classList.remove('modal-content-enter-active');
-            deleteModalContent.classList.add('modal-content-leave-active');
-            
-            // Sembunyikan modal segera setelah transisi dimulai
+            // Langsung sembunyikan modal tanpa transisi
             deleteModal.classList.add('hidden');
-
-            deleteModalContent.addEventListener('transitionend', function handler() {
-                deleteModalContent.classList.remove('modal-content-leave-active');
-                deleteModalContent.removeEventListener('transitionend', handler);
-            }, { once: true });
+            // Hapus kelas yang mungkin tersisa dari animasi sebelumnya (jika ada)
+            // deleteModalContent.classList.remove('modal-content-enter-active', 'modal-content-leave-active');
         }
 
         // ==================== FUNGSI EXPORT TO EXCEL ====================
