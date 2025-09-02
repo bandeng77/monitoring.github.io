@@ -312,10 +312,10 @@
             font-weight: 800;
         }
 
-        /* CSS untuk modal detail PO 2 kolom */
+        /* CSS untuk modal detail PO 3 kolom */
         #poDetailModalContent .detail-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Lebih fleksibel */
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Lebih fleksibel, 3 kolom */
             gap: 1.25rem; /* Jarak antar kolom dan baris lebih besar */
         }
         #poDetailModalContent .detail-item p {
@@ -458,27 +458,6 @@
                                 <label class="block text-gray-700 text-sm font-semibold mb-2" for="supplierName">Nama Supplier</label>
                                 <input type="text" id="supplierName" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
                             </div>
-
-                            <!-- Form Tambahan Baru dengan Fitur Search -->
-                            <div class="mb-4 relative"> <!-- Tambahkan relative untuk positioning absolute search results -->
-                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="searchableField">No ID</label>
-                                <input type="text" id="searchableField" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="Cari produk...">
-                                <div id="searchResults" class="absolute z-10 bg-white border border-gray-300 rounded-lg shadow-lg mt-1 w-full max-h-48 overflow-y-auto hidden">
-                                    <!-- Hasil pencarian akan ditampilkan di sini -->
-                                </div>
-                                <input type="hidden" id="selectedProductId">
-                            </div>
-                            <!-- Akhir Form Tambahan Baru -->
-
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-2">Nama Barang & Quantity</label>
-                                <div id="itemsList" class="space-y-3 mb-3">
-                                    <!-- Item barang akan ditambahkan di sini secara dinamis oleh JS -->
-                                </div>
-                                <button type="button" onclick="addItemField()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-1.5 rounded-lg text-xs flex items-center transition duration-200 ease-in-out transform hover:scale-105">
-                                    <i class="fas fa-plus mr-1"></i> Tambah Barang
-                                </button>
-                            </div>
                         </div>
                         <!-- Kolom 2 -->
                         <div>
@@ -505,6 +484,26 @@
                         </div>
                         <!-- Kolom 3 -->
                         <div>
+                            <!-- Form Tambahan Baru dengan Fitur Search -->
+                            <div class="mb-4 relative"> <!-- Tambahkan relative untuk positioning absolute search results -->
+                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="searchableField">No ID</label>
+                                <input type="text" id="searchableField" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="Cari produk...">
+                                <div id="searchResults" class="absolute z-10 bg-white border border-gray-300 rounded-lg shadow-lg mt-1 w-full max-h-48 overflow-y-auto hidden">
+                                    <!-- Hasil pencarian akan ditampilkan di sini -->
+                                </div>
+                                <input type="hidden" id="selectedProductId">
+                            </div>
+                            <!-- Akhir Form Tambahan Baru -->
+
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">Nama Barang & Quantity</label>
+                                <div id="itemsList" class="space-y-3 mb-3">
+                                    <!-- Item barang akan ditambahkan di sini secara dinamis oleh JS -->
+                                </div>
+                                <button type="button" onclick="addItemField()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-1.5 rounded-lg text-xs flex items-center transition duration-200 ease-in-out transform hover:scale-105">
+                                    <i class="fas fa-plus mr-1"></i> Tambah Barang
+                                </button>
+                            </div>
                             <div class="mb-4">
                                 <label class="block text-gray-700 text-sm font-semibold mb-2" for="disrc">DISRC</label>
                                 <input type="text" id="disrc" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
@@ -576,10 +575,6 @@
                         <p class="text-gray-700 font-semibold">Produk Terpilih:</p>
                         <p id="detailSelectedProduct" class="text-gray-900"></p>
                     </div>
-                    <div class="detail-item col-span-full"> <!-- Mengambil lebar penuh -->
-                        <p class="text-gray-700 font-semibold">Nama Barang & Quantity:</p>
-                        <ul id="detailItemsList" class="list-disc list-inside text-gray-900"></ul>
-                    </div>
                     <div class="detail-item">
                         <p class="text-gray-700 font-semibold">Allocation:</p>
                         <p id="detailAllocation" class="text-gray-900"></p>
@@ -631,6 +626,10 @@
                     <div class="detail-item">
                         <p class="text-gray-700 font-semibold">Status:</p>
                         <p id="detailStatus" class="text-gray-900"></p>
+                    </div>
+                    <div class="detail-item col-span-full"> <!-- Mengambil lebar penuh -->
+                        <p class="text-gray-700 font-semibold">Nama Barang & Quantity:</p>
+                        <ul id="detailItemsList" class="list-disc list-inside text-gray-900"></ul>
                     </div>
                     <div class="detail-item col-span-full">
                         <p class="text-gray-700 font-semibold">Note:</p>
@@ -1020,19 +1019,19 @@
                 </div>
                 <div class="mt-1 text-sm text-gray-600 deal-details">
                     <p><i class="fas fa-building mr-1"></i> ${po.supplierName || '-'}</p>
-                    <p><i class="fas fa-box mr-1"></i> ${po.items && po.items.length > 0 ? po.items.map(item => item.itemName).join(', ') : '-'}</p>
+                    <p><i class="fas fa-globe mr-1"></i> COO: ${po.coo || '-'}</p>
                     <p><i class="fas fa-calendar-alt mr-1"></i> Plan Delivery: ${po.planDelivery ? formatDate(po.planDelivery) : '-'}</p>
                 </div>
                 <div class="mt-2 flex justify-between items-center deal-footer">
                     <span class="text-xs text-gray-500">Dibuat: ${formatDate(po.createdAt)}</span>
                     <div class="flex space-x-1 deal-actions">
-                        <button onclick="openPODetailModal('${po.id}')" class="text-blue-600 hover:text-blue-800">
+                        <button onclick="openPODetailModal('${po.id}')" class="text-blue-600 hover:text-blue-800" title="Lihat Detail">
                             <i class="fas fa-eye"></i>
                         </button>
-                        <button onclick="prepareEditPO('${po.id}')" class="text-green-600 hover:text-green-800">
+                        <button onclick="prepareEditPO('${po.id}')" class="text-green-600 hover:text-green-800" title="Edit PO">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button onclick="confirmDeletePO('${po.id}', '${po.noPO}')" class="text-red-600 hover:text-red-800">
+                        <button onclick="confirmDeletePO('${po.id}', '${po.noPO}')" class="text-red-600 hover:text-red-800" title="Hapus PO">
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     </div>
@@ -1219,8 +1218,8 @@
             const poForm = document.getElementById('poForm');
             
             poForm.reset();
+            document.getElementById('itemsList').innerHTML = ''; // Pastikan ini kosong sebelum mengisi
             document.getElementById('poId').value = '';
-            document.getElementById('itemsList').innerHTML = '';
 
             if (poId) {
                 modalTitle.textContent = 'Edit PO';
@@ -1240,12 +1239,12 @@
                         document.getElementById('selectedProductId').value = '';
                     }
 
-                    if (po.items && Array.isArray(po.items)) {
+                    if (po.items && Array.isArray(po.items) && po.items.length > 0) { // Cek jika ada item
                         po.items.forEach(item => {
                             addItemField(item.itemName, item.quantity);
                         });
                     } else {
-                        addItemField();
+                        addItemField(); // Tambahkan minimal satu jika tidak ada item
                     }
 
                     document.getElementById('allocation').value = po.allocation || '';
@@ -1270,7 +1269,7 @@
                 document.getElementById('status').value = DEFAULT_STATUS;
                 document.getElementById('searchableField').value = ''; // Reset untuk PO baru
                 document.getElementById('selectedProductId').value = ''; // Reset untuk PO baru
-                addItemField();
+                addItemField(); // Tambahkan minimal satu form item saat membuat PO baru
             }
             
             poModal.classList.remove('hidden');
