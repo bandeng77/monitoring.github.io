@@ -1,11 +1,22 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Sales Pipeline Genetek</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Login - Monitoring Purchasing</title>
+
+    <!-- Tailwind CSS CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+
+    <!-- Font Awesome CDN -->
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+        crossorigin="anonymous"
+        referrerpolicy="no-referrer"
+    />
+
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
 
@@ -13,131 +24,198 @@
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f8fafc;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+            margin: 0;
         }
         .login-card {
             max-width: 400px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            background-color: #ffffff;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+            padding: 2.5rem 2rem;
+            box-sizing: border-box;
+            transition: box-shadow 0.3s ease;
         }
-        .input-field:focus {
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        .login-card:hover,
+        .login-card:focus-within {
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
+        }
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .login-header i {
+            font-size: 3.5rem;
+            color: #3b82f6;
+            margin-bottom: 0.5rem;
+        }
+        .login-header h1 {
+            font-size: 2.25rem;
+            font-weight: 800;
+            color: #1e293b;
+            margin: 0;
+        }
+        .login-header p {
+            color: #64748b;
+            margin-top: 0.25rem;
+            font-size: 1rem;
+        }
+        label {
+            font-weight: 600;
+            color: #334155;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            box-sizing: border-box;
+        }
+        input[type="email"]:focus,
+        input[type="password"]:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
             outline: none;
         }
-        .btn-login {
-            transition: all 0.3s ease;
+        #errorMessage {
+            color: #dc2626;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            display: none;
         }
-        .btn-login:disabled {
+        button#loginBtn {
+            width: 100%;
+            background-color: #2563eb;
+            color: white;
+            padding: 0.75rem 1rem;
+            border-radius: 0.75rem;
+            font-weight: 700;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+        button#loginBtn:hover:not(:disabled),
+        button#loginBtn:focus:not(:disabled) {
+            background-color: #1e40af;
+            transform: scale(1.05);
+            outline: none;
+        }
+        button#loginBtn:disabled {
             opacity: 0.7;
             cursor: not-allowed;
         }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4 bg-gray-50">
-    <div class="login-card bg-white p-8 w-full">
-        <div class="text-center mb-8">
-            <div class="flex items-center justify-center mb-4">
-                <i class="fas fa-chart-line text-blue-500 text-4xl mr-3"></i>
-                <h1 class="text-3xl font-bold text-gray-800">Sales Pipeline</h1>
-            </div>
-            <p class="text-gray-600">Masuk untuk mengelola pipeline penjualan</p>
+<body>
+    <div class="login-card" role="main" aria-labelledby="loginTitle">
+        <div class="login-header">
+            <i class="fas fa-chart-line" aria-hidden="true"></i>
+            <h1 id="loginTitle">Monitoring Purchasing</h1>
+            <p>Masuk untuk melihat monitoring pembelian</p>
         </div>
 
-        <form id="loginForm" class="space-y-4">
-            <div>
-                <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                <input type="email" id="email" required
-                    class="input-field w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-blue-500"
-                    placeholder="Email dengan domain genetek.co.id">
-            </div>
+        <form id="loginForm" novalidate>
+            <label for="email">Email</label>
+            <input
+                type="email"
+                id="email"
+                name="email"
+                placeholder="Email dengan domain genetek.co.id"
+                required
+                autocomplete="username"
+                aria-describedby="errorMessage"
+            />
 
-            <div>
-                <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
-                <input type="password" id="password" required
-                    class="input-field w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-blue-500"
-                    placeholder="••••••••">
-            </div>
+            <label for="password" class="mt-4">Password</label>
+            <input
+                type="password"
+                id="password"
+                name="password"
+                placeholder="••••••••"
+                required
+                autocomplete="current-password"
+                aria-describedby="errorMessage"
+            />
 
-            <div id="errorMessage" class="text-red-500 text-sm hidden"></div>
+            <div id="errorMessage" role="alert" aria-live="assertive"></div>
 
-            <button type="submit" id="loginBtn" class="btn-login w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium flex items-center justify-center">
-                <i class="fas fa-sign-in-alt mr-2"></i> Masuk
+            <button type="submit" id="loginBtn" aria-label="Masuk ke Sales Pipeline" class="mt-6">
+                <i class="fas fa-sign-in-alt"></i> Masuk
             </button>
         </form>
-
-        <div class="mt-6 text-center text-sm text-gray-500">
-            <p>© 2025 Genetek - Sales Pipeline Manager</p>
-        </div>
     </div>
 
     <script>
-        // Konfigurasi Firebase
+        // Firebase config (samakan dengan konfigurasi app.html dan index.html)
         const firebaseConfig = {
-                  apiKey: "AIzaSyB9s6k2K75vrbe1lWgiu42SAXV_lySHHNU",
-                  authDomain: "monitoring-efk.firebaseapp.com",
-                  projectId: "monitoring-efk",
-                  storageBucket: "monitoring-efk.firebasestorage.app",
-                  messagingSenderId: "1083858508151",
-                  appId: "1:1083858508151:web:3d505dec79d715f9cd6972"
-};
+            apiKey: "AIzaSyA630jQdTLNt1XHjVAXX10IjIeMVJ_vNn8",
+            authDomain: "pipelineefk.firebaseapp.com",
+            projectId: "pipelineefk",
+            storageBucket: "pipelineefk.appspot.com",
+            messagingSenderId: "763507094626",
+            appId: "1:763507094626:web:57838068505c964f654d3b"
+        };
 
-        // Inisialisasi Firebase
+        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
-        
-        // Variabel kontrol
-        let authChecked = false;
-        let isLoggingIn = false;
+        const auth = firebase.auth();
 
-        // Cek status auth saat pertama load
-        firebase.auth().onAuthStateChanged((user) => {
-            if (authChecked) return;
-            authChecked = true;
-            
-            if (user && window.location.pathname.includes('login.html')) {
-                console.log("User already logged in, redirecting...");
-                window.location.replace('app.html');
+        // Jika sudah login, langsung redirect ke index.html (halaman menu)
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                window.location.href = 'index.html';
             }
         });
 
-        // Handle form login
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        const loginForm = document.getElementById('loginForm');
+        const loginBtn = document.getElementById('loginBtn');
+        const errorMessage = document.getElementById('errorMessage');
+
+        loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            if (isLoggingIn) return;
-            isLoggingIn = true;
-            
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const errorMessage = document.getElementById('errorMessage');
-            const loginBtn = document.getElementById('loginBtn');
-            
-            // Update UI
+
+            if (loginBtn.disabled) return;
+
+            const email = loginForm.email.value.trim();
+            const password = loginForm.password.value;
+
+            errorMessage.style.display = 'none';
+            errorMessage.textContent = '';
             loginBtn.disabled = true;
-            loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Memproses...';
-            errorMessage.classList.add('hidden');
+            loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
 
             try {
-                // Login dengan Firebase
-                await firebase.auth().signInWithEmailAndPassword(email, password);
-                
-                // Redirect ke app.html
-                window.location.replace('app.html');
+                await auth.signInWithEmailAndPassword(email, password);
+                // Redirect akan otomatis terjadi di onAuthStateChanged
             } catch (error) {
-                console.error("Login error:", error);
-                let errorMsg = "Email atau password salah";
-                
+                let msg = "Email atau password salah";
                 if (error.code === 'auth/invalid-email') {
-                    errorMsg = "Format email tidak valid";
+                    msg = "Format email tidak valid";
                 } else if (error.code === 'auth/user-not-found') {
-                    errorMsg = "Email tidak terdaftar";
+                    msg = "Email tidak terdaftar";
                 } else if (error.code === 'auth/wrong-password') {
-                    errorMsg = "Password salah";
+                    msg = "Password salah";
                 }
-                
-                errorMessage.textContent = errorMsg;
-                errorMessage.classList.remove('hidden');
+                errorMessage.textContent = msg;
+                errorMessage.style.display = 'block';
                 loginBtn.disabled = false;
-                loginBtn.innerHTML = '<i class="fas fa-sign-in-alt mr-2"></i> Masuk';
-                isLoggingIn = false;
+                loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Masuk';
             }
         });
     </script>
