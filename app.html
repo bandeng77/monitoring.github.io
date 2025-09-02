@@ -35,7 +35,7 @@
             background-color: #f8fafc; /* Warna header yang lebih terang */
             display: flex;
             flex-direction: column;
-            align-items: flex-start;
+            align-items: center; /* Mengubah dari flex-start menjadi center */
             gap: 0.25rem;
         }
         .pipeline-stage-header h3 {
@@ -43,6 +43,8 @@
             font-weight: 700;
             color: #1e293b; /* Warna teks yang lebih gelap */
             flex-shrink: 0;
+            text-align: center; /* Tambahkan ini untuk menengahkan teks */
+            width: 100%; /* Pastikan mengambil lebar penuh untuk penengahan */
         }
         .pipeline-stage-header span {
             font-size: 0.8rem; /* Ukuran font sedikit lebih besar */
@@ -255,13 +257,15 @@
 
         /* Penyesuaian untuk modal Tambah/Edit PO */
         #poModalContent {
-            max-height: 95vh; /* Disesuaikan menjadi 95% tinggi viewport */
-            border-radius: 0.75rem; /* Border radius untuk modal */
-            width: 95%; /* Mengambil lebar 95% */
-            max-width: 1000px; /* Batasan lebar maksimum */
+            max-height: 100vh; /* Disesuaikan menjadi 100% tinggi viewport */
+            max-width: 100vw; /* Disesuaikan menjadi 100% lebar viewport */
+            width: 100%; /* Mengambil lebar 100% */
+            height: 100%; /* Mengambil tinggi 100% */
+            border-radius: 0; /* Hapus border-radius agar lebih menyatu dengan layar */
             box-sizing: border-box;
             padding: 2rem; /* Padding lebih besar */
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2); /* Bayangan lebih kuat */
+            box-shadow: none; /* Hapus bayangan untuk tampilan fullscreen */
+            overflow-y: auto; /* Tambahkan scroll jika konten melebihi tinggi layar */
         }
 
         /* Menyamakan tinggi input dan select */
@@ -363,6 +367,13 @@
             color: #94a3b8;
             font-size: 1rem;
             animation: fadeIn 0.5s ease-out;
+            /* Untuk penengahan vertikal dan horizontal di dalam parent */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%; /* Penting agar flexbox bisa menengahkan secara vertikal */
+            width: 100%; /* Penting agar flexbox bisa menengahkan secara horizontal */
         }
         .empty-state i {
             font-size: 4rem;
@@ -939,7 +950,7 @@
             }
         }
 
-        function renderPO(po) {
+        function renderPO(po, index) { // Tambahkan parameter index
             const poCard = document.createElement('div');
             poCard.className = 'deal-card';
             poCard.dataset.id = po.id;
@@ -967,7 +978,7 @@
 
             poCard.innerHTML = `
                 <div class="flex justify-between items-start">
-                    <h3 class="font-bold text-gray-800">${po.noPO || 'No PO'}</h3>
+                    <h3 class="font-bold text-gray-800">${index + 1}. ${po.noPO || 'No PO'}</h3> <!-- Tambahkan nomor di sini -->
                     <span class="priority-badge px-2 py-1 rounded-full ${statusColorClass}">
                         ${po.status ? po.status.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Unknown Status'}
                     </span>
@@ -1012,8 +1023,8 @@
                     </div>
                 `;
             } else {
-                posToDisplay.forEach((po, index) => {
-                    const poCard = renderPO(po);
+                posToDisplay.forEach((po, index) => { // Teruskan index di sini
+                    const poCard = renderPO(po, index); // Panggil renderPO dengan index
                     if (poCard) {
                         pipelineStage.appendChild(poCard);
                         // Animate cards on load
@@ -1024,7 +1035,7 @@
                 });
             }
 
-            initSortable();
+            initSortable(); // Tetap panggil, tapi fungsinya sudah dinonaktifkan
         }
 
         function populateDropdown(selectElementId, uniqueValues, selectedValue = 'all') {
@@ -1334,21 +1345,22 @@
             const pipelineStage = document.getElementById('pos-stage');
             if (!pipelineStage) return;
 
-            if (sortableInstances['pos-stage']) {
-                sortableInstances['pos-stage'].destroy();
-            }
+            // Hapus atau komentari baris berikut untuk menonaktifkan SortableJS
+            // if (sortableInstances['pos-stage']) {
+            //     sortableInstances['pos-stage'].destroy();
+            // }
 
-            sortableInstances['pos-stage'] = new Sortable(pipelineStage, {
-                animation: 150,
-                ghostClass: 'sortable-ghost',
-                chosenClass: 'sortable-chosen',
-                dragClass: 'sortable-drag',
-                disabled: currentUserRole !== 'admin', // Hanya admin yang bisa drag
-                onEnd: function(evt) {
-                    if (currentUserRole !== 'admin') return;
-                    // Logika jika ada perubahan urutan (opsional, tidak diminta di sini)
-                }
-            });
+            // sortableInstances['pos-stage'] = new Sortable(pipelineStage, {
+            //     animation: 150,
+            //     ghostClass: 'sortable-ghost',
+            //     chosenClass: 'sortable-chosen',
+            //     dragClass: 'sortable-drag',
+            //     disabled: true, // Selalu nonaktifkan drag
+            //     onEnd: function(evt) {
+            //         // Logika jika ada perubahan urutan (opsional, tidak diminta di sini)
+            //     }
+            // });
+            console.log("SortableJS is disabled."); // Tambahkan log untuk konfirmasi
         }
 
         // ==================== FUNGSI PERMISSIONS ====================
@@ -1372,9 +1384,11 @@
                 if (searchInput) searchInput.classList.remove('hidden');
                 if (openFilterPanelBtn) openFilterPanelBtn.classList.remove('hidden');
 
-                if (sortableInstances['pos-stage']) {
-                    sortableInstances['pos-stage'].option('disabled', !isAdmin);
-                }
+                // Karena drag and drop dinonaktifkan secara global di initSortable,
+                // baris ini tidak lagi diperlukan untuk mengontrol disabled state berdasarkan role.
+                // if (sortableInstances['pos-stage']) {
+                //     sortableInstances['pos-stage'].option('disabled', !isAdmin);
+                // }
                 
             } catch (error) {
                 console.error("Error in applyUserPermissions:", error);
@@ -1507,8 +1521,8 @@
                 return;
             }
             
-            filteredPOs.forEach((po, index) => {
-                const poCard = renderPO(po);
+            filteredPOs.forEach((po, index) => { // Teruskan index di sini
+                const poCard = renderPO(po, index); // Panggil renderPO dengan index
                 pipelineStage.appendChild(poCard);
                 // Animate cards on filter result
                 setTimeout(() => {
