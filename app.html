@@ -447,7 +447,7 @@
                         <!-- Kolom 1 -->
                         <div>
                             <div class="mb-4"> <!-- Margin lebih besar -->
-                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="orderConfirmation">Order Confirmation <span class="text-red-500">*</span></label>
+                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="orderConfirmation">Order Confirmation</label>
                                 <input type="text" id="orderConfirmation" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
                             </div>
                             <div class="mb-4">
@@ -458,12 +458,24 @@
                                 <label class="block text-gray-700 text-sm font-semibold mb-2" for="supplierName">Nama Supplier</label>
                                 <input type="text" id="supplierName" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
                             </div>
+
+                            <!-- Form Tambahan Baru dengan Fitur Search -->
+                            <div class="mb-4 relative"> <!-- Tambahkan relative untuk positioning absolute search results -->
+                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="searchableField">No ID</label>
+                                <input type="text" id="searchableField" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="Cari produk...">
+                                <div id="searchResults" class="absolute z-10 bg-white border border-gray-300 rounded-lg shadow-lg mt-1 w-full max-h-48 overflow-y-auto hidden">
+                                    <!-- Hasil pencarian akan ditampilkan di sini -->
+                                </div>
+                                <input type="hidden" id="selectedProductId">
+                            </div>
+                            <!-- Akhir Form Tambahan Baru -->
+
                             <div class="mb-4">
                                 <label class="block text-gray-700 text-sm font-semibold mb-2">Nama Barang & Quantity</label>
-                                <div id="itemsList" class="space-y-3 mb-3"> <!-- Space dan margin lebih besar -->
+                                <div id="itemsList" class="space-y-3 mb-3">
                                     <!-- Item barang akan ditambahkan di sini secara dinamis oleh JS -->
                                 </div>
-                                <button type="button" onclick="addItemField()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-1.5 rounded-lg text-xs flex items-center transition duration-200 ease-in-out transform hover:scale-105"> <!-- Padding dan efek hover -->
+                                <button type="button" onclick="addItemField()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-1.5 rounded-lg text-xs flex items-center transition duration-200 ease-in-out transform hover:scale-105">
                                     <i class="fas fa-plus mr-1"></i> Tambah Barang
                                 </button>
                             </div>
@@ -559,6 +571,10 @@
                     <div class="detail-item">
                         <p class="text-gray-700 font-semibold">Nama Supplier:</p>
                         <p id="detailSupplierName" class="text-gray-900"></p>
+                    </div>
+                    <div class="detail-item">
+                        <p class="text-gray-700 font-semibold">Produk Terpilih:</p>
+                        <p id="detailSelectedProduct" class="text-gray-900"></p>
                     </div>
                     <div class="detail-item col-span-full"> <!-- Mengambil lebar penuh -->
                         <p class="text-gray-700 font-semibold">Nama Barang & Quantity:</p>
@@ -750,6 +766,25 @@
 
         // Hanya satu admin yang diizinkan
         const ADMIN_EMAIL = 'maida@genetek.co.id';
+
+        // ==================== DATA PRODUK SEDERHANA (BUKAN FIREBASE) ====================
+        const productData = [
+            { id: 'prod001', name: 'Laptop Gaming XYZ', description: 'Laptop dengan RTX 3080' },
+            { id: 'prod002', name: 'Monitor UltraWide 34"', description: 'Monitor 144Hz QHD' },
+            { id: 'prod003', name: 'Keyboard Mekanikal RGB', description: 'Switch Cherry MX Brown' },
+            { id: 'prod004', name: 'Mouse Gaming Wireless', description: 'Sensor Hero 25K' },
+            { id: 'prod005', name: 'Headset Gaming Surround', description: 'Audio 7.1 Virtual' },
+            { id: 'prod006', name: 'Webcam Full HD', description: '1080p 60fps' },
+            { id: 'prod007', name: 'Microphone Kondenser USB', description: 'Cocok untuk streaming' },
+            { id: 'prod008', name: 'SSD NVMe 1TB', description: 'Kecepatan baca 7000MB/s' },
+            { id: 'prod009', name: 'RAM DDR4 16GB (2x8GB)', description: '3200MHz CL16' },
+            { id: 'prod010', name: 'Router Wi-Fi 6', description: 'Dual-band AX3000' },
+            { id: 'prod011', name: 'Printer Laser Monokrom', description: 'Cepat dan efisien' },
+            { id: 'prod012', name: 'Speaker Bluetooth Portable', description: 'Suara jernih, baterai tahan lama' },
+            { id: 'prod013', name: 'Smartwatch Sport', description: 'Fitur kesehatan lengkap' },
+            { id: 'prod014', name: 'Drone Mini dengan Kamera', description: 'Mudah diterbangkan' },
+            { id: 'prod015', name: 'Power Bank 20000mAh', description: 'Fast charging' },
+        ];
 
         // ==================== FUNGSI UTAMA ====================
 
@@ -1093,6 +1128,91 @@
             buttonElement.closest('.flex').remove();
         }
 
+        // ==================== FUNGSI UNTUK FORM TAMBAHAN DENGAN SEARCH ====================
+
+        function setupSearchableField() {
+            const searchableField = document.getElementById('searchableField');
+            const searchResultsDiv = document.getElementById('searchResults');
+            const selectedProductIdInput = document.getElementById('selectedProductId');
+
+            if (!searchableField || !searchResultsDiv || !selectedProductIdInput) return;
+
+            searchableField.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                searchResultsDiv.innerHTML = ''; // Clear previous results
+
+                if (searchTerm.length < 2) { // Minimal 2 karakter untuk mulai mencari
+                    searchResultsDiv.classList.add('hidden');
+                    return;
+                }
+
+                const filteredProducts = productData.filter(product => 
+                    product.name.toLowerCase().includes(searchTerm) || 
+                    product.description.toLowerCase().includes(searchTerm)
+                );
+
+                if (filteredProducts.length > 0) {
+                    filteredProducts.forEach(product => {
+                        const resultItem = document.createElement('div');
+                        resultItem.className = 'p-2 cursor-pointer hover:bg-gray-100 border-b border-gray-200 last:border-b-0';
+                        resultItem.textContent = product.name;
+                        resultItem.dataset.productId = product.id;
+                        resultItem.dataset.productName = product.name;
+                        resultItem.addEventListener('click', function() {
+                            selectProduct(this.dataset.productId, this.dataset.productName);
+                        });
+                        searchResultsDiv.appendChild(resultItem);
+                    });
+                    searchResultsDiv.classList.remove('hidden');
+                } else {
+                    const noResultItem = document.createElement('div');
+                    noResultItem.className = 'p-2 text-gray-500';
+                    noResultItem.textContent = 'Tidak ada hasil.';
+                    searchResultsDiv.appendChild(noResultItem);
+                    searchResultsDiv.classList.remove('hidden');
+                }
+            });
+
+            // Sembunyikan hasil pencarian saat klik di luar
+            document.addEventListener('click', function(event) {
+                if (!searchableField.contains(event.target) && !searchResultsDiv.contains(event.target)) {
+                    searchResultsDiv.classList.add('hidden');
+                }
+            });
+
+            // Fungsi untuk memilih produk dari hasil pencarian
+            function selectProduct(productId, productName) {
+                searchableField.value = productName;
+                selectedProductIdInput.value = productId;
+                searchResultsDiv.classList.add('hidden');
+                // Opsional: Tambahkan produk yang dipilih ke daftar item PO secara otomatis
+                // addItemField(productName, 1); // Contoh: tambahkan dengan quantity default 1
+            }
+
+            // Override openPOModal untuk reset/isi field pencarian
+            const originalOpenPOModal = openPOModal;
+            openPOModal = function(poId = null) {
+                originalOpenPOModal(poId); // Panggil fungsi asli
+                if (!poId) { // Jika ini adalah PO baru
+                    searchableField.value = '';
+                    selectedProductIdInput.value = '';
+                    searchResultsDiv.classList.add('hidden');
+                } else {
+                    // Jika edit PO, Anda mungkin ingin mengisi searchableField
+                    // dengan data yang sudah ada di PO
+                    const po = pos.find(p => p.id === poId);
+                    if (po && po.selectedProduct && po.selectedProduct.name) { 
+                        searchableField.value = po.selectedProduct.name;
+                        selectedProductIdInput.value = po.selectedProduct.id || '';
+                    } else {
+                        searchableField.value = '';
+                        selectedProductIdInput.value = '';
+                    }
+                }
+            };
+        }
+
+
         function openPOModal(poId = null) {
             const poModal = document.getElementById('poModal');
             const modalTitle = document.getElementById('modalTitle');
@@ -1111,6 +1231,15 @@
                     document.getElementById('noPO').value = po.noPO || '';
                     document.getElementById('supplierName').value = po.supplierName || '';
                     
+                    // Isi field produk terpilih jika ada
+                    if (po.selectedProduct && po.selectedProduct.name) {
+                        document.getElementById('searchableField').value = po.selectedProduct.name;
+                        document.getElementById('selectedProductId').value = po.selectedProduct.id || '';
+                    } else {
+                        document.getElementById('searchableField').value = '';
+                        document.getElementById('selectedProductId').value = '';
+                    }
+
                     if (po.items && Array.isArray(po.items)) {
                         po.items.forEach(item => {
                             addItemField(item.itemName, item.quantity);
@@ -1139,6 +1268,8 @@
             } else {
                 modalTitle.textContent = 'Tambah PO Baru';
                 document.getElementById('status').value = DEFAULT_STATUS;
+                document.getElementById('searchableField').value = ''; // Reset untuk PO baru
+                document.getElementById('selectedProductId').value = ''; // Reset untuk PO baru
                 addItemField();
             }
             
@@ -1167,6 +1298,10 @@
             const noPO = document.getElementById('noPO').value;
             const supplierName = document.getElementById('supplierName').value;
             
+            // Ambil data dari form pencarian produk
+            const selectedProductId = document.getElementById('selectedProductId').value;
+            const selectedProductName = document.getElementById('searchableField').value; // Ambil nama dari input field
+
             const itemInputs = document.querySelectorAll('#itemsList .item-name-input');
             const quantityInputs = document.querySelectorAll('#itemsList .item-quantity-input');
             const itemsToSave = [];
@@ -1195,8 +1330,8 @@
             const note = document.getElementById('note').value;
             const status = document.getElementById('status').value; // Ambil dari hidden input
 
-            if (!orderConfirmation || !noPO) {
-                showToast("Order Confirmation dan No. PO harus diisi.", 3000);
+            if (!noPO) { // Hanya No. PO yang required
+                showToast("No. PO harus diisi.", 3000);
                 return;
             }
 
@@ -1204,6 +1339,8 @@
                 orderConfirmation: orderConfirmation,
                 noPO: noPO,
                 supplierName: supplierName,
+                // Tambahkan data produk yang dipilih
+                selectedProduct: selectedProductId ? { id: selectedProductId, name: selectedProductName } : null,
                 items: itemsToSave,
                 allocation: allocation,
                 invoice: invoice,
@@ -1288,6 +1425,9 @@
             document.getElementById('detailNoPO').textContent = po.noPO || '-';
             document.getElementById('detailSupplierName').textContent = po.supplierName || '-';
             
+            // Tampilkan produk terpilih
+            document.getElementById('detailSelectedProduct').textContent = po.selectedProduct ? po.selectedProduct.name : '-';
+
             const detailItemsList = document.getElementById('detailItemsList');
             detailItemsList.innerHTML = '';
             if (po.items && Array.isArray(po.items) && po.items.length > 0) {
@@ -1602,6 +1742,7 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             initSortable();
+            setupSearchableField(); // Panggil fungsi setup pencarian
             // Initial load will be handled by auth.onAuthStateChanged
         });
     </script>
