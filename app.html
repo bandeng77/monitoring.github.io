@@ -75,8 +75,8 @@
             margin-bottom: 0;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06); /* Bayangan lebih jelas */
             font-size: 0.875rem;
-            width: calc(33.333% - 0.666rem);
-            min-width: 280px; /* Min-width sedikit lebih besar */
+            width: calc(25% - 0.75rem); /* Disesuaikan untuk 4 kolom */
+            min-width: 220px; /* Min-width sedikit lebih kecil agar muat 4 kolom */
             box-sizing: border-box;
             opacity: 0; /* Default hidden for animation */
             transform: translateY(20px); /* Default position for animation */
@@ -216,6 +216,13 @@
         }
 
         /* Media Queries untuk responsivitas */
+        @media (max-width: 1280px) { /* Tambahkan breakpoint untuk 3 kolom */
+            .deal-card {
+                width: calc(33.333% - 0.666rem);
+                min-width: 280px;
+            }
+        }
+
         @media (max-width: 1024px) {
             .deal-card {
                 width: calc(50% - 0.5rem);
@@ -391,7 +398,7 @@
         .po-card-number {
             position: absolute;
             top: 0.5rem;
-            left: 0.5rem;
+            right: 0.5rem; /* Diubah ke kanan */
             font-size: 0.75rem;
             font-weight: 700;
             color: #6b7280;
