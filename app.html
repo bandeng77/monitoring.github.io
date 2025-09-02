@@ -556,7 +556,7 @@
 
         <!-- PO Detail Modal -->
         <div id="poDetailModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
-            <div class="bg-white rounded-xl p-8 w-full max-w-2xl shadow-2xl modal-content-enter" id="poDetailModalContent"> <!-- Max-width lebih besar -->
+            <div class="bg-white rounded-xl p-8 w-full max-w-3xl shadow-2xl modal-content-enter" id="poDetailModalContent"> <!-- Max-width lebih besar -->
                 <h2 class="text-xl sm:text-2xl font-bold mb-6 text-gray-900" id="poDetailTitle">Detail PO</h2>
                 <div class="detail-grid">
                     <div class="detail-item">
@@ -859,8 +859,11 @@
                 if (timestamp instanceof Date) {
                     return timestamp.toLocaleDateString('id-ID');
                 }
-                const date = timestamp.toDate();
-                return date.toLocaleDateString('id-ID');
+                // Handle Firebase Timestamp objects
+                if (timestamp && typeof timestamp.toDate === 'function') {
+                    return timestamp.toDate().toLocaleDateString('id-ID');
+                }
+                return '-';
             } catch (e) {
                 return '-';
             }
@@ -932,21 +935,40 @@
 
                 querySnapshot.forEach((doc) => {
                     const poData = doc.data();
-                    if (poData.createdAt && typeof poData.createdAt.toDate !== 'function') {
-                        if (poData.createdAt.seconds !== undefined && poData.createdAt.nanoseconds !== undefined) {
-                            poData.createdAt = new firebase.firestore.Timestamp(poData.createdAt.seconds, poData.createdAt.nanoseconds);
-                        } else {
-                            poData.createdAt = null; 
-                        }
+                    // Ensure createdAt is a Date object
+                    if (poData.createdAt && typeof poData.createdAt.toDate === 'function') {
+                        poData.createdAt = poData.createdAt.toDate();
+                    } else if (poData.createdAt && typeof poData.createdAt === 'object' && poData.createdAt.seconds !== undefined) {
+                        poData.createdAt = new firebase.firestore.Timestamp(poData.createdAt.seconds, poData.createdAt.nanoseconds).toDate();
+                    } else {
+                        poData.createdAt = null; 
                     }
-                    if (poData.planDelivery && typeof poData.planDelivery.toDate !== 'function') {
-                        poData.planDelivery = new Date(poData.planDelivery.seconds * 1000);
+
+                    // Ensure planDelivery is a Date object
+                    if (poData.planDelivery && typeof poData.planDelivery.toDate === 'function') {
+                        poData.planDelivery = poData.planDelivery.toDate();
+                    } else if (poData.planDelivery && typeof poData.planDelivery === 'object' && poData.planDelivery.seconds !== undefined) {
+                        poData.planDelivery = new firebase.firestore.Timestamp(poData.planDelivery.seconds, poData.planDelivery.nanoseconds).toDate();
+                    } else {
+                        poData.planDelivery = null;
                     }
-                    if (poData.eta && typeof poData.eta.toDate !== 'function') {
-                        poData.eta = new Date(poData.eta.seconds * 1000);
+
+                    // Ensure eta is a Date object
+                    if (poData.eta && typeof poData.eta.toDate === 'function') {
+                        poData.eta = poData.eta.toDate();
+                    } else if (poData.eta && typeof poData.eta === 'object' && poData.eta.seconds !== undefined) {
+                        poData.eta = new firebase.firestore.Timestamp(poData.eta.seconds, poData.eta.nanoseconds).toDate();
+                    } else {
+                        poData.eta = null;
                     }
-                    if (poData.actualDelivery && typeof poData.actualDelivery.toDate !== 'function') {
-                        poData.actualDelivery = new Date(poData.actualDelivery.seconds * 1000);
+
+                    // Ensure actualDelivery is a Date object
+                    if (poData.actualDelivery && typeof poData.actualDelivery.toDate === 'function') {
+                        poData.actualDelivery = poData.actualDelivery.toDate();
+                    } else if (poData.actualDelivery && typeof poData.actualDelivery === 'object' && poData.actualDelivery.seconds !== undefined) {
+                        poData.actualDelivery = new firebase.firestore.Timestamp(poData.actualDelivery.seconds, poData.actualDelivery.nanoseconds).toDate();
+                    } else {
+                        poData.actualDelivery = null;
                     }
 
                     pos.push({ id: doc.id, ...poData });
@@ -959,8 +981,8 @@
                         });
                     }
                     
-                    if (poData.createdAt) {
-                        uniqueYears.add(poData.createdAt.toDate().getFullYear().toString());
+                    if (poData.createdAt instanceof Date) { // Check if it's a valid Date object
+                        uniqueYears.add(poData.createdAt.getFullYear().toString());
                     }
                 });
                 console.log("Total POs loaded:", pos.length);
@@ -1247,9 +1269,10 @@
                     document.getElementById('airForwarder').value = po.airForwarder || '';
                     document.getElementById('disrc').value = po.disrc || '';
                     
-                    document.getElementById('planDelivery').value = po.planDelivery ? po.planDelivery.toISOString().split('T')[0] : '';
-                    document.getElementById('eta').value = po.eta ? po.eta.toISOString().split('T')[0] : '';
-                    document.getElementById('actualDelivery').value = po.actualDelivery ? po.actualDelivery.toISOString().split('T')[0] : '';
+                    // Perbaikan: Pastikan po.planDelivery adalah objek Date sebelum memanggil toISOString()
+                    document.getElementById('planDelivery').value = po.planDelivery instanceof Date ? po.planDelivery.toISOString().split('T')[0] : '';
+                    document.getElementById('eta').value = po.eta instanceof Date ? po.eta.toISOString().split('T')[0] : '';
+                    document.getElementById('actualDelivery').value = po.actualDelivery instanceof Date ? po.actualDelivery.toISOString().split('T')[0] : '';
 
                     document.getElementById('coo').value = po.coo || '';
                     document.getElementById('hsCode').value = po.hsCode || '';
@@ -1395,7 +1418,7 @@
                 showGlobalLoading();
                 await dealsCollection.doc(poToDeleteId).delete();
                 showToast(`PO "${poToDeleteNo}" berhasil dihapus!`, 2000);
-                closeDeleteModal();
+                closeDeleteModal(); // Ini seharusnya berfungsi sekarang
                 await loadPOsFromFirebase();
             } catch (error) {
                 console.error("Error deleting PO:", error);
@@ -1626,7 +1649,7 @@
                         (po.allocation && po.allocation === allocationFilter);
 
                     const matchesYear = yearFilter === 'all' || 
-                                        (po.createdAt && po.createdAt.toDate().getFullYear().toString() === yearFilter);
+                                        (po.createdAt instanceof Date && po.createdAt.getFullYear().toString() === yearFilter);
                     
                     return matchesSearch && matchesStatus && matchesSupplier && matchesItemName && matchesAllocation && matchesYear;
                 });
@@ -1728,6 +1751,21 @@
             document.getElementById('filterYear').value = 'all';
             document.getElementById('searchPOs').value = '';
             filterPOs();
+        }
+
+        // Fungsi closeDeleteModal yang sudah ada
+        function closeDeleteModal() {
+            const deleteModalContent = document.getElementById('deleteModalContent');
+            if (!deleteModalContent) return;
+
+            deleteModalContent.classList.remove('modal-content-enter-active');
+            deleteModalContent.classList.add('modal-content-leave-active');
+            
+            deleteModalContent.addEventListener('transitionend', function handler() {
+                document.getElementById('deleteModal').classList.add('hidden');
+                deleteModalContent.classList.remove('modal-content-leave-active');
+                deleteModalContent.removeEventListener('transitionend', handler);
+            }, { once: true });
         }
 
         // ==================== INISIALISASI ====================
