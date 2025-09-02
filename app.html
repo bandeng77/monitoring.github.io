@@ -265,7 +265,7 @@
 
         /* Modals */
         .modal-content-enter-active, .modal-content-leave-active {
-            transition: opacity 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            transition: opacity 0.2s cubic-bezier(0.25, 0.8, 0.25, 1), transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1); /* Transisi lebih cepat */
         }
         #poModalContent, #poDetailModalContent, #deleteModalContent, #filterPanelContent, #successAlertModalContent {
             background-color: #ffffff;
@@ -300,6 +300,7 @@
 
         /* Detail Grid */
         #poDetailModalContent .detail-grid {
+            display: grid; /* Pastikan ini adalah grid */
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* Lebih rapat */
             gap: 1rem;
         }
@@ -647,7 +648,7 @@
                         <p id="detailDisrc" class="text-gray-900"></p>
                     </div>
                     <div class="detail-item">
-                        <p class="text-700 font-semibold">Plan Delivery:</p>
+                        <p class="text-gray-700 font-semibold">Plan Delivery:</p>
                         <p id="detailPlanDelivery" class="text-gray-900"></p>
                     </div>
                     <div class="detail-item">
@@ -811,7 +812,7 @@
         let currentUserRole = 'user';
         let sortableInstances = {};
         let authInitialized = false;
-        let unsubscribeFromPOs = null; // Untuk menyimpan fungsi unsubscribe onSnapshot
+        let unsubscribeFromPOs = null;
 
         let uniqueSuppliers = new Set();
         let uniqueItemNames = new Set();
@@ -834,7 +835,7 @@
             { id: 'prod011', name: 'Printer Laser Monokrom', description: 'Cepat dan efisien' },
             { id: 'prod012', name: 'Speaker Bluetooth Portable', description: 'Suara jernih, baterai tahan lama' },
             { id: 'prod013', name: 'Smartwatch Sport', description: 'Fitur kesehatan lengkap' },
-            { id: 'prod014', name: 'Drone Mini dengan Kamera', description: 'Mudah diterbangkan' },
+            { id: 'prod014', 'name': 'Drone Mini dengan Kamera', description: 'Mudah diterbangkan' },
             { id: 'prod015', name: 'Power Bank 20000mAh', description: 'Fast charging' },
         ];
 
@@ -876,7 +877,6 @@
 
                     console.log("Current role:", currentUserRole);
                     applyUserPermissions();
-                    // Mengganti loadPOsFromFirebase() dengan listenForPOs()
                     listenForPOs(); 
                     initEventListeners();
                     hideGlobalLoading();
@@ -893,7 +893,6 @@
         function formatDateTime(timestamp) {
             if (!timestamp) return '-';
             try {
-                // Handle Firebase Timestamp objects and Date objects
                 const date = timestamp instanceof Date ? timestamp : (timestamp && typeof timestamp.toDate === 'function' ? timestamp.toDate() : null);
                 if (!date) return '-';
 
@@ -920,7 +919,6 @@
         function formatDate(timestamp) {
             if (!timestamp) return '-';
             try {
-                // Handle Firebase Timestamp objects and Date objects
                 const date = timestamp instanceof Date ? timestamp : (timestamp && typeof timestamp.toDate === 'function' ? timestamp.toDate() : null);
                 if (!date) return '-';
                 
@@ -995,17 +993,15 @@
             });
         }
 
-        // Mengganti loadPOsFromFirebase dengan listenForPOs untuk realtime updates
         function listenForPOs() {
             console.log("Listening for POs from Firebase (onSnapshot)...");
             const pipelineStage = document.getElementById('pos-stage');
             const loadingSpinner = document.getElementById('loading-spinner');
             if (pipelineStage && loadingSpinner) {
-                pipelineStage.innerHTML = ''; // Clear current POs
-                loadingSpinner.classList.remove('hidden'); // Show spinner
+                pipelineStage.innerHTML = '';
+                loadingSpinner.classList.remove('hidden');
             }
 
-            // Unsubscribe dari listener sebelumnya jika ada
             if (unsubscribeFromPOs) {
                 unsubscribeFromPOs();
             }
@@ -1019,7 +1015,6 @@
 
                 snapshot.forEach((doc) => {
                     const poData = doc.data();
-                    // Convert Firebase Timestamps to Date objects
                     poData.createdAt = poData.createdAt && typeof poData.createdAt.toDate === 'function' ? poData.createdAt.toDate() : null;
                     poData.planDelivery = poData.planDelivery && typeof poData.planDelivery.toDate === 'function' ? poData.planDelivery.toDate() : null;
                     poData.eta = poData.eta && typeof poData.eta.toDate === 'function' ? poData.eta.toDate() : null;
@@ -1042,9 +1037,9 @@
                 console.log("Total POs updated by onSnapshot:", pos.length);
                 populateYearDropdown();
                 populateFilterDropdowns();
-                filterPOs(); // Render POs setelah data diperbarui
+                filterPOs();
                 if (loadingSpinner) {
-                    loadingSpinner.classList.add('hidden'); // Hide spinner once data is loaded
+                    loadingSpinner.classList.add('hidden');
                 }
             }, (error) => {
                 console.error("Error listening to POs:", error);
@@ -1089,8 +1084,9 @@
             return poCard;
         }
 
-        function renderAllPOs() { // Fungsi ini sekarang dipanggil oleh filterPOs()
-            // Logika rendering dipindahkan ke renderFilteredPOs()
+        function renderAllPOs() {
+            // This function is now effectively replaced by filterPOs() calling renderFilteredPOs()
+            // No direct call to renderAllPOs() is needed anymore.
         }
 
         function populateDropdown(selectElementId, uniqueValues, selectedValue = 'all') {
@@ -1100,7 +1096,7 @@
                 return;
             }
 
-            const currentSelectedValue = selectElement.value; // Simpan nilai yang sedang dipilih
+            const currentSelectedValue = selectElement.value;
 
             selectElement.innerHTML = '';
 
@@ -1121,17 +1117,14 @@
                 }
             });
 
-            // Kembalikan nilai yang dipilih sebelumnya jika masih ada
             if (Array.from(selectElement.options).some(option => option.value === currentSelectedValue)) {
                 selectElement.value = currentSelectedValue;
             } else {
-                selectElement.value = 'all'; // Reset ke 'all' jika nilai sebelumnya tidak valid lagi
+                selectElement.value = 'all';
             }
         }
 
         function populateFilterDropdowns() {
-            // Status dropdown tidak perlu diisi dari uniqueValues karena sudah statis
-            // populateDropdown('filterStatus', ['pending', 'in-transit', 'delivered', 'cancelled', 'on-hold'], document.getElementById('filterStatus').value);
             populateDropdown('filterSupplier', uniqueSuppliers, document.getElementById('filterSupplier').value);
             populateDropdown('filterItemName', uniqueItemNames, document.getElementById('filterItemName').value);
             populateDropdown('filterAllocation', uniqueAllocations, document.getElementById('filterAllocation').value);
@@ -1375,7 +1368,8 @@
             };
 
             try {
-                showGlobalLoading();
+                closePOModal(); // Tutup modal segera
+                showGlobalLoading(); // Tampilkan loading setelah modal ditutup
                 if (poId) {
                     await dealsCollection.doc(poId).update(poData);
                     showCustomAlert("PO berhasil diperbarui!", "success");
@@ -1385,14 +1379,11 @@
                     await dealsCollection.add(poData);
                     showCustomAlert("PO baru berhasil ditambahkan!", "success");
                 }
-                closePOModal();
-                // Tidak perlu memanggil loadPOsFromFirebase() atau filterPOs() di sini
-                // karena onSnapshot akan otomatis memperbarui data.
             } catch (error) {
                 console.error("Error saving PO:", error);
                 showCustomAlert("Gagal menyimpan PO. Silakan coba lagi.", "error");
             } finally {
-                hideGlobalLoading();
+                hideGlobalLoading(); // Sembunyikan loading setelah operasi Firebase selesai
             }
         }
 
@@ -1416,17 +1407,15 @@
             if (!poToDeleteId) return;
 
             try {
-                showGlobalLoading();
+                closeDeleteModal(); // Tutup modal segera
+                showGlobalLoading(); // Tampilkan loading setelah modal ditutup
                 await dealsCollection.doc(poToDeleteId).delete();
                 showCustomAlert(`PO "${poToDeleteNo}" berhasil dihapus!`, "success");
-                closeDeleteModal();
-                // Tidak perlu memanggil loadPOsFromFirebase() atau filterPOs() di sini
-                // karena onSnapshot akan otomatis memperbarui data.
             } catch (error) {
                 console.error("Error deleting PO:", error);
                 showCustomAlert("Gagal menghapus PO. Silakan coba lagi.", "error");
             } finally {
-                hideGlobalLoading();
+                hideGlobalLoading(); // Sembunyikan loading setelah operasi Firebase selesai
             }
         }
 
@@ -1604,7 +1593,7 @@
                 const allocationFilter = document.getElementById('filterAllocation').value;
                 const yearFilter = document.getElementById('filterYear').value;
                 
-                let basePOs = pos; // Gunakan array 'pos' yang sudah diperbarui oleh onSnapshot
+                let basePOs = pos;
 
                 const filteredPOs = basePOs.filter(po => {
                     const matchesSearch = 
@@ -1666,7 +1655,6 @@
         }
 
         function logout() {
-            // Unsubscribe dari listener onSnapshot saat logout
             if (unsubscribeFromPOs) {
                 unsubscribeFromPOs();
                 unsubscribeFromPOs = null;
@@ -1764,7 +1752,6 @@
                 ];
                 data.push(headers);
 
-                // Get the currently displayed POs (after filtering)
                 const currentPOs = pos.filter(po => {
                     const searchTerm = document.getElementById('searchPOs').value.toLowerCase();
                     const statusFilter = document.getElementById('filterStatus').value;
@@ -1853,7 +1840,6 @@
         document.addEventListener('DOMContentLoaded', function() {
             initSortable();
             setupSearchableField();
-            // auth.onAuthStateChanged akan memanggil listenForPOs() setelah otentikasi
         });
     </script>
 </body>
