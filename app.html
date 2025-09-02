@@ -267,7 +267,7 @@
         .modal-content-enter-active, .modal-content-leave-active {
             transition: opacity 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
-        #poModalContent, #poDetailModalContent, #deleteModalContent, #filterPanelContent {
+        #poModalContent, #poDetailModalContent, #deleteModalContent, #filterPanelContent, #successAlertModalContent {
             background-color: #ffffff;
             border-radius: 1rem;
             box-shadow: 0 20px 50px var(--shadow-strong);
@@ -279,7 +279,7 @@
             border-radius: 1rem; /* Kembali ke border-radius */
             box-shadow: 0 20px 50px var(--shadow-strong); /* Kembali ke bayangan */
         }
-        #poModalContent h2, #poDetailModalContent h2, #deleteModalContent h2, #filterPanelContent h2 {
+        #poModalContent h2, #poDetailModalContent h2, #deleteModalContent h2, #filterPanelContent h2, #successAlertModalContent h2 {
             color: var(--text-dark);
             font-weight: 800;
             font-size: 2rem;
@@ -302,6 +302,12 @@
         #poDetailModalContent .detail-grid {
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* Lebih rapat */
             gap: 1rem;
+        }
+        /* Modifikasi untuk 3 kolom pada detail PO */
+        @media (min-width: 768px) { /* Untuk tablet dan desktop */
+            #poDetailModalContent .detail-grid {
+                grid-template-columns: repeat(3, 1fr); /* 3 kolom */
+            }
         }
         #poDetailModalContent .detail-item p:first-child {
             color: var(--text-light);
@@ -761,8 +767,22 @@
             </div>
         </div>
 
-        <!-- Toast Notification Container -->
-        <div id="toast-container"></div>
+        <!-- Success Alert Modal (New) -->
+        <div id="successAlertModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+            <div class="bg-white rounded-xl p-8 w-full max-w-sm text-center shadow-2xl modal-content-enter" id="successAlertModalContent">
+                <div class="text-green-500 text-6xl mb-4">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h2 class="text-2xl font-bold mb-4 text-gray-900">Berhasil!</h2>
+                <p class="text-gray-700 mb-6" id="successAlertMessage">PO berhasil disimpan.</p>
+                <button type="button" onclick="closeSuccessAlertModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105">
+                    OK
+                </button>
+            </div>
+        </div>
+
+        <!-- Toast Notification Container (Removed) -->
+        <!-- <div id="toast-container"></div> -->
     </div>
     <div id="global-loading-overlay" class="loading-overlay">
         <div class="spinner"></div>
@@ -863,7 +883,7 @@
                     hideGlobalLoading();
                 } catch (error) {
                     console.error("Error checking user role or loading data:", error);
-                    showToast("Gagal memuat data pengguna atau aplikasi. Silakan refresh halaman.", 5000);
+                    showCustomAlert("Gagal memuat data pengguna atau aplikasi. Silakan refresh halaman.", "error"); // Menggunakan custom alert
                     hideGlobalLoading();
                 }
             }
@@ -910,6 +930,8 @@
             }
         }
 
+        // Fungsi showToast dihapus
+        /*
         function showToast(message, duration = 3000) {
             const toastContainer = document.getElementById('toast-container');
             if (!toastContainer) return;
@@ -928,6 +950,47 @@
                 toast.addEventListener('transitionend', () => toast.remove(), { once: true });
             }, duration);
         }
+        */
+
+        // Fungsi showCustomAlert baru
+        function showCustomAlert(message, type = 'success') {
+            const modal = document.getElementById('successAlertModal');
+            const modalContent = document.getElementById('successAlertModalContent');
+            const alertMessage = document.getElementById('successAlertMessage');
+            const alertIcon = modalContent.querySelector('.text-6xl i');
+
+            alertMessage.textContent = message;
+
+            // Set icon and color based on type
+            if (type === 'success') {
+                alertIcon.className = 'fas fa-check-circle text-green-500';
+            } else if (type === 'error') {
+                alertIcon.className = 'fas fa-times-circle text-red-500';
+            } else if (type === 'info') {
+                alertIcon.className = 'fas fa-info-circle text-blue-500';
+            } else if (type === 'warning') {
+                alertIcon.className = 'fas fa-exclamation-triangle text-yellow-500';
+            }
+
+            modal.classList.remove('hidden');
+            modalContent.classList.remove('modal-content-leave-active');
+            modalContent.classList.add('modal-content-enter-active');
+        }
+
+        function closeSuccessAlertModal() {
+            const modalContent = document.getElementById('successAlertModalContent');
+            if (!modalContent) return;
+
+            modalContent.classList.remove('modal-content-enter-active');
+            modalContent.classList.add('modal-content-leave-active');
+            
+            modalContent.addEventListener('transitionend', function handler() {
+                document.getElementById('successAlertModal').classList.add('hidden');
+                modalContent.classList.remove('modal-content-leave-active');
+                modalContent.removeEventListener('transitionend', handler);
+            }, { once: true });
+        }
+
 
         function showGlobalLoading() {
             document.getElementById('global-loading-overlay').classList.add('show');
@@ -1032,7 +1095,7 @@
                 filterPOs();
             } catch (error) {
                 console.error("Error loading POs:", error);
-                showToast("Gagal memuat data PO", 3000);
+                showCustomAlert("Gagal memuat data PO", "error"); // Menggunakan custom alert
             } finally {
                 if (loadingSpinner) {
                     loadingSpinner.classList.add('hidden'); // Hide spinner
@@ -1046,26 +1109,26 @@
             poCard.dataset.id = po.id;
             
             // Status color class is still generated but not used for the badge
-            let statusColorClass = '';
-            switch (po.status) {
-                case 'pending':
-                    statusColorClass = 'bg-gray-100 text-gray-800';
-                    break;
-                case 'in-transit':
-                    statusColorClass = 'bg-blue-100 text-blue-800';
-                    break;
-                case 'delivered':
-                    statusColorClass = 'bg-green-100 text-green-800';
-                    break;
-                case 'cancelled':
-                    statusColorClass = 'bg-red-100 text-red-800';
-                    break;
-                case 'on-hold':
-                    statusColorClass = 'bg-yellow-100 text-yellow-800';
-                    break;
-                default:
-                    statusColorClass = 'bg-gray-100 text-gray-800';
-            }
+            // let statusColorClass = ''; // Dihapus karena status tidak ditampilkan
+            // switch (po.status) {
+            //     case 'pending':
+            //         statusColorClass = 'bg-gray-100 text-gray-800';
+            //         break;
+            //     case 'in-transit':
+            //         statusColorClass = 'bg-blue-100 text-blue-800';
+            //         break;
+            //     case 'delivered':
+            //         statusColorClass = 'bg-green-100 text-green-800';
+            //         break;
+            //     case 'cancelled':
+            //         statusColorClass = 'bg-red-100 text-red-800';
+            //         break;
+            //     case 'on-hold':
+            //         statusColorClass = 'bg-yellow-100 text-yellow-800';
+            //         break;
+            //     default:
+            //         statusColorClass = 'bg-gray-100 text-gray-800';
+            // }
 
             poCard.innerHTML = `
                 <span class="po-card-number">${index + 1}</span> <!-- Nomor urut di kanan atas -->
@@ -1076,7 +1139,8 @@
                     <p><i class="fas fa-building"></i> Supplier: ${po.supplierName || '-'}</p>
                     <p><i class="fas fa-box"></i> Produk: ${po.selectedProduct ? po.selectedProduct.name : '-'}</p>
                     <p><i class="fas fa-calendar-alt"></i> Plan Delivery: ${po.planDelivery ? formatDate(po.planDelivery) : '-'}</p>
-                    <p><i class="fas fa-info-circle"></i> Status: <span class="font-semibold ${statusColorClass.replace('bg-', 'text-')}">${po.status ? po.status.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : '-'}</span></p>
+                    <!-- Baris status dihilangkan -->
+                    <!-- <p><i class="fas fa-info-circle"></i> Status: <span class="font-semibold ${statusColorClass.replace('bg-', 'text-')}">${po.status ? po.status.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : '-'}</span></p> -->
                 </div>
                 <div class="mt-2 flex justify-end items-center deal-footer">
                     <div class="flex space-x-1 deal-actions">
@@ -1389,7 +1453,7 @@
             // const status = document.getElementById('status').value; 
 
             if (!noPO) { // Hanya No. PO yang required
-                showToast("No. PO harus diisi.", 3000);
+                showCustomAlert("No. PO harus diisi.", "error"); // Menggunakan custom alert
                 return;
             }
 
@@ -1421,18 +1485,18 @@
                 showGlobalLoading();
                 if (poId) {
                     await dealsCollection.doc(poId).update(poData);
-                    showToast("PO berhasil diperbarui!", 2000);
+                    showCustomAlert("PO berhasil diperbarui!", "success"); // Menggunakan custom alert
                 } else {
                     poData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
                     poData.createdBy = auth.currentUser.email;
                     await dealsCollection.add(poData);
-                    showToast("PO baru berhasil ditambahkan!", 2000);
+                    showCustomAlert("PO baru berhasil ditambahkan!", "success"); // Menggunakan custom alert
                 }
                 closePOModal();
                 await loadPOsFromFirebase();
             } catch (error) {
                 console.error("Error saving PO:", error);
-                showToast("Gagal menyimpan PO. Silakan coba lagi.", 3000);
+                showCustomAlert("Gagal menyimpan PO. Silakan coba lagi.", "error"); // Menggunakan custom alert
             } finally {
                 hideGlobalLoading();
             }
@@ -1460,12 +1524,12 @@
             try {
                 showGlobalLoading();
                 await dealsCollection.doc(poToDeleteId).delete();
-                showToast(`PO "${poToDeleteNo}" berhasil dihapus!`, 2000);
+                showCustomAlert(`PO "${poToDeleteNo}" berhasil dihapus!`, "success"); // Menggunakan custom alert
                 closeDeleteModal(); // Ini seharusnya berfungsi sekarang
                 await loadPOsFromFirebase();
             } catch (error) {
                 console.error("Error deleting PO:", error);
-                showToast("Gagal menghapus PO. Silakan coba lagi.", 3000);
+                showCustomAlert("Gagal menghapus PO. Silakan coba lagi.", "error"); // Menggunakan custom alert
             } finally {
                 hideGlobalLoading();
             }
@@ -1474,7 +1538,7 @@
         function openPODetailModal(poId) {
             const po = pos.find(p => p.id === poId);
             if (!po) {
-                showToast("Detail PO tidak ditemukan.", 3000);
+                showCustomAlert("Detail PO tidak ditemukan.", "error"); // Menggunakan custom alert
                 return;
             }
 
@@ -1592,7 +1656,7 @@
                 
             } catch (error) {
                 console.error("Error in applyUserPermissions:", error);
-                showToast("Gagal menerapkan permissions", 3000);
+                showCustomAlert("Gagal menerapkan permissions", "error"); // Menggunakan custom alert
             }
         }
 
@@ -1636,7 +1700,7 @@
                 }
             } catch (error) {
                 console.error("Error initializing event listeners:", error);
-                showToast("Gagal memuat beberapa fungsi", 3000);
+                showCustomAlert("Gagal memuat beberapa fungsi", "error"); // Menggunakan custom alert
             }
         }
 
@@ -1764,7 +1828,7 @@
                 })
                 .catch((error) => {
                     console.error("Error logging out:", error);
-                    showToast("Gagal logout. Silakan coba lagi.", 5000);
+                    showCustomAlert("Gagal logout. Silakan coba lagi.", "error"); // Menggunakan custom alert
                 });
         }
 
@@ -1778,7 +1842,7 @@
 
             if (!filterPanel || !filterPanelContent) {
                 console.error("Elemen panel filter tidak ditemukan.");
-                showToast("Gagal membuka filter: Elemen tidak lengkap.", 3000);
+                showCustomAlert("Gagal membuka filter: Elemen tidak lengkap.", "error"); // Menggunakan custom alert
                 return;
             }
 
@@ -1925,11 +1989,11 @@
 
                 const fileName = `Purchase_Orders_${new Date().toISOString().slice(0,10)}.xlsx`;
                 XLSX.writeFile(wb, fileName);
-                showToast("Data PO berhasil diekspor ke Excel!", 3000);
+                showCustomAlert("Data PO berhasil diekspor ke Excel!", "success"); // Menggunakan custom alert
 
             } catch (error) {
                 console.error("Error exporting to Excel:", error);
-                showToast("Gagal mengekspor data ke Excel.", 5000);
+                showCustomAlert("Gagal mengekspor data ke Excel.", "error"); // Menggunakan custom alert
             } finally {
                 hideGlobalLoading();
             }
