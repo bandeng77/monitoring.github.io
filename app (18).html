@@ -1,0 +1,2531 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Pipeline Manager - Genetek</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .pipeline-stage {
+            min-height: 480px;
+            max-height: 600px;
+            transition: all 0.3s ease;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background-color: #ffffff;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            box-sizing: border-box;
+        }
+        .pipeline-stage-header {
+            padding: 1.25rem;
+            border-bottom: 1px solid #e2e8f0;
+            background-color: #f1f5f9;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.25rem;
+        }
+        .pipeline-stage-header h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1f2937;
+            flex-shrink: 0;
+        }
+        .pipeline-stage-header span {
+            font-size: 0.75rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .pipeline-stage-content {
+            flex-grow: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            min-height: 100px;
+            height: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-content: flex-start;
+        }
+        .deal-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: grab;
+            position: relative;
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            margin-bottom: 0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            font-size: 0.875rem;
+            width: calc(33.333% - 0.666rem);
+            min-width: 250px;
+            box-sizing: border-box;
+        }
+        .deal-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        }
+        .deal-card:active {
+            cursor: grabbing;
+        }
+        .sortable-ghost {
+            opacity: 0.4;
+            background-color: #e0f2fe;
+            border: 1px dashed #90cdf4;
+        }
+        .sortable-chosen {
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            transform: scale(1.02);
+        }
+        .sortable-drag {
+            opacity: 0.9;
+        }
+        .stage-main-pipeline { border-left: 5px solid #3B82F6; }
+        .pipeline-stage-content::-webkit-scrollbar {
+            width: 8px;
+        }
+        .pipeline-stage-content::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .pipeline-stage-content::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        .pipeline-stage-content::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        .modal-content-enter {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+        .modal-content-enter-active {
+            opacity: 1;
+            transform: scale(1);
+            transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+        }
+        .modal-content-leave {
+            opacity: 1;
+            transform: scale(1);
+        }
+        .modal-content-leave-active {
+            opacity: 0;
+            transform: scale(0.95);
+            transition: opacity 0.3s ease-in, transform 0.3s ease-in;
+        }
+        #toast-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .toast {
+            background-color: #333;
+            color: white;
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transform: translateX(100%);
+            transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        #activityModalContent {
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .activity-item {
+            padding: 0.75rem;
+            background-color: #f9fafb;
+            border-radius: 0.375rem;
+            border: 1px solid #e5e7eb;
+            margin-bottom: 0.5rem;
+        }
+        .activity-item:last-child {
+            margin-bottom: 0;
+        }
+        .activity-item p {
+            font-size: 0.875rem;
+            color: #374151;
+        }
+        .activity-item .activity-date {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+        
+        /* Penyesuaian CSS untuk deal card yang lebih ringkas */
+        .deal-card h3 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #1f2937;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: calc(100% - 60px);
+        }
+
+        .priority-badge {
+            font-size: 0.65rem;
+            padding: 0.15rem 0.4rem;
+            line-height: 1;
+        }
+
+        .deal-details p {
+            font-size: 0.75rem;
+            margin-top: 0.15rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .deal-details p i {
+            font-size: 0.7rem;
+        }
+
+        .deal-actions button {
+            padding: 0.1rem 0.25rem;
+            font-size: 0.7rem;
+        }
+        .deal-actions button i {
+            font-size: 0.7rem;
+        }
+
+        .deal-footer {
+            margin-top: 0.5rem;
+        }
+
+        /* Media Queries untuk responsivitas */
+        @media (max-width: 1024px) {
+            .deal-card {
+                width: calc(50% - 0.5rem);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .deal-card {
+                width: 100%;
+            }
+        }
+
+        /* CSS untuk membuat canvas melebar */
+        .chart-container {
+            width: 100%; /* Membuat container chart mengambil lebar penuh */
+            height: 400px; /* Tinggi default untuk chart */
+            margin-bottom: 1rem; /* Tambahkan sedikit margin bawah */
+        }
+        .chart-container canvas {
+            width: 100% !important; /* Memastikan canvas mengambil lebar penuh dari containernya */
+            height: 100% !important; /* Memastikan canvas mengambil tinggi penuh dari containernya */
+        }
+
+        /* Penyesuaian untuk modal Tambah/Edit Deal */
+        #dealModalContent {
+            max-height: 100vh; /* Disesuaikan menjadi 100% tinggi viewport */
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            border-radius: 0; /* Menghilangkan border-radius agar terlihat full screen */
+            width: 100%; /* Mengambil lebar penuh */
+            max-width: 100%; /* Menghilangkan batasan lebar maksimum */
+            box-sizing: border-box;
+            padding: 1.5rem; /* Disesuaikan */
+        }
+
+        /* Menyamakan tinggi input dan select */
+        #dealForm input[type="text"],
+        #dealForm input[type="number"],
+        #dealForm input[type="date"],
+        #dealForm select {
+            height: 40px; /* Disesuaikan */
+            padding: 0.5rem 0.75rem; /* Disesuaikan */
+            box-sizing: border-box;
+            font-size: 0.8rem; /* Disesuaikan */
+            border-width: 1px; /* Disesuaikan */
+        }
+
+        /* Menyesuaikan tinggi textarea remarks */
+        #remarks {
+            height: 100px; /* Disesuaikan */
+            resize: vertical;
+            font-size: 0.8rem; /* Disesuaikan */
+            padding: 0.5rem 0.75rem; /* Disesuaikan */
+        }
+
+        /* Menghilangkan scrollbar jika konten pas */
+        #dealModalContent::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+
+        #dealModalContent {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Menyesuaikan ukuran font label */
+        #dealForm label {
+            font-size: 0.75rem; /* Disesuaikan */
+            margin-bottom: 0.15rem; /* Disesuaikan */
+        }
+
+        /* Menyesuaikan ukuran font judul modal */
+        #dealModalContent h2 {
+            font-size: 1.5rem; /* Disesuaikan */
+            margin-bottom: 1rem; /* Disesuaikan */
+        }
+
+        /* CSS untuk modal detail deal 2 kolom */
+        #dealDetailModalContent .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem; /* Jarak antar kolom dan baris */
+        }
+        #dealDetailModalContent .detail-item {
+            /* Gaya untuk setiap item detail jika diperlukan */
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="mb-8 bg-white p-6 rounded-lg shadow-md">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                <div>
+                    <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900">Sales Pipeline Manager <i class="fas fa-chart-line text-blue-600 ml-2"></i></h1>
+                </div>
+                <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 mt-4 sm:mt-0">
+                    <button id="authButton" onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
+                        <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                    </button>
+
+                    <button id="newDealBtn" onclick="openDealModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
+                        <i class="fas fa-plus-circle mr-2"></i> Deal Baru
+                    </button>
+                    
+                    <button id="viewStatsBtn" onclick="showStats()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
+                        <i class="fas fa-chart-pie mr-2"></i> Statistik
+                    </button>
+                    
+                    <button id="activityBtn" onclick="openActivityModal()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
+                        <i class="fas fa-bell mr-2"></i> Aktivitas
+                        <span id="activity-badge" class="ml-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full hidden">0</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Combined Filter Section -->
+            <div class="mt-6 flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 items-center">
+                <input type="text" id="searchDeals" onkeyup="filterDeals()" placeholder="Cari deal berdasarkan nama, perusahaan..." class="w-full sm:w-1/2 p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                
+                <button id="openFilterPanelBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
+                    <i class="fas fa-filter mr-2"></i> Filter
+                </button>
+            </div>
+        </header>
+
+        <!-- Pipeline Visualization -->
+        <div class="grid grid-cols-1 gap-6 mb-10">
+            <div class="pipeline-stage stage-main-pipeline">
+                <div class="pipeline-stage-header">
+                    <h3>Pipelines</h3>
+                </div>
+                <div id="pipelines-stage" class="pipeline-stage-content">
+                    <!-- Deals akan ditampilkan di sini -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Section (hidden by default) -->
+        <div id="stats-section" class="hidden bg-white p-6 rounded-lg shadow-md mb-10">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-900 flex items-center"><i class="fas fa-chart-bar mr-3 text-gray-500"></i> Analisis Performa Penjualan</h2>
+                <button onclick="hideStats()" class="text-gray-500 hover:text-gray-700 transition duration-200">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="grid grid-cols-1 gap-8"> <!-- Changed to single column for full width -->
+                <div class="bg-gray-50 p-4 rounded-lg shadow-inner chart-container">
+                    <canvas id="dealSizeChart"></canvas>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg shadow-inner chart-container">
+                    <canvas id="winRateChart"></canvas>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg shadow-inner chart-container">
+                    <canvas id="dealsBySalesChart"></canvas>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg shadow-inner chart-container">
+                    <canvas id="dealsByProductPackageChart"></canvas>
+                </div>
+            </div>
+            <div class="mt-8 bg-gray-50 p-4 rounded-lg shadow-inner chart-container">
+                <canvas id="pipelineValueChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Add/Edit Deal Modal -->
+        <div id="dealModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+            <div class="bg-white rounded-none p-8 w-full h-full shadow-2xl modal-content-enter" id="dealModalContent">
+                <h2 class="text-xl sm:text-2xl font-bold mb-6 text-gray-900" id="modalTitle">Tambah Deal Baru</h2>
+                <form id="dealForm">
+                    <input type="hidden" id="dealId">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3"> <!-- Changed lg:grid-cols-3 to lg:grid-cols-4 -->
+                        <!-- Kolom 1 -->
+                        <div>
+                            <div class="mb-3">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="dealName">Nama Proyek <span class="text-red-500">*</span></label>
+                                <input type="text" id="dealName" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="salesName">Nama Sales</label>
+                                <select id="salesName" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                                    <option value="">Pilih Sales</option>
+                                    <option value="Pamungkas">Pamungkas</option>
+                                    <option value="Rory">Rory</option>
+                                    <option value="Rangga">Rangga</option>
+                                    <option value="Dhea">Dhea</option>
+                                    <option value="YIB Wahyu">YIB Wahyu</option>
+                                    <option value="David">David</option>
+                                    <option value="Hadi">Hadi</option>
+                                    <option value="Engineering">Engineering</option>
+                                </select>
+                                <!-- Tambahkan filter sales di sini -->
+                                <!-- Elemen ini tidak lagi hidden karena akan digunakan untuk filter -->
+                                <!-- <select id="filterSales" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm hidden">
+                                    <option value="all">Semua Sales</option>
+                                </select> -->
+                            </div>
+                            <div class="mb-3" id="stageFieldContainer">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="stage">Tahap <span class="text-red-500">*</span></label>
+                                <select id="stage" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" required>
+                                    <option value="identified">Identified</option>
+                                    <option value="prospect">Prospect</option>
+                                    <option value="tender-me">Tender Stage M&E</option>
+                                    <option value="tender-main-con">Tender Main Con</option>
+                                    <option value="contract-award">Contract Award</option>
+                                    <option value="win">Win</option>
+                                    <option value="lost">Lost</option>
+                                    <option value="on-hold">On Hold</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="priority">Prioritas</label>
+                                <select id="priority" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                                    <option value="cold">Cold</option>
+                                    <option value="warm">Warm</option>
+                                    <option value="hot">Hot</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="remarks">Remarks</label>
+                                <textarea id="remarks" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" rows="3" placeholder="Tambahkan catatan atau deskripsi tambahan..."></textarea>
+                            </div>
+                        </div>
+                        <!-- Kolom 2 -->
+                        <div>
+                            <div class="mb-3">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="package">Paket</label>
+                                <select id="package" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                                    <option value="">Pilih Paket</option>
+                                    <option value="Electronic Package">Electronic Package</option>
+                                    <option value="M&E">M&E</option>
+                                    <option value="Fire Fighting Cont">Fire Fighting Cont</option>
+                                    <option value="Main Kontraktor">Main Kontraktor</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="product">Produk</label>
+                                <select id="product" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                                    <option value="">Pilih Produk</option>
+                                    <option value="Fire">Fire</option>
+                                    <option value="Suppresion">Suppresion</option>
+                                    <option value="Vesda">Vesda</option>
+                                    <option value="Maintenance">Maintenance</option>
+                                    <option value="Fire - Water">Fire - Water</option>
+                                    <option value="Mechanical">Mechanical</option>
+                                    <option value="FAS-FSS-FF">FAS-FSS-FF</option>
+                                    <option value="FAS&FSS">FAS&FSS</option>
+                                </select>
+                                <input type="text" id="newProduct" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm mt-2" placeholder="Atau ketik nama produk baru">
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="facility">Fasilitas</label>
+                                <select id="facility" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                                    <option value="">Pilih Fasilitas</option>
+                                    <option value="Industrial">Industrial</option>
+                                    <option value="Office">Office</option>
+                                    <option value="Hotel">Hotel</option>
+                                    <option value="Data Center">Data Center</option>
+                                    <option value="Oil & Gas">Oil & Gas</option>
+                                    <option value="Warehouse">Warehouse</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                                <input type="text" id="newFacility" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm mt-2" placeholder="Atau ketik nama fasilitas baru">
+                            </div>
+                        </div>
+                        <!-- Kolom 3 -->
+                        <div>
+                            <div class="mb-3">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="owner">Owner</label>
+                                <select id="owner" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                                    <option value="">Pilih Owner</option>
+                                </select>
+                                <input type="text" id="newOwner" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm mt-2" placeholder="Atau ketik nama owner baru">
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="consultant">Konsultan</label>
+                                <select id="consultant" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                                    <option value="">Pilih Konsultan</option>
+                                </select>
+                                <input type="text" id="newConsultant" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm mt-2" placeholder="Atau ketik nama konsultan baru">
+                            </div>
+                            <!-- MODIFIKASI HTML UNTUK KONTRAKTOR -->
+                            <div class="mb-3">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="contractor">Kontraktor</label>
+                                <div id="contractorList" class="space-y-2 mb-2">
+                                    <!-- Kontraktor yang dipilih akan ditambahkan di sini secara dinamis oleh JS -->
+                                </div>
+                                <button type="button" onclick="addContractorField()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-1 rounded-lg text-xs flex items-center">
+                                    <i class="fas fa-plus mr-1"></i> Tambah Kontraktor
+                                </button>
+                            </div>
+                            <!-- AKHIR MODIFIKASI HTML UNTUK KONTRAKTOR -->
+                            <div class="mb-3">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="pic">PIC</label>
+                                <select id="pic" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                                    <option value="">Pilih PIC</option>
+                                </select>
+                                <input type="text" id="newPic" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm mt-2" placeholder="Atau ketik nama PIC baru">
+                            </div>
+                        </div>
+                        <!-- Kolom 4 -->
+                        <div>
+                            <div class="mb-3">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="value">Nilai (IDR)</label>
+                                <input type="text" id="value" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" min="0" oninput="formatAndCalculateBeforeDiscount()">
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="discount">Diskon (%)</label>
+                                <input type="number" id="discount" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" min="0" max="100" oninput="formatAndCalculateBeforeDiscount()">
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="beforeDiscount">Sebelum Diskon (IDR)</label>
+                                <input type="text" id="beforeDiscount" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" min="0" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="planPO">Plan PO</label>
+                                <select id="planPO" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                                    <option value="">Pilih Bulan</option>
+                                    <option value="Januari">Januari</option>
+                                    <option value="Februari">Februari</option>
+                                    <option value="Maret">Maret</option>
+                                    <option value="April">April</option>
+                                    <option value="Mei">Mei</option>
+                                    <option value="Juni">Juni</option>
+                                    <option value="Juli">Juli</option>
+                                    <option value="Agustus">Agustus</option>
+                                    <option value="September">September</option>
+                                    <option value="Oktober">Oktober</option>
+                                    <option value="November">November</option>
+                                    <option value="Desember">Desember</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button type="button" onclick="closeDealModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
+                            Batal
+                        </button>
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105 text-sm">
+                            Simpan Deal
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Deal Detail Modal -->
+        <div id="dealDetailModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+            <div class="bg-white rounded-xl p-8 w-full max-w-md shadow-2xl modal-content-enter" id="dealDetailModalContent">
+                <h2 class="text-xl sm:text-2xl font-bold mb-6 text-gray-900" id="dealDetailTitle">Detail Deal</h2>
+                <div class="detail-grid"> <!-- Added detail-grid class for 2-column layout -->
+                    <div class="detail-item">
+                        <p class="text-gray-700 font-semibold">Nama Sales:</p>
+                        <p id="detailSalesName" class="text-gray-900"></p>
+                    </div>
+                    <div class="detail-item">
+                        <p class="text-gray-700 font-semibold">Nilai (IDR):</p>
+                        <p id="detailValue" class="text-gray-900"></p>
+                    </div>
+                    <div class="detail-item">
+                        <p class="text-gray-700 font-semibold">Diskon:</p>
+                        <p id="detailDiscount" class="text-gray-900"></p>
+                    </div>
+                    <div class="detail-item">
+                        <p class="text-gray-700 font-semibold">Sebelum Diskon (IDR):</p>
+                        <p id="detailBeforeDiscount" class="text-gray-900"></p>
+                    </div>
+                    <div class="detail-item">
+                        <p class="text-gray-700 font-semibold">Paket:</p>
+                        <p id="detailPackage" class="text-gray-900"></p>
+                    </div>
+                    <div class="detail-item">
+                        <p class="text-gray-700 font-semibold">Produk:</p>
+                        <p id="detailProduct" class="text-gray-900"></p>
+                    </div>
+                    <div class="detail-item">
+                        <p class="text-gray-700 font-semibold">Fasilitas:</p>
+                        <p id="detailFacility" class="text-gray-900"></p>
+                    </div>
+                    <div class="detail-item">
+                        <p class="text-gray-700 font-semibold">Owner:</p>
+                        <p id="detailOwner" class="text-gray-900"></p>
+                    </div>
+                    <div class="detail-item">
+                        <p class="text-gray-700 font-semibold">Konsultan:</p>
+                        <p id="detailConsultant" class="text-gray-900"></p>
+                    </div>
+                    <div class="detail-item">
+                        <p class="text-gray-700 font-semibold">Kontraktor:</p>
+                        <p id="detailContractor" class="text-gray-900"></p>
+                    </div>
+                    <div class="detail-item">
+                        <p class="text-gray-700 font-semibold">PIC:</p>
+                        <p id="detailPIC" class="text-gray-900"></p>
+                    </div>
+                    <div class="detail-item">
+                        <p class="text-gray-700 font-semibold">Plan PO:</p>
+                        <p id="detailPlanPO" class="text-gray-900"></p>
+                    </div>
+                    <div class="detail-item">
+                        <p class="text-gray-700 font-semibold">Tanggal Dibuat:</p>
+                        <p id="detailCreatedDate" class="text-gray-900"></p>
+                    </div>
+                    <!-- Remarks will take full width -->
+                    <div class="detail-item col-span-2"> 
+                        <p class="text-gray-700 font-semibold">Remarks:</p>
+                        <p id="detailRemarks" class="text-gray-900"></p>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" onclick="closeDealDetailModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
+                        Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity Modal -->
+        <div id="activityModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+            <div class="bg-white rounded-xl p-8 w-full max-w-lg shadow-2xl modal-content-enter" id="activityModalContent">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900 flex items-center"><i class="fas fa-history mr-3 text-gray-500"></i> Aktivitas Terakhir</h2>
+                    <button onclick="closeActivityModal()" class="text-gray-500 hover:text-gray-700 transition duration-200">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div id="activity-feed-modal" class="space-y-3">
+                    <!-- Aktivitas akan dimuat di sini -->
+                </div>
+                <div class="flex justify-end mt-6">
+                    <button onclick="closeActivityModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
+                        Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delete Confirmation Modal -->
+        <div id="deleteModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+            <div class="bg-white rounded-xl p-8 w-full max-w-sm shadow-2xl modal-content-enter" id="deleteModalContent">
+                <h2 class="text-xl font-bold mb-4 text-gray-900">Konfirmasi Penghapusan</h2>
+                <p class="text-gray-700 mb-6 text-sm">Apakah Anda yakin ingin menghapus "<span id="dealToDeleteName" class="font-semibold"></span>"? Aksi ini tidak dapat dibatalkan.</p>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="closeDeleteModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
+                        Batal
+                    </button>
+                    <button type="button" id="confirmDeleteBtn" onclick="deleteDeal()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105 text-sm">
+                        Hapus
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Panel Modal -->
+        <div id="filterPanel" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+            <div class="bg-white rounded-xl p-8 w-full max-w-2xl shadow-2xl modal-content-enter" id="filterPanelContent">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900 flex items-center"><i class="fas fa-filter mr-3 text-gray-500"></i> Filter Deals</h2>
+                    <button onclick="closeFilterPanel()" class="text-gray-500 hover:text-gray-700 transition duration-200">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Kolom 1 -->
+                    <div>
+                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterPriority">Prioritas</label>
+                        <select id="filterPriority" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            <option value="all">Semua Prioritas</option>
+                            <option value="hot">Hot</option>
+                            <option value="warm">Warm</option>
+                            <option value="cold">Cold</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterStage">Tahap</label>
+                        <select id="filterStage" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            <option value="all">Semua Tahap</option>
+                            <option value="identified">Identified</option>
+                            <option value="prospect">Prospect</option>
+                            <option value="tender-me">Tender Stage M&E</option>
+                            <option value="tender-main-con">Tender Main Con</option>
+                            <option value="contract-award">Contract Award</option>
+                            <option value="win">Win</option>
+                            <option value="lost">Lost</option>
+                            <option value="on-hold">On Hold</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterSales">Sales</label>
+                        <select id="filterSales" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            <option value="all">Semua Sales</option>
+                            <!-- Opsi akan diisi secara dinamis oleh JavaScript -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterConsultant">Konsultan</label>
+                        <select id="filterConsultant" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            <option value="all">Semua Konsultan</option>
+                            <!-- Opsi akan diisi secara dinamis oleh JavaScript -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterContractor">Kontraktor</label>
+                        <select id="filterContractor" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            <option value="all">Semua Kontraktor</option>
+                            <!-- Opsi akan diisi secara dinamis oleh JavaScript -->
+                        </select>
+                    </div>
+                    <!-- Kolom 2 -->
+                    <div>
+                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterProduct">Produk</label>
+                        <select id="filterProduct" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            <option value="all">Semua Produk</option>
+                            <!-- Opsi akan diisi secara dinamis oleh JavaScript -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterFacility">Fasilitas</label>
+                        <select id="filterFacility" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            <option value="all">Semua Fasilitas</option>
+                            <!-- Opsi akan diisi secara dinamis oleh JavaScript -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterPackage">Paket</label>
+                        <select id="filterPackage" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            <option value="all">Semua Paket</option>
+                            <option value="Electronic Package">Electronic Package</option>
+                            <option value="M&E">M&E</option>
+                            <option value="Fire Fighting Cont">Fire Fighting Cont</option>
+                            <option value="Main Kontraktor">Main Kontraktor</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterYear">Tahun</label>
+                        <select id="filterYear" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            <option value="all">Semua Tahun</option>
+                            <!-- Tahun akan diisi secara dinamis oleh JavaScript -->
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" onclick="resetFilters()" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
+                        Reset Filter
+                    </button>
+                    <button type="button" onclick="applyFiltersAndClosePanel()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105 text-sm">
+                        Terapkan Filter
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Notification Container -->
+        <div id="toast-container"></div>
+    </div>
+    <script>
+        // Konfigurasi Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyA630jQdTLNt1XHjVAXX10IjIeMVJ_vNn8",
+            authDomain: "pipelineefk.firebaseapp.com",
+            projectId: "pipelineefk",
+            storageBucket: "pipelineefk.appspot.com",
+            messagingSenderId: "763507094626",
+            appId: "1:763507094626:web:57838068505c964f654d3b"
+        };
+
+        // Inisialisasi Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+        const dealsCollection = db.collection('deals');
+        const activitiesCollection = db.collection('activities');
+        const usersCollection = db.collection('users');
+
+        let deals = []; // Variabel ini akan menyimpan SEMUA deals yang bisa diakses oleh user saat ini
+        let activities = [];
+        let charts = {};
+        const DEFAULT_STAGE = 'identified'; // Changed default stage
+        let currentUserRole = 'user'; // Default role
+        let sortableInstances = {};
+        let authInitialized = false;
+
+        // Variabel untuk menyimpan daftar unik Konsultan, Kontraktor, PIC, Owner, Produk, Fasilitas, dan Tahun
+        let uniqueConsultants = new Set();
+        let uniqueContractors = new Set();
+        let uniquePICs = new Set();
+        let uniqueOwners = new Set();
+        let uniqueProducts = new Set();
+        let uniqueFacilities = new Set();
+        let uniqueYears = new Set();
+        let uniqueSales = new Set(); // Tambahkan ini
+
+        // Daftar email sales yang akan memiliki role 'user'
+        const salesEmails = [
+            'pamungkas@genetek.co.id',
+            'rory@genetek.co.id',
+            'rangga@genetek.co.id',
+            'dhea@genetek.co.id',
+            'yib_wahyu@genetek.co.id',
+        ];
+
+        // Daftar email manager yang akan memiliki role 'manager'
+        const managerEmails = [
+            'hadi@genetek.co.id',
+            'david@genetek.co.id',
+            'crenata@genetek.co.id',
+            'agoesdh@genetek.co.id',
+            'satriopk@genetek.co.id',
+        ];
+
+        // ==================== FUNGSI UTAMA ====================
+
+        // Fungsi untuk menangani perubahan status autentikasi
+        auth.onAuthStateChanged(async (user) => {
+            if (authInitialized) return;
+            authInitialized = true;
+            
+            console.log("Auth state changed:", user ? user.email : "no user");
+            
+            if (!user && window.location.pathname.includes('app.html')) {
+                console.log("No user, redirecting to login");
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            if (user && window.location.pathname.includes('login.html')) {
+                console.log("User already logged in, redirecting to app");
+                window.location.href = 'app.html';
+                return;
+            }
+
+            if (user && window.location.pathname.includes('app.html')) {
+                try {
+                    // Cek role admin
+                    if (user.email === 'admin@genetek.co.id') {
+                        currentUserRole = 'admin';
+                        await usersCollection.doc(user.uid).set({ 
+                            role: 'admin',
+                            email: user.email 
+                        }, { merge: true });
+                    } else if (managerEmails.includes(user.email)) { // Cek apakah email termasuk manager
+                        currentUserRole = 'manager'; // Set role sebagai 'manager'
+                        await usersCollection.doc(user.uid).set({ 
+                            role: 'manager',
+                            email: user.email 
+                        }, { merge: true });
+                    } else if (salesEmails.includes(user.email)) { // Cek apakah email termasuk sales
+                        currentUserRole = 'user'; // Set role sebagai 'user' (sales)
+                        await usersCollection.doc(user.uid).set({ 
+                            role: 'user',
+                            email: user.email 
+                        }, { merge: true });
+                    } else {
+                        // Jika bukan admin, manager, atau sales yang terdaftar, anggap sebagai user biasa
+                        const userDoc = await usersCollection.doc(user.uid).get();
+                        currentUserRole = userDoc.exists ? userDoc.data().role : 'user';
+                    }
+
+                    console.log("Current role:", currentUserRole);
+                    applyUserPermissions();
+                    // loadDealsFromFirebase() akan dipanggil di applyUserPermissions()
+                    loadActivitiesFromFirebase(); // Memuat semua aktivitas untuk semua role
+                    
+                    initEventListeners();
+                } catch (error) {
+                    console.error("Error checking user role:", error);
+                    showToast("Gagal memuat data pengguna. Silakan refresh halaman.", 5000);
+                }
+            }
+        });
+
+        // ==================== FUNGSI AKTIVITAS ====================
+
+        // Fungsi untuk memuat aktivitas dari Firebase
+        function loadActivitiesFromFirebase() {
+            console.log("Loading activities from Firebase...");
+            
+            let query = activitiesCollection.orderBy("timestamp", "desc").limit(50);
+            
+            query.get()
+                .then((querySnapshot) => {
+                    activities = [];
+                    querySnapshot.forEach((doc) => {
+                        const activityData = doc.data();
+                        if (activityData.timestamp && typeof activityData.timestamp.toDate !== 'function') {
+                            activityData.timestamp = firebase.firestore.Timestamp.fromMillis(activityData.timestamp);
+                        }
+                        activities.push({ id: doc.id, ...activityData });
+                    });
+                    console.log("Activities loaded:", activities.length, activities);
+                    updateActivityBadge();
+                })
+                .catch((error) => {
+                    console.error("Error loading activities:", error);
+                    showToast("Gagal memuat aktivitas terbaru", 3000);
+                });
+        }
+
+        // Fungsi untuk memperbarui badge aktivitas
+        function updateActivityBadge() {
+            const activityBadge = document.getElementById('activity-badge');
+            if (!activityBadge) return;
+            
+            const unreadCount = activities.filter(act => !act.read).length;
+            
+            if (unreadCount > 0) {
+                activityBadge.textContent = unreadCount;
+                activityBadge.classList.remove('hidden');
+            } else {
+                activityBadge.classList.add('hidden');
+            }
+        }
+
+        // Fungsi untuk membuka modal aktivitas
+        function openActivityModal() {
+            try {
+                const activityModal = document.getElementById('activityModal');
+                const activityFeed = document.getElementById('activity-feed-modal');
+                const activityModalContent = document.getElementById('activityModalContent');
+
+                if (!activityModal || !activityFeed || !activityModalContent) {
+                    console.error("Elemen modal aktivitas tidak ditemukan.");
+                    showToast("Gagal membuka aktivitas: Elemen tidak lengkap.", 3000);
+                    return;
+                }
+                
+                activityFeed.innerHTML = '';
+                
+                if (activities.length === 0) {
+                    activityFeed.innerHTML = `
+                        <div class="text-center text-gray-500 py-4">
+                            <i class="fas fa-inbox text-3xl mb-2"></i>
+                            <p>Tidak ada aktivitas terbaru</p>
+                        </div>
+                    `;
+                } else {
+                    const sortedActivities = [...activities].sort((a, b) => {
+                        const tsA = a.timestamp ? (a.timestamp.toDate ? a.timestamp.toDate().getTime() : a.timestamp) : 0;
+                        const tsB = b.timestamp ? (b.timestamp.toDate ? b.timestamp.toDate().getTime() : b.timestamp) : 0;
+                        return tsB - tsA;
+                    });
+
+                    sortedActivities.forEach(activity => {
+                        const activityItem = document.createElement('div');
+                        activityItem.className = 'activity-item';
+                        activityItem.innerHTML = `
+                            <p>${activity.message || 'Aktivitas tidak tersedia'}</p>
+                            <div class="activity-date">
+                                ${formatDateTime(activity.timestamp)}
+                                ${activity.read ? '' : '<span class="ml-2 text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full">Baru</span>'}
+                            </div>
+                        `;
+                        activityFeed.appendChild(activityItem);
+                    });
+                }
+                
+                activityModal.classList.remove('hidden');
+                activityModalContent.classList.remove('modal-content-leave-active');
+                activityModalContent.classList.add('modal-content-enter-active');
+                
+                markActivitiesAsRead();
+            } catch (error) {
+                console.error("Error opening activity modal:", error);
+                showToast("Gagal membuka aktivitas", 3000);
+            }
+        }
+
+        // Fungsi untuk menandai aktivitas sebagai telah dibaca
+        function markActivitiesAsRead() {
+            const batch = db.batch();
+            const unreadActivities = activities.filter(act => !act.read);
+            
+            unreadActivities.forEach(activity => {
+                const activityRef = activitiesCollection.doc(activity.id);
+                batch.update(activityRef, { read: true });
+            });
+            
+            if (unreadActivities.length > 0) {
+                batch.commit()
+                    .then(() => {
+                        console.log("Activities marked as read");
+                        updateActivityBadge();
+                    })
+                    .catch(error => {
+                        console.error("Error marking activities as read:", error);
+                    });
+            }
+        }
+
+        // Fungsi untuk menutup modal aktivitas
+        function closeActivityModal() {
+            console.log("closeActivityModal() called.");
+            const activityModalContent = document.getElementById('activityModalContent');
+            if (!activityModalContent) {
+                console.error("Elemen activityModalContent tidak ditemukan saat menutup modal.");
+                return;
+            }
+
+            activityModalContent.classList.remove('modal-content-enter-active');
+            activityModalContent.classList.add('modal-content-leave-active');
+            
+            activityModalContent.addEventListener('transitionend', function handler() {
+                document.getElementById('activityModal').classList.add('hidden');
+                activityModalContent.classList.remove('modal-content-leave-active');
+                activityModalContent.removeEventListener('transitionend', handler);
+                console.log("Modal aktivitas disembunyikan.");
+            }, { once: true });
+        }
+
+        // ==================== FUNGSI UTILITAS ====================
+
+        // Fungsi helper untuk format tanggal dan waktu
+        function formatDateTime(timestamp) {
+            if (!timestamp) return '-';
+            try {
+                const date = timestamp.toDate();
+                return date.toLocaleString('id-ID', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch (e) {
+                return '-';
+            }
+        }
+
+        // Fungsi helper untuk format angka
+        function formatNumber(num) {
+            // Pastikan num adalah angka dan bukan null/undefined
+            if (num === null || num === undefined || isNaN(num)) {
+                return '0';
+            }
+            // Menggunakan Intl.NumberFormat untuk format angka dengan separator ribuan
+            // 'id-ID' akan menggunakan titik sebagai pemisah ribuan dan koma sebagai pemisah desimal
+            return new Intl.NumberFormat('id-ID').format(num);
+        }
+
+        // Fungsi helper untuk format tanggal
+        function formatDate(timestamp) {
+            if (!timestamp) return '-';
+            try {
+                const date = timestamp.toDate();
+                return date.toLocaleDateString('id-ID');
+            } catch (e) {
+                return '-';
+            }
+        }
+
+        // Fungsi untuk menampilkan toast notifikasi
+        function showToast(message, duration = 3000) {
+            const toastContainer = document.getElementById('toast-container');
+            if (!toastContainer) return;
+            
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerText = message;
+            toastContainer.appendChild(toast);
+
+            requestAnimationFrame(() => {
+                toast.classList.add('show');
+            });
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+                toast.addEventListener('transitionend', () => toast.remove(), { once: true });
+            }, duration);
+        }
+
+        // ==================== FUNGSI DEALS ====================
+
+        // Fungsi untuk mengisi dropdown tahun
+        function populateYearDropdown() {
+            const filterYearSelect = document.getElementById('filterYear');
+            if (!filterYearSelect) return;
+
+            // Simpan opsi "Semua Tahun"
+            const allYearsOption = filterYearSelect.querySelector('option[value="all"]');
+            filterYearSelect.innerHTML = ''; // Bersihkan opsi yang ada
+            filterYearSelect.appendChild(allYearsOption); // Tambahkan kembali "Semua Tahun"
+
+            const sortedYears = Array.from(uniqueYears).sort((a, b) => parseInt(b) - parseInt(a)); // Urutkan dari terbaru ke terlama
+            sortedYears.forEach(year => {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                filterYearSelect.appendChild(option);
+            });
+        }
+
+        // Fungsi untuk memuat deals dari Firebase
+        // Fungsi ini akan memuat SEMUA deals ke variabel 'deals' untuk semua user.
+        function loadDealsFromFirebase() {
+            console.log("Loading deals from Firebase...");
+            
+            let query = dealsCollection.orderBy("createdAt", "desc");
+            
+            query.get()
+                .then((querySnapshot) => {
+                    deals = []; // Reset array deals
+                    uniqueConsultants.clear();
+                    uniqueContractors.clear();
+                    uniquePICs.clear();
+                    uniqueOwners.clear();
+                    uniqueProducts.clear();
+                    uniqueFacilities.clear();
+                    uniqueYears.clear();
+                    uniqueSales.clear(); // Clear uniqueSales juga
+
+                    querySnapshot.forEach((doc) => {
+                        const dealData = doc.data();
+                        // Pastikan createdAt adalah objek Timestamp yang benar
+                        if (dealData.createdAt && typeof dealData.createdAt.toDate !== 'function') {
+                            if (dealData.createdAt.seconds !== undefined && dealData.createdAt.nanoseconds !== undefined) {
+                                dealData.createdAt = new firebase.firestore.Timestamp(dealData.createdAt.seconds, dealData.createdAt.nanoseconds);
+                            } else {
+                                dealData.createdAt = null; 
+                            }
+                        }
+                        deals.push({ id: doc.id, ...dealData });
+
+                        // Kumpulkan nilai unik untuk dropdown
+                        if (dealData.consultant) uniqueConsultants.add(dealData.consultant);
+                        // MODIFIKASI: Kumpulkan nilai unik untuk kontraktor (mendukung array dan string)
+                        if (dealData.contractor) {
+                            if (Array.isArray(dealData.contractor)) {
+                                dealData.contractor.forEach(c => {
+                                    if (c) uniqueContractors.add(c);
+                                });
+                            } else { // Untuk kompatibilitas mundur dengan data lama (string)
+                                uniqueContractors.add(dealData.contractor);
+                            }
+                        }
+                        if (dealData.pic) uniquePICs.add(dealData.pic);
+                        if (dealData.owner) uniqueOwners.add(dealData.owner);
+                        if (dealData.product) uniqueProducts.add(dealData.product);
+                        if (dealData.facility) uniqueFacilities.add(dealData.facility);
+                        if (dealData.salesName) uniqueSales.add(dealData.salesName); // Tambahkan ini
+                        
+                        // Kumpulkan tahun unik dari createdAt
+                        if (dealData.createdAt) {
+                            uniqueYears.add(dealData.createdAt.toDate().getFullYear().toString());
+                        }
+                    });
+                    console.log("Total deals loaded (for search/admin view):", deals.length);
+                    populateYearDropdown(); // Panggil setelah deals dimuat dan tahun dikumpulkan
+                    populateFilterDropdowns(); // Panggil fungsi baru untuk mengisi dropdown filter
+                    filterDeals(); // Panggil filterDeals() setelah deals dimuat untuk menerapkan filter awal
+                })
+                .catch((error) => {
+                    console.error("Error loading deals:", error);
+                    showToast("Gagal memuat data deals", 3000);
+                });
+        }
+
+        // Fungsi untuk render deal card (tidak berubah)
+        function renderDeal(deal) {
+            const dealCard = document.createElement('div');
+            dealCard.className = 'deal-card';
+            dealCard.dataset.id = deal.id;
+            
+            // Tentukan warna latar belakang untuk badge tahap
+            let stageColorClass = '';
+            switch (deal.stage) {
+                case 'identified':
+                    stageColorClass = 'bg-gray-100 text-gray-800';
+                    break;
+                case 'prospect':
+                    stageColorClass = 'bg-blue-100 text-blue-800';
+                    break;
+                case 'tender-me':
+                    stageColorClass = 'bg-orange-100 text-orange-800';
+                    break;
+                case 'tender-main-con':
+                    stageColorClass = 'bg-purple-100 text-purple-800';
+                    break;
+                case 'contract-award':
+                    stageColorClass = 'bg-indigo-100 text-indigo-800';
+                    break;
+                case 'win':
+                    stageColorClass = 'bg-green-100 text-green-800';
+                    break;
+                case 'lost':
+                    stageColorClass = 'bg-red-100 text-red-800';
+                    break;
+                case 'on-hold':
+                    stageColorClass = 'bg-yellow-100 text-yellow-800';
+                    break;
+                default:
+                    stageColorClass = 'bg-gray-100 text-gray-800';
+            }
+
+            dealCard.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <h3 class="font-bold text-gray-800">${deal.dealName || 'No Name'}</h3>
+                    <span class="priority-badge px-2 py-1 rounded-full ${
+                        deal.priority === 'hot' ? 'bg-red-100 text-red-800' : 
+                        deal.priority === 'warm' ? 'bg-yellow-100 text-yellow-800' : 
+                        'bg-blue-100 text-blue-800'
+                    }">
+                        ${deal.priority || 'cold'}
+                    </span>
+                </div>
+                <div class="mt-1 text-sm text-gray-600 deal-details">
+                    <p><i class="fas fa-user-tie mr-1"></i> ${deal.salesName || '-'}</p>
+                    <p class="font-semibold text-blue-600">Rp ${formatNumber(deal.value) || '0'}</p>
+                    <p class="mt-1">
+                        <span class="priority-badge px-2 py-1 rounded-full ${stageColorClass}">
+                            ${deal.stage ? deal.stage.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Unknown Stage'}
+                        </span>
+                    </p>
+                </div>
+                <div class="mt-2 flex justify-between items-center deal-footer">
+                    <span class="text-xs text-gray-500">Dibuat: ${formatDate(deal.createdAt)}</span>
+                    <div class="flex space-x-1 deal-actions">
+                        <button onclick="openDealDetailModal('${deal.id}')" class="text-blue-600 hover:text-blue-800">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button onclick="prepareEditDeal('${deal.id}')" class="text-green-600 hover:text-green-800">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="confirmDeleteDeal('${deal.id}', '${deal.dealName}')" class="text-red-600 hover:text-red-800">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            return dealCard;
+        }
+
+        // Fungsi untuk render semua deals (untuk tampilan default pipeline)
+        // Fungsi ini sekarang hanya akan dipanggil jika tidak ada filter yang diterapkan
+        function renderAllDeals() {
+            const pipelineStage = document.getElementById('pipelines-stage');
+            if (!pipelineStage) return;
+            
+            pipelineStage.innerHTML = ''; // Bersihkan konten pipeline
+
+            // Tentukan deals yang akan ditampilkan berdasarkan role
+            let dealsToDisplay = deals;
+            if (currentUserRole !== 'admin') {
+                dealsToDisplay = deals.filter(deal => deal.stage !== 'lost');
+            }
+
+            if (dealsToDisplay.length === 0) {
+                pipelineStage.innerHTML = `
+                    <div class="empty-stage-message text-center text-gray-400 p-4 text-sm w-full">
+                        <i class="fas fa-inbox text-3xl mb-2"></i>
+                        <p>Tidak ada deals di pipeline.</p>
+                    </div>
+                `;
+            } else {
+                dealsToDisplay.forEach(deal => {
+                    const dealCard = renderDeal(deal);
+                    if (dealCard) {
+                        pipelineStage.appendChild(dealCard);
+                    }
+                });
+            }
+
+            initSortable();
+        }
+
+        // Fungsi untuk mengisi dropdown dengan opsi unik
+        function populateDropdown(selectElementId, uniqueValues, selectedValue = 'all') { // Default selectedValue changed to 'all'
+            const selectElement = document.getElementById(selectElementId);
+            if (!selectElement) { // Tambahkan pengecekan null/undefined
+                console.warn(`Element with ID '${selectElementId}' not found.`);
+                return;
+            }
+
+            selectElement.innerHTML = ''; // Bersihkan opsi yang ada
+
+            // Tambahkan opsi default "Semua X"
+            const defaultOption = document.createElement('option');
+            defaultOption.value = 'all'; // Value for "all" option
+            const labelElement = selectElement.previousElementSibling;
+            const labelText = labelElement ? labelElement.textContent.replace(':', '').replace('*', '').trim() : '';
+            defaultOption.textContent = `Semua ${labelText}`; // Changed text to "Semua X"
+            selectElement.appendChild(defaultOption);
+
+            // Tambahkan opsi dari nilai unik
+            const sortedValues = Array.from(uniqueValues).sort();
+            sortedValues.forEach(value => {
+                if (value) { // Pastikan bukan string kosong
+                    const option = document.createElement('option');
+                    option.value = value;
+                    option.textContent = value;
+                    selectElement.appendChild(option);
+                }
+            });
+
+            // Set nilai yang dipilih
+            selectElement.value = selectedValue;
+        }
+
+        // Fungsi untuk mengisi dropdown filter tambahan
+        function populateFilterDropdowns() {
+            populateDropdown('filterPriority', ['hot', 'warm', 'cold'], document.getElementById('filterPriority').value); // Pastikan ini juga dipanggil
+            populateDropdown('filterStage', ['identified', 'prospect', 'tender-me', 'tender-main-con', 'contract-award', 'win', 'lost', 'on-hold'], document.getElementById('filterStage').value); // Pastikan ini juga dipanggil
+            populateDropdown('filterSales', uniqueSales, document.getElementById('filterSales').value); // Tambahkan ini
+            populateDropdown('filterConsultant', uniqueConsultants, document.getElementById('filterConsultant').value);
+            populateDropdown('filterContractor', uniqueContractors, document.getElementById('filterContractor').value);
+            populateDropdown('filterFacility', uniqueFacilities, document.getElementById('filterFacility').value);
+            populateDropdown('filterProduct', uniqueProducts, document.getElementById('filterProduct').value);
+            // filterPackage sudah memiliki opsi statis, tidak perlu diisi dinamis dari uniquePackages
+        }
+
+        // Fungsi helper untuk memformat input angka secara real-time
+        function formatNumberInput(inputElement) {
+            // Hapus semua karakter non-digit kecuali koma/titik desimal (jika diperlukan)
+            let value = inputElement.value.replace(/[^0-9]/g, ''); // Hanya angka
+            
+            // Konversi ke angka, lalu format dengan Intl.NumberFormat
+            let numberValue = parseInt(value, 10);
+            if (isNaN(numberValue)) {
+                inputElement.value = '';
+                return;
+            }
+            
+            inputElement.value = new Intl.NumberFormat('id-ID').format(numberValue);
+        }
+
+        // Fungsi untuk menghitung nilai sebelum diskon berdasarkan nilai dan diskon
+        function calculateBeforeDiscount() {
+            const valueRaw = document.getElementById('value').value.replace(/[^0-9]/g, '');
+            const value = parseFloat(valueRaw) || 0;
+            
+            const discount = parseFloat(document.getElementById('discount').value) || 0;
+            
+            let calculatedBeforeDiscount = value;
+            if (discount > 0 && discount <= 100) {
+                calculatedBeforeDiscount = value / (1 - (discount / 100));
+            }
+            
+            // Set nilai ke input 'beforeDiscount' dan format
+            const beforeDiscountInput = document.getElementById('beforeDiscount');
+            beforeDiscountInput.value = calculatedBeforeDiscount.toFixed(0); // Tetapkan nilai numerik tanpa format dulu
+            formatNumberInput(beforeDiscountInput); // Kemudian format untuk tampilan
+        }
+
+        // Fungsi untuk memformat input nilai dan menghitung sebelum diskon
+        function formatAndCalculateBeforeDiscount() {
+            formatNumberInput(document.getElementById('value')); // Format input value
+            calculateBeforeDiscount(); // Kemudian hitung nilai beforeDiscount
+        }
+
+        // MODIFIKASI: Fungsi untuk menambahkan field kontraktor baru
+        function addContractorField(initialValue = '') {
+            const contractorListDiv = document.getElementById('contractorList');
+            const newContractorDiv = document.createElement('div');
+            newContractorDiv.className = 'flex items-center space-x-2 mb-2'; // Tambahkan mb-2 untuk jarak antar field
+
+            const selectId = `contractor-select-${Date.now()}`; // ID unik untuk setiap select
+            const inputId = `contractor-input-${Date.now()}`; // ID unik untuk setiap input
+
+            newContractorDiv.innerHTML = `
+                <select id="${selectId}" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                    <option value="">Pilih Kontraktor</option>
+                </select>
+                <input type="text" id="${inputId}" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="Atau ketik nama kontraktor baru">
+                <button type="button" onclick="removeContractorField(this)" class="text-red-500 hover:text-red-700 p-1">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            contractorListDiv.appendChild(newContractorDiv);
+
+            // Isi dropdown kontraktor yang baru ditambahkan
+            populateDropdown(selectId, uniqueContractors);
+
+            // Set nilai awal jika ada (untuk mode edit)
+            if (initialValue) {
+                const newSelect = document.getElementById(selectId);
+                const newTextInput = document.getElementById(inputId);
+                if (uniqueContractors.has(initialValue)) {
+                    newSelect.value = initialValue;
+                    newTextInput.value = ''; // Kosongkan input teks jika dipilih dari dropdown
+                } else {
+                    newSelect.value = ''; // Pilih opsi default
+                    newTextInput.value = initialValue; // Isi input teks
+                }
+            }
+
+            // Tambahkan event listener untuk memastikan hanya satu input yang aktif
+            const newSelect = document.getElementById(selectId);
+            const newTextInput = document.getElementById(inputId);
+
+            newSelect.addEventListener('change', () => {
+                if (newSelect.value !== '') {
+                    newTextInput.value = ''; // Kosongkan input teks jika dropdown dipilih
+                }
+            });
+
+            newTextInput.addEventListener('input', () => {
+                if (newTextInput.value.trim() !== '') {
+                    newSelect.value = ''; // Kosongkan dropdown jika input teks diisi
+                }
+            });
+        }
+
+        // MODIFIKASI: Fungsi untuk menghapus field kontraktor
+        function removeContractorField(buttonElement) {
+            buttonElement.closest('.flex').remove();
+        }
+
+        // Fungsi untuk membuka modal deal
+        function openDealModal(dealId = null) {
+            const dealModal = document.getElementById('dealModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const dealForm = document.getElementById('dealForm');
+            
+            dealForm.reset();
+            document.getElementById('dealId').value = '';
+            document.getElementById('value').value = '';
+            document.getElementById('beforeDiscount').value = ''; // Reset juga beforeDiscount
+
+            // Reset input teks baru
+            document.getElementById('newConsultant').value = '';
+            document.getElementById('newPic').value = '';
+            document.getElementById('newOwner').value = '';
+            document.getElementById('newProduct').value = '';
+            document.getElementById('newFacility').value = ''; // Reset newFacility
+
+            // Isi dropdown Konsultan, PIC, Owner
+            populateDropdown('consultant', uniqueConsultants);
+            populateDropdown('pic', uniquePICs);
+            populateDropdown('owner', uniqueOwners);
+
+            // Isi dropdown Produk dengan opsi awal yang spesifik
+            const productSelect = document.getElementById('product');
+            productSelect.innerHTML = `
+                <option value="">Pilih Produk</option>
+                <option value="Fire">Fire</option>
+                <option value="Suppresion">Suppresion</option>
+                <option value="Vesda">Vesda</option>
+                <option value="Maintenance">Maintenance</option>
+                <option value="Fire - Water">Fire - Water</option>
+                <option value="Mechanical">Mechanical</option>
+                <option value="FAS-FSS-FF">FAS-FSS-FF</option>
+                <option value="FAS&FSS">FAS&FSS</option>
+            `;
+            // Tambahkan produk unik lainnya yang mungkin sudah ada di database
+            Array.from(uniqueProducts).sort().forEach(value => {
+                if (value && !['Fire', 'Suppresion', 'Vesda', 'Maintenance', 'Fire - Water', 'Mechanical', 'FAS-FSS-FF', 'FAS&FSS'].includes(value)) {
+                    const option = document.createElement('option');
+                    option.value = value;
+                    option.textContent = value;
+                    productSelect.appendChild(option);
+                }
+            });
+
+            // Isi dropdown Fasilitas dengan opsi awal yang spesifik
+            const facilitySelect = document.getElementById('facility');
+            facilitySelect.innerHTML = `
+                <option value="">Pilih Fasilitas</option>
+                <option value="Industrial">Industrial</option>
+                <option value="Office">Office</option>
+                <option value="Hotel">Hotel</option>
+                <option value="Data Center">Data Center</option>
+                <option value="Oil & Gas">Oil & Gas</option>
+                <option value="Warehouse">Warehouse</option>
+                <option value="Other">Other</option>
+            `;
+            // Tambahkan fasilitas unik lainnya yang mungkin sudah ada di database
+            Array.from(uniqueFacilities).sort().forEach(value => {
+                if (value && !['Industrial', 'Office', 'Hotel', 'Data Center', 'Oil & Gas', 'Warehouse', 'Other'].includes(value)) {
+                    const option = document.createElement('option');
+                    option.value = value;
+                    option.textContent = value;
+                    facilitySelect.appendChild(option);
+                }
+            });
+
+            // MODIFIKASI: Bersihkan daftar kontraktor yang ada sebelum mengisi ulang
+            document.getElementById('contractorList').innerHTML = '';
+            
+            if (dealId) {
+                modalTitle.textContent = 'Edit Deal';
+                const deal = deals.find(d => d.id === dealId);
+                if (deal) {
+                    document.getElementById('dealId').value = deal.id;
+                    document.getElementById('salesName').value = deal.salesName || '';
+                    document.getElementById('dealName').value = deal.dealName || '';
+                    
+                    // Set nilai untuk value dan discount, lalu hitung beforeDiscount
+                    const valueInput = document.getElementById('value');
+                    valueInput.value = deal.value || '';
+                    formatNumberInput(valueInput); // Format saat mengisi
+
+                    document.getElementById('discount').value = deal.discount || '';
+                    calculateBeforeDiscount(); // Hitung beforeDiscount setelah value dan discount diisi
+                    
+                    document.getElementById('package').value = deal.package || '';
+                    
+                    // Set nilai untuk dropdown Product
+                    if (deal.product && Array.from(productSelect.options).some(option => option.value === deal.product)) {
+                        document.getElementById('product').value = deal.product;
+                    } else {
+                        document.getElementById('product').value = '';
+                        document.getElementById('newProduct').value = deal.product || '';
+                    }
+
+                    // Set nilai untuk dropdown Facility
+                    if (deal.facility && Array.from(facilitySelect.options).some(option => option.value === deal.facility)) {
+                        document.getElementById('facility').value = deal.facility;
+                    } else {
+                        document.getElementById('facility').value = '';
+                        document.getElementById('newFacility').value = deal.facility || '';
+                    }
+                    
+                    // Set nilai untuk dropdown Owner
+                    if (deal.owner && uniqueOwners.has(deal.owner)) {
+                        document.getElementById('owner').value = deal.owner;
+                    } else {
+                        document.getElementById('owner').value = '';
+                        document.getElementById('newOwner').value = deal.owner || '';
+                    }
+
+                    // Set nilai untuk dropdown Konsultan
+                    if (deal.consultant && uniqueConsultants.has(deal.consultant)) {
+                        document.getElementById('consultant').value = deal.consultant;
+                    } else {
+                        document.getElementById('consultant').value = '';
+                        document.getElementById('newConsultant').value = deal.consultant || '';
+                    }
+
+                    // MODIFIKASI: Muat multiple kontraktor
+                    if (deal.contractor && Array.isArray(deal.contractor) && deal.contractor.length > 0) {
+                        deal.contractor.forEach(contractor => {
+                            addContractorField(contractor);
+                        });
+                    } else if (deal.contractor) { // Jika masih ada deal lama dengan single kontraktor (string)
+                        addContractorField(deal.contractor);
+                    } else {
+                        // Jika tidak ada kontraktor sama sekali, tambahkan satu field kosong
+                        addContractorField(); 
+                    }
+
+                    // Set nilai untuk dropdown PIC
+                    if (deal.pic && uniquePICs.has(deal.pic)) {
+                        document.getElementById('pic').value = deal.pic;
+                    } else {
+                        document.getElementById('pic').value = '';
+                        document.getElementById('newPic').value = deal.pic || '';
+                    }
+
+                    document.getElementById('planPO').value = deal.planPO || ''; // New: Set Plan PO
+                    document.getElementById('stage').value = deal.stage || DEFAULT_STAGE;
+                    document.getElementById('priority').value = deal.priority || 'cold';
+                    document.getElementById('remarks').value = deal.remarks || ''; // New: Set Remarks
+                }
+            } else {
+                modalTitle.textContent = 'Tambah Deal Baru';
+                document.getElementById('stage').value = DEFAULT_STAGE;
+                document.getElementById('priority').value = 'cold';
+                // MODIFIKASI: Pastikan satu field kontraktor kosong ditambahkan untuk deal baru
+                addContractorField(); // Panggil ini untuk menambahkan field kontraktor awal
+            }
+            
+            dealModal.classList.remove('hidden');
+            document.getElementById('dealModalContent').classList.remove('modal-content-leave-active');
+            document.getElementById('dealModalContent').classList.add('modal-content-enter-active');
+        }
+
+        // Fungsi untuk menutup modal deal
+        function closeDealModal() {
+            const dealModalContent = document.getElementById('dealModalContent');
+            if (!dealModalContent) return;
+
+            dealModalContent.classList.remove('modal-content-enter-active');
+            dealModalContent.classList.add('modal-content-leave-active');
+            
+            dealModalContent.addEventListener('transitionend', function handler() {
+                document.getElementById('dealModal').classList.add('hidden');
+                dealModalContent.classList.remove('modal-content-leave-active');
+                dealModalContent.removeEventListener('transitionend', handler);
+            }, { once: true });
+        }
+
+        // Fungsi untuk menyimpan atau memperbarui deal
+        async function saveDeal() {
+            const dealId = document.getElementById('dealId').value;
+            const dealName = document.getElementById('dealName').value;
+            const salesName = document.getElementById('salesName').value;
+            
+            // Ambil nilai numerik murni dari input yang sudah diformat
+            const valueRaw = document.getElementById('value').value.replace(/[^0-9]/g, '');
+            const value = parseFloat(valueRaw) || 0;
+
+            const discount = parseFloat(document.getElementById('discount').value) || 0;
+            
+            // Ambil nilai numerik murni dari input 'beforeDiscount' (yang sekarang dihitung)
+            const beforeDiscountRaw = document.getElementById('beforeDiscount').value.replace(/[^0-9]/g, '');
+            const beforeDiscount = parseFloat(beforeDiscountRaw) || 0;
+
+            const packageType = document.getElementById('package').value;
+            
+            // Ambil nilai produk dari input teks baru jika ada, jika tidak, ambil dari dropdown
+            let product = document.getElementById('newProduct').value.trim();
+            if (!product) {
+                product = document.getElementById('product').value;
+            }
+
+            // Ambil nilai fasilitas dari input teks baru jika ada, jika tidak, ambil dari dropdown
+            let facility = document.getElementById('newFacility').value.trim();
+            if (!facility) {
+                facility = document.getElementById('facility').value;
+            }
+            
+            // Ambil nilai owner dari input teks baru jika ada, jika tidak, ambil dari dropdown
+            let owner = document.getElementById('newOwner').value.trim();
+            if (!owner) {
+                owner = document.getElementById('owner').value;
+            }
+
+            // Ambil nilai konsultan dari input teks baru jika ada, jika tidak, ambil dari dropdown
+            let consultant = document.getElementById('newConsultant').value.trim();
+            if (!consultant) {
+                consultant = document.getElementById('consultant').value;
+            }
+
+            // MODIFIKASI: Kumpulkan semua nilai kontraktor dari field yang ada
+            const contractorInputs = document.querySelectorAll('#contractorList select, #contractorList input[type="text"]');
+            const collectedContractors = new Set(); // Gunakan Set untuk menghindari duplikasi
+
+            // Iterasi melalui setiap pasangan select dan input teks
+            for (let i = 0; i < contractorInputs.length; i += 2) {
+                const selectElement = contractorInputs[i];
+                const textInputElement = contractorInputs[i + 1];
+
+                let contractorValue = '';
+                if (textInputElement.value.trim() !== '') {
+                    contractorValue = textInputElement.value.trim();
+                } else if (selectElement.value !== '') {
+                    contractorValue = selectElement.value;
+                }
+
+                if (contractorValue) {
+                    collectedContractors.add(contractorValue);
+                }
+            }
+            const contractorsToSave = Array.from(collectedContractors); // Konversi ke array
+
+            // Ambil nilai PIC dari input teks baru jika ada, jika tidak, ambil dari dropdown
+            let pic = document.getElementById('newPic').value.trim();
+            if (!pic) {
+                pic = document.getElementById('pic').value;
+            }
+
+            const planPO = document.getElementById('planPO').value; // New: Get Plan PO
+            const stage = document.getElementById('stage').value;
+            const priority = document.getElementById('priority').value;
+            const remarks = document.getElementById('remarks').value; // New: Get Remarks
+
+            if (!dealName) { // MODIFIED: Removed !value from validation
+                showToast("Nama Proyek harus diisi.", 3000);
+                return;
+            }
+
+            const dealData = {
+                dealName: dealName,
+                salesName: salesName,
+                beforeDiscount: beforeDiscount, // Ini sudah numerik
+                discount: discount,
+                value: value, // Ini sudah numerik
+                package: packageType,
+                product: product,
+                facility: facility,
+                owner: owner, // New: Add owner to dealData
+                consultant: consultant,
+                contractor: contractorsToSave, // MODIFIKASI: Simpan sebagai array
+                pic: pic,
+                planPO: planPO, // New: Add Plan PO to dealData
+                stage: stage,
+                priority: priority,
+                remarks: remarks, // New: Add Remarks to dealData
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            try {
+                if (dealId) {
+                    await dealsCollection.doc(dealId).update(dealData);
+                    showToast("Deal berhasil diperbarui!", 2000);
+                    await activitiesCollection.add({
+                        message: `Deal "${dealName}" diperbarui oleh ${auth.currentUser.email}.`,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        userEmail: auth.currentUser.email,
+                        read: false
+                    });
+                } else {
+                    dealData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                    dealData.createdBy = auth.currentUser.email;
+                    await dealsCollection.add(dealData);
+                    showToast("Deal baru berhasil ditambahkan!", 2000);
+                    await activitiesCollection.add({
+                        message: `Deal baru "${dealName}" ditambahkan oleh ${auth.currentUser.email}.`,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        userEmail: auth.currentUser.email,
+                        read: false
+                    });
+                }
+                closeDealModal();
+                loadDealsFromFirebase(); // Memuat ulang deals untuk memperbarui daftar unik
+                loadActivitiesFromFirebase();
+            } catch (error) {
+                console.error("Error saving deal:", error);
+                showToast("Gagal menyimpan deal. Silakan coba lagi.", 3000);
+            }
+        }
+
+        // Fungsi untuk menyiapkan modal edit deal
+        function prepareEditDeal(dealId) {
+            openDealModal(dealId);
+        }
+
+        let dealToDeleteId = null;
+        let dealToDeleteName = '';
+
+        // Fungsi untuk menampilkan modal konfirmasi penghapusan
+        function confirmDeleteDeal(dealId, dealName) {
+            dealToDeleteId = dealId;
+            dealToDeleteName = dealName;
+            document.getElementById('dealToDeleteName').textContent = dealName;
+            document.getElementById('deleteModal').classList.remove('hidden');
+            document.getElementById('deleteModalContent').classList.remove('modal-content-leave-active');
+            document.getElementById('deleteModalContent').classList.add('modal-content-enter-active');
+        }
+
+        // Fungsi untuk menutup modal konfirmasi penghapusan
+        function closeDeleteModal() {
+            const deleteModalContent = document.getElementById('deleteModalContent');
+            if (!deleteModalContent) return;
+
+            deleteModalContent.classList.remove('modal-content-enter-active');
+            deleteModalContent.classList.add('modal-content-leave-active');
+            
+            deleteModalContent.addEventListener('transitionend', function handler() {
+                document.getElementById('deleteModal').classList.add('hidden');
+                deleteModalContent.classList.remove('modal-content-leave-active');
+                deleteModalContent.removeEventListener('transitionend', handler);
+            }, { once: true });
+        }
+
+        // Fungsi untuk menghapus deal
+        async function deleteDeal() {
+            if (!dealToDeleteId) return;
+
+            try {
+                await dealsCollection.doc(dealToDeleteId).delete();
+                showToast(`Deal "${dealToDeleteName}" berhasil dihapus!`, 2000);
+                await activitiesCollection.add({
+                    message: `Deal "${dealToDeleteName}" dihapus oleh ${auth.currentUser.email}.`,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    userEmail: auth.currentUser.email,
+                    read: false
+                });
+                closeDeleteModal();
+                loadDealsFromFirebase();
+                loadActivitiesFromFirebase();
+            } catch (error) {
+                console.error("Error deleting deal:", error);
+                showToast("Gagal menghapus deal. Silakan coba lagi.", 3000);
+            }
+        }
+
+        // Fungsi untuk membuka modal detail deal
+        function openDealDetailModal(dealId) {
+            const deal = deals.find(d => d.id === dealId);
+            if (!deal) {
+                showToast("Detail deal tidak ditemukan.", 3000);
+                return;
+            }
+
+            document.getElementById('dealDetailTitle').textContent = deal.dealName || 'Detail Deal';
+            document.getElementById('detailSalesName').textContent = deal.salesName || '-';
+            document.getElementById('detailValue').textContent = `Rp ${formatNumber(deal.value) || '0'}`;
+            document.getElementById('detailDiscount').textContent = `${deal.discount || '0'}%`;
+            document.getElementById('detailBeforeDiscount').textContent = `Rp ${formatNumber(deal.beforeDiscount) || '0'}`;
+            document.getElementById('detailPackage').textContent = deal.package || '-';
+            document.getElementById('detailProduct').textContent = deal.product || '-';
+            document.getElementById('detailFacility').textContent = deal.facility || '-';
+            document.getElementById('detailOwner').textContent = deal.owner || '-'; // New: Display Owner
+            document.getElementById('detailConsultant').textContent = deal.consultant || '-';
+            // MODIFIKASI: Menampilkan multiple kontraktor
+            const detailContractorElement = document.getElementById('detailContractor');
+            if (deal.contractor && Array.isArray(deal.contractor) && deal.contractor.length > 0) {
+                detailContractorElement.textContent = deal.contractor.join(', ');
+            } else if (deal.contractor) { // Untuk kompatibilitas mundur dengan data lama (string)
+                detailContractorElement.textContent = deal.contractor;
+            } else {
+                detailContractorElement.textContent = '-';
+            }
+            document.getElementById('detailPIC').textContent = deal.pic || '-';
+            document.getElementById('detailPlanPO').textContent = deal.planPO || '-'; // Menampilkan Plan PO
+            document.getElementById('detailCreatedDate').textContent = formatDate(deal.createdAt) || '-'; // Menampilkan tanggal dibuat
+            document.getElementById('detailRemarks').textContent = deal.remarks || '-'; // New: Display Remarks
+
+            document.getElementById('dealDetailModal').classList.remove('hidden');
+            document.getElementById('dealDetailModalContent').classList.remove('modal-content-leave-active');
+            document.getElementById('dealDetailModalContent').classList.add('modal-content-enter-active');
+        }
+
+        // Fungsi untuk menutup modal detail deal
+        function closeDealDetailModal() {
+            const dealDetailModalContent = document.getElementById('dealDetailModalContent');
+            if (!dealDetailModalContent) return;
+
+            dealDetailModalContent.classList.remove('modal-content-enter-active');
+            dealDetailModalContent.classList.add('modal-content-leave-active');
+            
+            dealDetailModalContent.addEventListener('transitionend', function handler() {
+                document.getElementById('dealDetailModal').classList.add('hidden');
+                dealDetailModalContent.classList.remove('modal-content-leave-active');
+                dealDetailModalContent.removeEventListener('transitionend', handler);
+            }, { once: true });
+        }
+
+        // ==================== FUNGSI SORTABLE ====================
+
+        // Fungsi untuk inisialisasi SortableJS
+        function initSortable() {
+            const pipelineStage = document.getElementById('pipelines-stage');
+            if (!pipelineStage) return;
+
+            // Hancurkan instance Sortable yang ada jika ada
+            if (sortableInstances['pipelines-stage']) {
+                sortableInstances['pipelines-stage'].destroy();
+            }
+
+            sortableInstances['pipelines-stage'] = new Sortable(pipelineStage, {
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
+                dragClass: 'sortable-drag',
+                disabled: currentUserRole !== 'admin', // Hanya admin yang bisa drag-and-drop
+                onEnd: function(evt) {
+                    if (currentUserRole !== 'admin') return;
+                    
+                    const dealId = evt.item.dataset.id;
+                    const newStage = 'main-pipeline'; // Karena hanya ada satu stage utama
+                    
+                    updateDealStage(dealId, newStage);
+                }
+            });
+        }
+
+        // Fungsi untuk update stage deal
+        function updateDealStage(dealId, newStage) {
+            dealsCollection.doc(dealId).update({
+                stage: newStage,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            })
+            .then(() => {
+                showToast("Deal berhasil dipindahkan", 2000);
+            })
+            .catch((error) => {
+                console.error("Error updating deal stage:", error);
+                showToast("Gagal memindahkan deal", 3000);
+            });
+        }
+
+        // ==================== FUNGSI STATISTIK ====================
+
+        // Variabel global untuk menyimpan data agregat sales
+        let salesValue = {};
+        let salesWinCount = {};
+        // Variabel global untuk menyimpan data agregat produk
+        let productValue = {}; // Tambahkan variabel global ini
+
+        // Fungsi untuk memproses data deals menjadi format yang siap untuk chart
+        function processDealDataForCharts(dealsData) {
+            // Ambil semua opsi tahap dari elemen select#stage
+            const stageSelect = document.getElementById('stage');
+            const allStages = Array.from(stageSelect.options).map(option => option.value).filter(value => value !== ''); // Filter out empty value
+
+            // Inisialisasi winRateData dengan semua tahap yang ada
+            const winRateDataMap = {};
+            allStages.forEach(stage => {
+                winRateDataMap[stage] = 0;
+            });
+
+            const stats = {
+                dealSizeLabels: [],
+                dealSizeData: [],
+                winRateLabels: allStages, // Gunakan semua tahap sebagai label
+                winRateData: [], // Akan diisi dari winRateDataMap
+                dealsBySalesLabels: [],
+                dealsBySalesData: [],
+                dealsByProductLabels: [],
+                dealsByProductData: [],
+                pipelineValueLabels: [],
+                pipelineValueData: []
+            };
+
+            // Helper untuk mengelompokkan data
+            const dealSizes = {
+                'Small (< Rp 500 Juta)': 0,
+                'Medium (Rp 500 Juta - Rp 2 Miliar)': 0,
+                'Large (> Rp 2 Miliar)': 0
+            };
+            const dealsBySales = {};
+            salesValue = {}; // Reset global salesValue
+            salesWinCount = {}; // Reset global salesWinCount
+            const dealsByProduct = {};
+            productValue = {}; // Reset global productValue
+            const pipelineValueByMonth = {};
+
+            dealsData.forEach(deal => {
+                // Deal Size
+                if (deal.value < 500000000) { // 500 Juta
+                    dealSizes['Small (< Rp 500 Juta)']++;
+                } else if (deal.value >= 500000000 && deal.value <= 2000000000) { // 500 Juta - 2 Miliar
+                    dealSizes['Medium (Rp 500 Juta - Rp 2 Miliar)']++;
+                } else { // Lebih dari 2 Miliar
+                    dealSizes['Large (> Rp 2 Miliar)']++;
+                }
+
+                // Win Rate
+                if (deal.stage && winRateDataMap.hasOwnProperty(deal.stage)) {
+                    winRateDataMap[deal.stage]++;
+                } else {
+                    // Jika ada tahap yang tidak terdaftar di form, bisa ditambahkan ke kategori 'Other' atau diabaikan
+                    // Untuk saat ini, kita akan mengabaikannya jika tidak ada di allStages
+                    console.warn(`Deal with unknown stage: ${deal.stage}`);
+                }
+
+                // Deals By Sales (Updated)
+                if (deal.salesName) {
+                    dealsBySales[deal.salesName] = (dealsBySales[deal.salesName] || 0) + 1;
+                    salesValue[deal.salesName] = (salesValue[deal.salesName] || 0) + (deal.value || 0); // Accumulate value
+                    if (deal.stage === 'win') {
+                        salesWinCount[deal.salesName] = (salesWinCount[deal.salesName] || 0) + 1; // Accumulate win count
+                    }
+                }
+
+                // Deals By Product (menggunakan product)
+                const productKey = deal.product || 'Unknown Product';
+                dealsByProduct[productKey] = (dealsByProduct[productKey] || 0) + 1;
+                productValue[productKey] = (productValue[productKey] || 0) + (deal.value || 0); // Akumulasi nilai per produk
+
+                // Pipeline Value Over Time (menggunakan createdAt)
+                // Hanya sertakan deal yang belum 'lost' atau 'win' untuk pipeline value
+                if (deal.stage !== 'lost' && deal.stage !== 'win') {
+                    const dateSource = deal.createdAt;
+                    if (dateSource && typeof dateSource.toDate === 'function') {
+                        const date = dateSource.toDate();
+                        // Format tanggal sesuai permintaan: "Bulan Tahun"
+                        const monthYear = date.toLocaleString('id-ID', { month: 'short', year: 'numeric' });
+                        pipelineValueByMonth[monthYear] = (pipelineValueByMonth[monthYear] || 0) + deal.value;
+                    } else {
+                        console.warn(`Deal ID: ${deal.id} has invalid or missing createdAt timestamp for pipeline value calculation.`);
+                    }
+                }
+            });
+
+            // Konversi objek ke array untuk chart
+            stats.dealSizeLabels = Object.keys(dealSizes);
+            stats.dealSizeData = Object.values(dealSizes);
+
+            // Isi winRateData dari map
+            stats.winRateData = stats.winRateLabels.map(stage => winRateDataMap[stage]);
+
+            // Update dealsBySalesLabels dan dealsBySalesData untuk menyertakan nilai dan win count
+            stats.dealsBySalesLabels = Object.keys(dealsBySales);
+            stats.dealsBySalesData = Object.values(dealsBySales);
+
+            stats.dealsByProductLabels = Object.keys(dealsByProduct);
+            stats.dealsByProductData = Object.values(dealsByProduct);
+
+            // Urutkan data pipeline value berdasarkan bulan
+            const sortedMonths = Object.keys(pipelineValueByMonth).sort((a, b) => {
+                // Parse string "Bulan Tahun" menjadi objek Date untuk perbandingan
+                const [monthStrA, yearStrA] = a.split(' ');
+                const [monthStrB, yearStrB] = b.split(' ');
+                const monthIndexA = new Date(Date.parse(monthStrA + " 1, 2000")).getMonth(); // Get month index
+                const monthIndexB = new Date(Date.parse(monthStrB + " 1, 2000")).getMonth(); // Get month index
+                const dateA = new Date(parseInt(yearStrA), monthIndexA, 1);
+                const dateB = new Date(parseInt(yearStrB), monthIndexB, 1);
+                return dateA - dateB;
+            });
+            stats.pipelineValueLabels = sortedMonths;
+            stats.pipelineValueData = sortedMonths.map(month => pipelineValueByMonth[month]);
+
+            return stats;
+        }
+
+        // Fungsi untuk menampilkan bagian statistik
+        function showStats() {
+            const statsSection = document.getElementById('stats-section');
+            if (statsSection) {
+                statsSection.classList.remove('hidden');
+                renderAllCharts();
+            }
+        }
+
+        // Fungsi untuk menyembunyikan bagian statistik
+        function hideStats() {
+            const statsSection = document.getElementById('stats-section');
+            if (statsSection) {
+                statsSection.classList.add('hidden');
+            }
+        }
+
+        // Fungsi untuk merender semua chart (akan diimplementasikan lebih lanjut)
+        function renderAllCharts() {
+            console.log("Rendering all charts...");
+
+            // 1. Proses Data Deals untuk Statistik
+            const processedStats = processDealDataForCharts(deals);
+
+            // 2. Deal Size Chart (Distribusi Ukuran Deal)
+            const dealSizeCtx = document.getElementById('dealSizeChart').getContext('2d');
+            if (charts.dealSizeChart) charts.dealSizeChart.destroy();
+            charts.dealSizeChart = new Chart(dealSizeCtx, {
+                type: 'bar',
+                data: {
+                    labels: processedStats.dealSizeLabels,
+                    datasets: [{
+                        label: 'Jumlah Deal',
+                        data: processedStats.dealSizeData,
+                        backgroundColor: ['#3B82F6', '#60A5FA', '#93C5FD', '#22D3EE', '#A78BFA'] // Tambahkan warna jika ada lebih banyak kategori
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Distribusi Ukuran Deal'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0 // Pastikan tick y-axis adalah bilangan bulat
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 3. Win Rate Chart (Tingkat Kemenangan Berdasarkan Tahap)
+            const winRateCtx = document.getElementById('winRateChart').getContext('2d');
+            if (charts.winRateChart) charts.winRateChart.destroy();
+            charts.winRateChart = new Chart(winRateCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: processedStats.winRateLabels,
+                    datasets: [{
+                        label: 'Jumlah Deal',
+                        data: processedStats.winRateData,
+                        backgroundColor: [
+                            '#10B981', // win
+                            '#EF4444', // lost
+                            '#F59E0B', // on-hold
+                            '#6B7280', // identified
+                            '#3B82F6', // prospect
+                            '#06B6D4', // tender-me
+                            '#A855F7', // tender-main-con
+                            '#EC4899'  // contract-award
+                        ] // Sesuaikan warna untuk setiap tahap jika perlu
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Tingkat Kemenangan Berdasarkan Tahap'
+                        }
+                    }
+                }
+            });
+
+            // 4. Deals By Sales Chart (Jumlah Deal per Sales)
+            const dealsBySalesCtx = document.getElementById('dealsBySalesChart').getContext('2d');
+            if (charts.dealsBySalesChart) charts.dealsBySalesChart.destroy();
+            charts.dealsBySalesChart = new Chart(dealsBySalesCtx, {
+                type: 'bar',
+                data: {
+                    labels: processedStats.dealsBySalesLabels,
+                    datasets: [{
+                        label: 'Jumlah Deal',
+                        data: processedStats.dealsBySalesData,
+                        backgroundColor: '#6366F1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Jumlah Deal per Sales' // Ubah judul
+                        },
+                        tooltip: { // Tambahkan konfigurasi tooltip
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    const salesName = processedStats.dealsBySalesLabels[context.dataIndex];
+                                    const totalValue = salesValue[salesName] || 0;
+                                    const winCount = salesWinCount[salesName] || 0;
+                                    return `${label}${context.raw} (Total IDR: Rp ${formatNumber(totalValue)} / Win: ${winCount})`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 5. Deals By Product Chart (Deal per Produk) - Updated
+            const dealsByProductPackageCtx = document.getElementById('dealsByProductPackageChart').getContext('2d');
+            if (charts.dealsByProductPackageChart) charts.dealsByProductPackageChart.destroy();
+            charts.dealsByProductPackageChart = new Chart(dealsByProductPackageCtx, {
+                type: 'pie',
+                data: {
+                    labels: processedStats.dealsByProductLabels,
+                    datasets: [{
+                        label: 'Jumlah Deal',
+                        data: processedStats.dealsByProductData,
+                        backgroundColor: [
+                            '#F97316', '#14B8A6', '#8B5CF6', '#EC4899', '#FACC15',
+                            '#3B82F6', '#EF4444', '#06B6D4', '#A855F7', '#F43F5E',
+                            '#4CAF50', '#FFC107', '#9C27B0', '#00BCD4', '#FF5722' // More colors
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Deal per Produk' // Changed title
+                        },
+                        tooltip: { // Tambahkan konfigurasi tooltip
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || ''; // Label produk
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    const product = processedStats.dealsByProductLabels[context.dataIndex];
+                                    const totalValue = productValue[product] || 0; // Ambil total nilai produk
+                                    return `${label}${context.raw} (Total IDR: Rp ${formatNumber(totalValue)})`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 6. Pipeline Value Chart (Nilai Pipeline Seiring Waktu) - Updated
+            const pipelineValueCtx = document.getElementById('pipelineValueChart').getContext('2d');
+            if (charts.pipelineValueChart) charts.pipelineValueChart.destroy();
+            charts.pipelineValueChart = new Chart(pipelineValueCtx, {
+                type: 'line',
+                data: {
+                    labels: processedStats.pipelineValueLabels,
+                    datasets: [{
+                        label: 'Nilai Pipeline (IDR)',
+                        data: processedStats.pipelineValueData,
+                        borderColor: '#0EA5E9', // Warna garis
+                        backgroundColor: 'rgba(14, 165, 233, 0.2)', // Warna area di bawah garis
+                        tension: 0.3, // Kehalusan garis
+                        fill: true, // Isi area di bawah garis
+                        pointRadius: 5, // Ukuran titik data
+                        pointBackgroundColor: '#0EA5E9', // Warna titik data
+                        pointBorderColor: '#fff', // Warna border titik data
+                        pointHoverRadius: 7, // Ukuran titik saat di-hover
+                        pointHoverBackgroundColor: '#0EA5E9',
+                        pointHoverBorderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Nilai Pipeline Seiring Waktu'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true, // Dimulai dari 0
+                            ticks: {
+                                callback: function(value) {
+                                    return 'Rp ' + formatNumber(value);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ==================== FUNGSI PERMISSIONS ====================
+
+        // Fungsi untuk menerapkan permissions berdasarkan role
+        function applyUserPermissions() {
+            try {
+                const isAdmin = currentUserRole === 'admin';
+                const isManager = currentUserRole === 'manager';
+                
+                console.log("Applying permissions for Role:", currentUserRole);
+                
+                const viewStatsBtn = document.getElementById('viewStatsBtn');
+                const activityBtn = document.getElementById('activityBtn');
+                const newDealBtn = document.getElementById('newDealBtn');
+                const searchInput = document.getElementById('searchDeals');
+                const openFilterPanelBtn = document.getElementById('openFilterPanelBtn');
+
+                // Tombol Statistik hanya untuk admin dan manager
+                if (viewStatsBtn) viewStatsBtn.classList.toggle('hidden', !(isAdmin || isManager));
+                
+                // Tombol Aktivitas selalu terlihat
+                if (activityBtn) activityBtn.classList.remove('hidden');
+                
+                // Tombol Deal Baru selalu terlihat
+                if (newDealBtn) newDealBtn.classList.remove('hidden');
+
+                // Search dan Filter selalu terlihat
+                if (searchInput) searchInput.classList.remove('hidden');
+                if (openFilterPanelBtn) openFilterPanelBtn.classList.remove('hidden');
+
+                // Atur kemampuan drag-and-drop
+                if (sortableInstances['pipelines-stage']) {
+                    sortableInstances['pipelines-stage'].option('disabled', !isAdmin);
+                }
+
+                // Pastikan tombol delete selalu aktif untuk semua role
+                // Tombol delete berada di dalam deal-card yang dirender, dan tidak ada logika penonaktifan berdasarkan role di sana.
+                // Jadi, secara default, semua role akan bisa mengklik tombol delete.
+
+                loadDealsFromFirebase(); 
+                
+            } catch (error) {
+                console.error("Error in applyUserPermissions:", error);
+                showToast("Gagal menerapkan permissions", 3000);
+            }
+        }
+
+        // ==================== FUNGSI EVENT LISTENERS ====================
+
+        // Fungsi untuk inisialisasi event listeners
+        function initEventListeners() {
+            console.log("Initializing event listeners...");
+            
+            try {
+                const dealForm = document.getElementById('dealForm');
+                if (dealForm) {
+                    dealForm.addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        saveDeal();
+                    });
+                }
+
+                const buttons = [
+                    { id: 'newDealBtn', func: openDealModal },
+                    { id: 'viewStatsBtn', func: showStats },
+                    { id: 'activityBtn', func: openActivityModal },
+                    { id: 'authButton', func: logout },
+                    { id: 'openFilterPanelBtn', func: openFilterPanel } // New: Event listener for the filter button
+                ];
+                
+                buttons.forEach(btn => {
+                    const element = document.getElementById(btn.id);
+                    if (element) {
+                        element.removeEventListener('click', btn.func); 
+                        element.addEventListener('click', btn.func);
+                        console.log(`Event listener added for ${btn.id}`);
+                    }
+                });
+
+                const searchInput = document.getElementById('searchDeals');
+                if (searchInput) {
+                    searchInput.removeEventListener('keyup', filterDeals);
+                    searchInput.addEventListener('keyup', filterDeals);
+                }
+                
+                // No longer need individual change listeners for filter dropdowns,
+                // as filterDeals() will be called by applyFiltersAndClosePanel()
+                // or resetFilters().
+                // However, you want real-time filtering as user changes dropdowns inside the panel,
+                // you can re-add them here and call filterDeals() directly.
+                // For a "Terapkan Filter" button, it's better to call filterDeals() only once.
+
+            } catch (error) {
+                console.error("Error initializing event listeners:", error);
+                showToast("Gagal memuat beberapa fungsi", 3000);
+            }
+        }
+
+        // ==================== FUNGSI LAINNYA ====================
+
+        // Fungsi untuk filter deals
+        function filterDeals() {
+            try {
+                const searchTerm = document.getElementById('searchDeals').value.toLowerCase();
+                const priorityFilter = document.getElementById('filterPriority').value;
+                const yearFilter = document.getElementById('filterYear').value;
+                const stageFilter = document.getElementById('filterStage').value;
+                const salesFilter = document.getElementById('filterSales').value;
+                const consultantFilter = document.getElementById('filterConsultant').value;
+                const contractorFilter = document.getElementById('filterContractor').value;
+                const facilityFilter = document.getElementById('filterFacility').value;
+                const productFilter = document.getElementById('filterProduct').value;
+                const packageFilter = document.getElementById('filterPackage').value;
+                
+                // Tentukan deals dasar yang akan difilter berdasarkan role
+                let baseDeals = deals;
+                if (currentUserRole !== 'admin') {
+                    baseDeals = deals.filter(deal => deal.stage !== 'lost');
+                }
+
+                // Jika semua filter kosong, dan user bukan admin, tampilkan pesan default
+                if (searchTerm === '' && priorityFilter === 'all' && yearFilter === 'all' && stageFilter === 'all' && salesFilter === 'all' &&
+                    consultantFilter === 'all' && contractorFilter === 'all' && facilityFilter === 'all' &&
+                    productFilter === 'all' && packageFilter === 'all') {
+                    
+                    if (currentUserRole !== 'admin') {
+                        const pipelineStage = document.getElementById('pipelines-stage');
+                        if (pipelineStage) {
+                            pipelineStage.innerHTML = `
+                                <div class="empty-stage-message text-center text-gray-400 p-4 text-sm w-full">
+                                    <i class="fas fa-inbox text-3xl mb-2"></i>
+                                    <p>Tidak ada data pipeline yang ditampilkan secara default.</p>
+                                    <p>Gunakan kolom pencarian di atas untuk mencari deal.</p>
+                                </div>
+                            `;
+                        }
+                        return; // Keluar dari fungsi karena tidak ada filter yang diterapkan dan tampilan default sudah diatur
+                    } else {
+                        // Jika admin dan tidak ada filter, render semua deals (termasuk yang lost)
+                        renderFilteredDeals(baseDeals); // Panggil renderFilteredDeals dengan baseDeals (semua deals untuk admin)
+                        return;
+                    }
+                }
+
+                const filteredDeals = baseDeals.filter(deal => {
+                    const matchesSearch = 
+                        (deal.dealName && deal.dealName.toLowerCase().includes(searchTerm)) ||
+                        (deal.company && deal.company.toLowerCase().includes(searchTerm)) || 
+                        (deal.salesName && deal.salesName.toLowerCase().includes(searchTerm));
+                    
+                    const matchesPriority = 
+                        priorityFilter === 'all' || 
+                        (deal.priority && deal.priority === priorityFilter);
+                    
+                    const matchesYear = yearFilter === 'all' || 
+                                        (deal.createdAt && deal.createdAt.toDate().getFullYear().toString() === yearFilter);
+
+                    const matchesStage = stageFilter === 'all' || 
+                                         (deal.stage && deal.stage === stageFilter);
+
+                    const matchesSales = salesFilter === 'all' || 
+                                         (deal.salesName && deal.salesName === salesFilter);
+
+                    const matchesConsultant = consultantFilter === 'all' || 
+                                              (deal.consultant && deal.consultant === consultantFilter);
+                    
+                    // MODIFIKASI: Filter untuk multiple kontraktor
+                    const matchesContractor = contractorFilter === 'all' || 
+                                              (deal.contractor && 
+                                               (Array.isArray(deal.contractor) ? 
+                                                deal.contractor.includes(contractorFilter) : 
+                                                deal.contractor === contractorFilter));
+
+                    const matchesFacility = facilityFilter === 'all' || 
+                                            (deal.facility && deal.facility === facilityFilter);
+
+                    const matchesProduct = productFilter === 'all' || 
+                                           (deal.product && deal.product === productFilter);
+
+                    const matchesPackage = packageFilter === 'all' || 
+                                           (deal.package && deal.package === packageFilter);
+                    
+                    return matchesSearch && matchesPriority && matchesYear && matchesStage && matchesSales &&
+                           matchesConsultant && matchesContractor && matchesFacility && matchesProduct && matchesPackage;
+                });
+                
+                renderFilteredDeals(filteredDeals);
+            } catch (error) {
+                console.error("Error filtering deals:", error);
+            }
+        }
+
+        // Fungsi untuk render deals yang sudah difilter
+        function renderFilteredDeals(filteredDeals) {
+            const pipelineStage = document.getElementById('pipelines-stage');
+            if (!pipelineStage) return;
+            
+            pipelineStage.innerHTML = '';
+            
+            if (filteredDeals.length === 0) {
+                pipelineStage.innerHTML = `
+                    <div class="empty-stage-message text-center text-gray-400 p-4 text-sm w-full">
+                        <i class="fas fa-search text-3xl mb-2"></i>
+                        <p>Tidak ada deals yang sesuai dengan filter.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            filteredDeals.forEach(deal => {
+                const dealCard = renderDeal(deal);
+                pipelineStage.appendChild(dealCard);
+            });
+        }
+
+        // Fungsi logout
+        function logout() {
+            auth.signOut()
+                .then(() => {
+                    console.log("User logged out successfully");
+                    deals = [];
+                    activities = [];
+                    window.location.href = 'login.html';
+                })
+                .catch((error) => {
+                    console.error("Error logging out:", error);
+                    showToast("Gagal logout. Silakan coba lagi.", 5000);
+                });
+        }
+
+        // Fungsi untuk membuka panel filter
+        function openFilterPanel() {
+            const filterPanel = document.getElementById('filterPanel');
+            const filterPanelContent = document.getElementById('filterPanelContent');
+
+            if (!filterPanel || !filterPanelContent) {
+                console.error("Elemen panel filter tidak ditemukan.");
+                showToast("Gagal membuka filter: Elemen tidak lengkap.", 3000);
+                return;
+            }
+
+            // Pastikan dropdown diisi ulang setiap kali panel dibuka
+            populateYearDropdown();
+            populateFilterDropdowns();
+
+            filterPanel.classList.remove('hidden');
+            filterPanelContent.classList.remove('modal-content-leave-active');
+            filterPanelContent.classList.add('modal-content-enter-active');
+        }
+
+        // Fungsi untuk menutup panel filter
+        function closeFilterPanel() {
+            const filterPanelContent = document.getElementById('filterPanelContent');
+            if (!filterPanelContent) {
+                console.error("Elemen filterPanelContent tidak ditemukan saat menutup modal.");
+                return;
+            }
+
+            filterPanelContent.classList.remove('modal-content-enter-active');
+            filterPanelContent.classList.add('modal-content-leave-active');
+            
+            filterPanelContent.addEventListener('transitionend', function handler() {
+                document.getElementById('filterPanel').classList.add('hidden');
+                filterPanelContent.classList.remove('modal-content-leave-active');
+                filterPanelContent.removeEventListener('transitionend', handler);
+            }, { once: true });
+        }
+
+        // Fungsi untuk menerapkan filter dan menutup panel
+        function applyFiltersAndClosePanel() {
+            filterDeals(); // Panggil fungsi filter yang sudah ada
+            closeFilterPanel();
+        }
+
+        // Fungsi untuk mereset semua filter
+        function resetFilters() {
+            document.getElementById('filterPriority').value = 'all';
+            document.getElementById('filterYear').value = 'all';
+            document.getElementById('filterStage').value = 'all';
+            document.getElementById('filterSales').value = 'all'; // Tambahkan ini
+            document.getElementById('filterConsultant').value = 'all';
+            document.getElementById('filterContractor').value = 'all';
+            document.getElementById('filterFacility').value = 'all';
+            document.getElementById('filterProduct').value = 'all';
+            document.getElementById('filterPackage').value = 'all';
+            document.getElementById('searchDeals').value = ''; // Reset juga search input
+            filterDeals(); // Terapkan filter setelah reset
+            // Tidak perlu menutup panel secara otomatis setelah reset, biarkan user melihat bahwa filter sudah direset
+        }
+
+        // ==================== INISIALISASI ====================
+
+        // Inisialisasi saat DOM siap
+        document.addEventListener('DOMContentLoaded', function() {
+            initSortable();
+        });
+    </script>
+</body>
+</html>
