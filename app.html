@@ -1388,7 +1388,17 @@
                     showToast("PO baru berhasil ditambahkan!", 2000);
                 }
                 closePOModal();
-                await loadPOsFromFirebase();
+                
+                // --- START MODIFIKASI: Reset semua filter dan kolom pencarian ---
+                document.getElementById('searchPOs').value = '';
+                document.getElementById('filterStatus').value = 'all';
+                document.getElementById('filterSupplier').value = 'all';
+                document.getElementById('filterItemName').value = 'all';
+                document.getElementById('filterAllocation').value = 'all';
+                document.getElementById('filterYear').value = 'all';
+                // --- END MODIFIKASI ---
+
+                await loadPOsFromFirebase(); // Ini akan memuat ulang data dan memanggil filterPOs()
             } catch (error) {
                 console.error("Error saving PO:", error);
                 showToast("Gagal menyimpan PO. Silakan coba lagi.", 3000);
