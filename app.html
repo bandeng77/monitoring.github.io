@@ -458,27 +458,6 @@
                                 <label class="block text-gray-700 text-sm font-semibold mb-2" for="supplierName">Nama Supplier</label>
                                 <input type="text" id="supplierName" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
                             </div>
-
-                            <!-- Form Tambahan Baru dengan Fitur Search -->
-                            <div class="mb-4 relative"> <!-- Tambahkan relative untuk positioning absolute search results -->
-                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="searchableField">No ID</label>
-                                <input type="text" id="searchableField" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="Cari produk...">
-                                <div id="searchResults" class="absolute z-10 bg-white border border-gray-300 rounded-lg shadow-lg mt-1 w-full max-h-48 overflow-y-auto hidden">
-                                    <!-- Hasil pencarian akan ditampilkan di sini -->
-                                </div>
-                                <input type="hidden" id="selectedProductId">
-                            </div>
-                            <!-- Akhir Form Tambahan Baru -->
-
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-2">Nama Barang & Quantity</label>
-                                <div id="itemsList" class="space-y-3 mb-3">
-                                    <!-- Item barang akan ditambahkan di sini secara dinamis oleh JS -->
-                                </div>
-                                <button type="button" onclick="addItemField()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-1.5 rounded-lg text-xs flex items-center transition duration-200 ease-in-out transform hover:scale-105">
-                                    <i class="fas fa-plus mr-1"></i> Tambah Barang
-                                </button>
-                            </div>
                         </div>
                         <!-- Kolom 2 -->
                         <div>
@@ -505,6 +484,26 @@
                         </div>
                         <!-- Kolom 3 -->
                         <div>
+                            <!-- Form Tambahan Baru dengan Fitur Search -->
+                            <div class="mb-4 relative"> <!-- Tambahkan relative untuk positioning absolute search results -->
+                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="searchableField">No ID</label>
+                                <input type="text" id="searchableField" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="Cari produk...">
+                                <div id="searchResults" class="absolute z-10 bg-white border border-gray-300 rounded-lg shadow-lg mt-1 w-full max-h-48 overflow-y-auto hidden">
+                                    <!-- Hasil pencarian akan ditampilkan di sini -->
+                                </div>
+                                <input type="hidden" id="selectedProductId">
+                            </div>
+                            <!-- Akhir Form Tambahan Baru -->
+
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">Nama Barang & Quantity</label>
+                                <div id="itemsList" class="space-y-3 mb-3">
+                                    <!-- Item barang akan ditambahkan di sini secara dinamis oleh JS -->
+                                </div>
+                                <button type="button" onclick="addItemField()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-1.5 rounded-lg text-xs flex items-center transition duration-200 ease-in-out transform hover:scale-105">
+                                    <i class="fas fa-plus mr-1"></i> Tambah Barang
+                                </button>
+                            </div>
                             <div class="mb-4">
                                 <label class="block text-gray-700 text-sm font-semibold mb-2" for="disrc">DISRC</label>
                                 <input type="text" id="disrc" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
@@ -1219,8 +1218,8 @@
             const poForm = document.getElementById('poForm');
             
             poForm.reset();
+            document.getElementById('itemsList').innerHTML = ''; // Pastikan ini kosong sebelum mengisi
             document.getElementById('poId').value = '';
-            document.getElementById('itemsList').innerHTML = '';
 
             if (poId) {
                 modalTitle.textContent = 'Edit PO';
@@ -1240,12 +1239,12 @@
                         document.getElementById('selectedProductId').value = '';
                     }
 
-                    if (po.items && Array.isArray(po.items)) {
+                    if (po.items && Array.isArray(po.items) && po.items.length > 0) { // Cek jika ada item
                         po.items.forEach(item => {
                             addItemField(item.itemName, item.quantity);
                         });
                     } else {
-                        addItemField();
+                        addItemField(); // Tambahkan minimal satu jika tidak ada item
                     }
 
                     document.getElementById('allocation').value = po.allocation || '';
@@ -1270,7 +1269,7 @@
                 document.getElementById('status').value = DEFAULT_STATUS;
                 document.getElementById('searchableField').value = ''; // Reset untuk PO baru
                 document.getElementById('selectedProductId').value = ''; // Reset untuk PO baru
-                addItemField();
+                addItemField(); // Tambahkan minimal satu form item saat membuat PO baru
             }
             
             poModal.classList.remove('hidden');
