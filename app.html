@@ -237,7 +237,7 @@
             background-color: var(--bg-medium);
         }
         .deal-actions button.text-blue-600:hover { color: var(--primary-blue); }
-        .deal-actions button.text-green-600:hover { color: var(--accent-green); }
+        .deal-actions button.text-green-600:hover { color: #22c55e; } /* Menggunakan accent-green */
         .deal-actions button.text-red-600:hover { color: #ef4444; }
 
         .deal-footer {
@@ -1092,7 +1092,7 @@
                 console.log("Total POs loaded:", pos.length);
                 populateYearDropdown();
                 populateFilterDropdowns();
-                filterPOs();
+                filterPOs(); // Panggil filterPOs untuk merender POs setelah dimuat
             } catch (error) {
                 console.error("Error loading POs:", error);
                 showCustomAlert("Gagal memuat data PO", "error"); // Menggunakan custom alert
@@ -1355,7 +1355,7 @@
                         document.getElementById('selectedProductId').value = po.selectedProduct.id || '';
                     } else {
                         document.getElementById('searchableField').value = '';
-                        document.getElementById('selectedProductId').value = '';
+                        selectedProductIdInput.value = '';
                     }
 
                     if (po.items && Array.isArray(po.items) && po.items.length > 0) { // Cek jika ada item
@@ -1738,33 +1738,14 @@
                 
                 let basePOs = pos;
 
-                if (searchTerm === '' && statusFilter === 'all' && supplierFilter === 'all' && itemNameFilter === 'all' &&
-                    allocationFilter === 'all' && yearFilter === 'all') {
-                    
-                    // Jika tidak ada filter yang diterapkan, dan user adalah admin, tampilkan semua PO
-                    if (currentUserRole === 'admin') {
-                        renderFilteredPOs(basePOs);
-                    } else {
-                        // Jika bukan admin dan tidak ada filter, tampilkan pesan kosong
-                        const pipelineStage = document.getElementById('pos-stage');
-                        if (pipelineStage) {
-                            pipelineStage.innerHTML = `
-                                <div class="empty-state">
-                                    <i class="fas fa-search"></i>
-                                    <p>Gunakan kolom pencarian atau filter di atas untuk menemukan PO.</p>
-                                </div>
-                            `;
-                        }
-                    }
-                    return;
-                }
-
+                // Logika pemfilteran yang sebenarnya
                 const filteredPOs = basePOs.filter(po => {
                     const matchesSearch = 
                         (po.noPO && po.noPO.toLowerCase().includes(searchTerm)) ||
                         (po.supplierName && po.supplierName.toLowerCase().includes(searchTerm)) ||
                         (po.items && Array.isArray(po.items) && po.items.some(item => item.itemName && item.itemName.toLowerCase().includes(searchTerm)));
                     
+                    // Status filter (tetap aktif meskipun tidak terlihat di card)
                     const matchesStatus = 
                         statusFilter === 'all' || 
                         (po.status && po.status === statusFilter);
@@ -1787,7 +1768,7 @@
                     return matchesSearch && matchesStatus && matchesSupplier && matchesItemName && matchesAllocation && matchesYear;
                 });
                 
-                renderFilteredPOs(filteredPOs);
+                renderFilteredPOs(filteredPOs); // Selalu panggil ini dengan hasil filter
             } catch (error) {
                 console.error("Error filtering POs:", error);
             }
