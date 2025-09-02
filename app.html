@@ -623,10 +623,7 @@
                         <p class="text-gray-700 font-semibold">Revisi HS:</p>
                         <p id="detailRevisiHS" class="text-gray-900"></p>
                     </div>
-                    <div class="detail-item">
-                        <p class="text-gray-700 font-semibold">Status:</p>
-                        <p id="detailStatus" class="text-gray-900"></p>
-                    </div>
+                    <!-- Status dan Tanggal Dibuat dihapus dari sini -->
                     <div class="detail-item col-span-full"> <!-- Mengambil lebar penuh -->
                         <p class="text-gray-700 font-semibold">Nama Barang & Quantity:</p>
                         <ul id="detailItemsList" class="list-disc list-inside text-gray-900"></ul>
@@ -634,10 +631,6 @@
                     <div class="detail-item col-span-full">
                         <p class="text-gray-700 font-semibold">Note:</p>
                         <p id="detailNote" class="text-gray-900"></p>
-                    </div>
-                    <div class="detail-item col-span-full">
-                        <p class="text-gray-700 font-semibold">Tanggal Dibuat:</p>
-                        <p id="detailCreatedDate" class="text-gray-900"></p>
                     </div>
                 </div>
                 <div class="flex justify-end space-x-3 mt-6">
@@ -1456,8 +1449,8 @@
             document.getElementById('detailHSCode').textContent = po.hsCode || '-';
             document.getElementById('detailRevisiHS').textContent = po.revisiHS || '-';
             document.getElementById('detailNote').textContent = po.note || '-';
-            document.getElementById('detailStatus').textContent = po.status ? po.status.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : '-';
-            document.getElementById('detailCreatedDate').textContent = formatDate(po.createdAt) || '-';
+            // document.getElementById('detailStatus').textContent = po.status ? po.status.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : '-'; // Dihapus
+            // document.getElementById('detailCreatedDate').textContent = formatDate(po.createdAt) || '-'; // Dihapus
 
             document.getElementById('poDetailModal').classList.remove('hidden');
             document.getElementById('poDetailModalContent').classList.remove('modal-content-leave-active');
