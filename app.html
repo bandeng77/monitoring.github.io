@@ -647,7 +647,7 @@
                         <p id="detailDisrc" class="text-gray-900"></p>
                     </div>
                     <div class="detail-item">
-                        <p class="text-gray-700 font-semibold">Plan Delivery:</p>
+                        <p class="text-700 font-semibold">Plan Delivery:</p>
                         <p id="detailPlanDelivery" class="text-gray-900"></p>
                     </div>
                     <div class="detail-item">
@@ -781,11 +781,11 @@
             </div>
         </div>
 
-        <!-- Toast Notification Container (Removed) -->
-        <!-- <div id="toast-container"></div> -->
-    </div>
-    <div id="global-loading-overlay" class="loading-overlay">
-        <div class="spinner"></div>
+        <!-- Global Loading Overlay -->
+        <div id="global-loading-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-[9999] hidden">
+            <div class="spinner"></div>
+        </div>
+
     </div>
 
     <script>
@@ -804,23 +804,22 @@
         const db = firebase.firestore();
         const auth = firebase.auth();
         const dealsCollection = db.collection('purchaseOrders');
-        const usersCollection = db.collection('users'); // Tetap diperlukan untuk menyimpan role admin
+        const usersCollection = db.collection('users');
 
         let pos = [];
-        const DEFAULT_STATUS = 'pending'; // Status default yang akan digunakan
-        let currentUserRole = 'user'; // Default role, akan diubah jika admin
+        const DEFAULT_STATUS = 'pending';
+        let currentUserRole = 'user';
         let sortableInstances = {};
         let authInitialized = false;
+        let unsubscribeFromPOs = null; // Untuk menyimpan fungsi unsubscribe onSnapshot
 
         let uniqueSuppliers = new Set();
         let uniqueItemNames = new Set();
         let uniqueAllocations = new Set();
         let uniqueYears = new Set();
 
-        // Hanya satu admin yang diizinkan
         const ADMIN_EMAIL = 'maida@genetek.co.id';
 
-        // ==================== DATA PRODUK SEDERHANA (BUKAN FIREBASE) ====================
         const productData = [
             { id: 'prod001', name: 'Laptop Gaming XYZ', description: 'Laptop dengan RTX 3080' },
             { id: 'prod002', name: 'Monitor UltraWide 34"', description: 'Monitor 144Hz QHD' },
@@ -869,7 +868,6 @@
                             email: user.email 
                         }, { merge: true });
                     } else {
-                        // Jika bukan admin yang diizinkan, paksa logout dan redirect ke login
                         console.log("Unauthorized user, logging out and redirecting to login.");
                         await auth.signOut();
                         window.location.href = 'login.html';
@@ -878,12 +876,13 @@
 
                     console.log("Current role:", currentUserRole);
                     applyUserPermissions();
-                    await loadPOsFromFirebase(); // Tunggu PO dimuat
+                    // Mengganti loadPOsFromFirebase() dengan listenForPOs()
+                    listenForPOs(); 
                     initEventListeners();
                     hideGlobalLoading();
                 } catch (error) {
                     console.error("Error checking user role or loading data:", error);
-                    showCustomAlert("Gagal memuat data pengguna atau aplikasi. Silakan refresh halaman.", "error"); // Menggunakan custom alert
+                    showCustomAlert("Gagal memuat data pengguna atau aplikasi. Silakan refresh halaman.", "error");
                     hideGlobalLoading();
                 }
             }
@@ -894,7 +893,10 @@
         function formatDateTime(timestamp) {
             if (!timestamp) return '-';
             try {
-                const date = timestamp.toDate();
+                // Handle Firebase Timestamp objects and Date objects
+                const date = timestamp instanceof Date ? timestamp : (timestamp && typeof timestamp.toDate === 'function' ? timestamp.toDate() : null);
+                if (!date) return '-';
+
                 return date.toLocaleString('id-ID', {
                     day: 'numeric',
                     month: 'short',
@@ -903,6 +905,7 @@
                     minute: '2-digit'
                 });
             } catch (e) {
+                console.error("Error formatting date time:", e);
                 return '-';
             }
         }
@@ -917,42 +920,17 @@
         function formatDate(timestamp) {
             if (!timestamp) return '-';
             try {
-                if (timestamp instanceof Date) {
-                    return timestamp.toLocaleDateString('id-ID');
-                }
-                // Handle Firebase Timestamp objects
-                if (timestamp && typeof timestamp.toDate === 'function') {
-                    return timestamp.toDate().toLocaleDateString('id-ID');
-                }
-                return '-';
+                // Handle Firebase Timestamp objects and Date objects
+                const date = timestamp instanceof Date ? timestamp : (timestamp && typeof timestamp.toDate === 'function' ? timestamp.toDate() : null);
+                if (!date) return '-';
+                
+                return date.toLocaleDateString('id-ID');
             } catch (e) {
+                console.error("Error formatting date:", e);
                 return '-';
             }
         }
 
-        // Fungsi showToast dihapus
-        /*
-        function showToast(message, duration = 3000) {
-            const toastContainer = document.getElementById('toast-container');
-            if (!toastContainer) return;
-            
-            const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.innerText = message;
-            toastContainer.appendChild(toast);
-
-            requestAnimationFrame(() => {
-                toast.classList.add('show');
-            });
-
-            setTimeout(() => {
-                toast.classList.remove('show');
-                toast.addEventListener('transitionend', () => toast.remove(), { once: true });
-            }, duration);
-        }
-        */
-
-        // Fungsi showCustomAlert baru
         function showCustomAlert(message, type = 'success') {
             const modal = document.getElementById('successAlertModal');
             const modalContent = document.getElementById('successAlertModalContent');
@@ -961,7 +939,6 @@
 
             alertMessage.textContent = message;
 
-            // Set icon and color based on type
             if (type === 'success') {
                 alertIcon.className = 'fas fa-check-circle text-green-500';
             } else if (type === 'error') {
@@ -991,7 +968,6 @@
             }, { once: true });
         }
 
-
         function showGlobalLoading() {
             document.getElementById('global-loading-overlay').classList.add('show');
         }
@@ -1019,8 +995,9 @@
             });
         }
 
-        async function loadPOsFromFirebase() {
-            console.log("Loading POs from Firebase...");
+        // Mengganti loadPOsFromFirebase dengan listenForPOs untuk realtime updates
+        function listenForPOs() {
+            console.log("Listening for POs from Firebase (onSnapshot)...");
             const pipelineStage = document.getElementById('pos-stage');
             const loadingSpinner = document.getElementById('loading-spinner');
             if (pipelineStage && loadingSpinner) {
@@ -1028,52 +1005,25 @@
                 loadingSpinner.classList.remove('hidden'); // Show spinner
             }
 
-            try {
-                let query = dealsCollection.orderBy("createdAt", "desc");
-                const querySnapshot = await query.get();
+            // Unsubscribe dari listener sebelumnya jika ada
+            if (unsubscribeFromPOs) {
+                unsubscribeFromPOs();
+            }
+
+            unsubscribeFromPOs = dealsCollection.orderBy("createdAt", "desc").onSnapshot(snapshot => {
                 pos = [];
                 uniqueSuppliers.clear();
                 uniqueItemNames.clear();
                 uniqueAllocations.clear();
                 uniqueYears.clear();
 
-                querySnapshot.forEach((doc) => {
+                snapshot.forEach((doc) => {
                     const poData = doc.data();
-                    // Ensure createdAt is a Date object
-                    if (poData.createdAt && typeof poData.createdAt.toDate === 'function') {
-                        poData.createdAt = poData.createdAt.toDate();
-                    } else if (poData.createdAt && typeof poData.createdAt === 'object' && poData.createdAt.seconds !== undefined) {
-                        poData.createdAt = new firebase.firestore.Timestamp(poData.createdAt.seconds, poData.createdAt.nanoseconds).toDate();
-                    } else {
-                        poData.createdAt = null; 
-                    }
-
-                    // Ensure planDelivery is a Date object
-                    if (poData.planDelivery && typeof poData.planDelivery.toDate === 'function') {
-                        poData.planDelivery = poData.planDelivery.toDate();
-                    } else if (poData.planDelivery && typeof poData.planDelivery === 'object' && poData.planDelivery.seconds !== undefined) {
-                        poData.planDelivery = new firebase.firestore.Timestamp(poData.planDelivery.seconds, poData.planDelivery.nanoseconds).toDate();
-                    } else {
-                        poData.planDelivery = null;
-                    }
-
-                    // Ensure eta is a Date object
-                    if (poData.eta && typeof poData.eta.toDate === 'function') {
-                        poData.eta = poData.eta.toDate();
-                    } else if (poData.eta && typeof poData.eta === 'object' && poData.eta.seconds !== undefined) {
-                        poData.eta = new firebase.firestore.Timestamp(poData.eta.seconds, poData.eta.nanoseconds).toDate();
-                    } else {
-                        poData.eta = null;
-                    }
-
-                    // Ensure actualDelivery is a Date object
-                    if (poData.actualDelivery && typeof poData.actualDelivery.toDate === 'function') {
-                        poData.actualDelivery = poData.actualDelivery.toDate();
-                    } else if (poData.actualDelivery && typeof poData.actualDelivery === 'object' && poData.actualDelivery.seconds !== undefined) {
-                        poData.actualDelivery = new firebase.firestore.Timestamp(poData.actualDelivery.seconds, poData.actualDelivery.nanoseconds).toDate();
-                    } else {
-                        poData.actualDelivery = null;
-                    }
+                    // Convert Firebase Timestamps to Date objects
+                    poData.createdAt = poData.createdAt && typeof poData.createdAt.toDate === 'function' ? poData.createdAt.toDate() : null;
+                    poData.planDelivery = poData.planDelivery && typeof poData.planDelivery.toDate === 'function' ? poData.planDelivery.toDate() : null;
+                    poData.eta = poData.eta && typeof poData.eta.toDate === 'function' ? poData.eta.toDate() : null;
+                    poData.actualDelivery = poData.actualDelivery && typeof poData.actualDelivery.toDate === 'function' ? poData.actualDelivery.toDate() : null;
 
                     pos.push({ id: doc.id, ...poData });
 
@@ -1085,53 +1035,34 @@
                         });
                     }
                     
-                    if (poData.createdAt instanceof Date) { // Check if it's a valid Date object
+                    if (poData.createdAt instanceof Date) {
                         uniqueYears.add(poData.createdAt.getFullYear().toString());
                     }
                 });
-                console.log("Total POs loaded:", pos.length);
+                console.log("Total POs updated by onSnapshot:", pos.length);
                 populateYearDropdown();
                 populateFilterDropdowns();
-                filterPOs(); // Panggil filterPOs untuk merender POs setelah dimuat
-            } catch (error) {
-                console.error("Error loading POs:", error);
-                showCustomAlert("Gagal memuat data PO", "error"); // Menggunakan custom alert
-            } finally {
+                filterPOs(); // Render POs setelah data diperbarui
                 if (loadingSpinner) {
-                    loadingSpinner.classList.add('hidden'); // Hide spinner
+                    loadingSpinner.classList.add('hidden'); // Hide spinner once data is loaded
                 }
-            }
+            }, (error) => {
+                console.error("Error listening to POs:", error);
+                showCustomAlert("Gagal memuat data PO secara realtime.", "error");
+                if (loadingSpinner) {
+                    loadingSpinner.classList.add('hidden');
+                }
+            });
         }
 
-        function renderPO(po, index) { // Tambahkan parameter index
+
+        function renderPO(po, index) {
             const poCard = document.createElement('div');
             poCard.className = 'deal-card';
             poCard.dataset.id = po.id;
             
-            // Status color class is still generated but not used for the badge
-            // let statusColorClass = ''; // Dihapus karena status tidak ditampilkan
-            // switch (po.status) {
-            //     case 'pending':
-            //         statusColorClass = 'bg-gray-100 text-gray-800';
-            //         break;
-            //     case 'in-transit':
-            //         statusColorClass = 'bg-blue-100 text-blue-800';
-            //         break;
-            //     case 'delivered':
-            //         statusColorClass = 'bg-green-100 text-green-800';
-            //         break;
-            //     case 'cancelled':
-            //         statusColorClass = 'bg-red-100 text-red-800';
-            //         break;
-            //     case 'on-hold':
-            //         statusColorClass = 'bg-yellow-100 text-yellow-800';
-            //         break;
-            //     default:
-            //         statusColorClass = 'bg-gray-100 text-gray-800';
-            // }
-
             poCard.innerHTML = `
-                <span class="po-card-number">${index + 1}</span> <!-- Nomor urut di kanan atas -->
+                <span class="po-card-number">${index + 1}</span>
                 <div class="flex justify-between items-start">
                     <h3 class="font-bold text-gray-800">No. PO: ${po.noPO || 'No PO'}</h3>
                 </div>
@@ -1139,8 +1070,6 @@
                     <p><i class="fas fa-building"></i> Supplier: ${po.supplierName || '-'}</p>
                     <p><i class="fas fa-box"></i> Produk: ${po.selectedProduct ? po.selectedProduct.name : '-'}</p>
                     <p><i class="fas fa-calendar-alt"></i> Plan Delivery: ${po.planDelivery ? formatDate(po.planDelivery) : '-'}</p>
-                    <!-- Baris status dihilangkan -->
-                    <!-- <p><i class="fas fa-info-circle"></i> Status: <span class="font-semibold ${statusColorClass.replace('bg-', 'text-')}">${po.status ? po.status.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : '-'}</span></p> -->
                 </div>
                 <div class="mt-2 flex justify-end items-center deal-footer">
                     <div class="flex space-x-1 deal-actions">
@@ -1160,35 +1089,8 @@
             return poCard;
         }
 
-        function renderAllPOs() {
-            const pipelineStage = document.getElementById('pos-stage');
-            if (!pipelineStage) return;
-            
-            pipelineStage.innerHTML = '';
-
-            let posToDisplay = pos;
-
-            if (posToDisplay.length === 0) {
-                pipelineStage.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-inbox"></i>
-                        <p>Tidak ada PO di daftar.</p>
-                    </div>
-                `;
-            } else {
-                posToDisplay.forEach((po, index) => { // Teruskan index di sini
-                    const poCard = renderPO(po, index); // Panggil renderPO dengan index
-                    if (poCard) {
-                        pipelineStage.appendChild(poCard);
-                        // Animate cards on load
-                        setTimeout(() => {
-                            poCard.classList.add('show');
-                        }, 50 * index); // Staggered animation
-                    }
-                });
-            }
-
-            initSortable(); // Tetap panggil, tapi fungsinya sudah dinonaktifkan
+        function renderAllPOs() { // Fungsi ini sekarang dipanggil oleh filterPOs()
+            // Logika rendering dipindahkan ke renderFilteredPOs()
         }
 
         function populateDropdown(selectElementId, uniqueValues, selectedValue = 'all') {
@@ -1197,6 +1099,8 @@
                 console.warn(`Element with ID '${selectElementId}' not found.`);
                 return;
             }
+
+            const currentSelectedValue = selectElement.value; // Simpan nilai yang sedang dipilih
 
             selectElement.innerHTML = '';
 
@@ -1217,11 +1121,17 @@
                 }
             });
 
-            selectElement.value = selectedValue;
+            // Kembalikan nilai yang dipilih sebelumnya jika masih ada
+            if (Array.from(selectElement.options).some(option => option.value === currentSelectedValue)) {
+                selectElement.value = currentSelectedValue;
+            } else {
+                selectElement.value = 'all'; // Reset ke 'all' jika nilai sebelumnya tidak valid lagi
+            }
         }
 
         function populateFilterDropdowns() {
-            populateDropdown('filterStatus', ['pending', 'in-transit', 'delivered', 'cancelled', 'on-hold'], document.getElementById('filterStatus').value);
+            // Status dropdown tidak perlu diisi dari uniqueValues karena sudah statis
+            // populateDropdown('filterStatus', ['pending', 'in-transit', 'delivered', 'cancelled', 'on-hold'], document.getElementById('filterStatus').value);
             populateDropdown('filterSupplier', uniqueSuppliers, document.getElementById('filterSupplier').value);
             populateDropdown('filterItemName', uniqueItemNames, document.getElementById('filterItemName').value);
             populateDropdown('filterAllocation', uniqueAllocations, document.getElementById('filterAllocation').value);
@@ -1257,9 +1167,9 @@
 
             searchableField.addEventListener('input', function() {
                 const searchTerm = this.value.toLowerCase();
-                searchResultsDiv.innerHTML = ''; // Clear previous results
+                searchResultsDiv.innerHTML = '';
 
-                if (searchTerm.length < 2) { // Minimal 2 karakter untuk mulai mencari
+                if (searchTerm.length < 2) {
                     searchResultsDiv.classList.add('hidden');
                     return;
                 }
@@ -1291,33 +1201,26 @@
                 }
             });
 
-            // Sembunyikan hasil pencarian saat klik di luar
             document.addEventListener('click', function(event) {
                 if (!searchableField.contains(event.target) && !searchResultsDiv.contains(event.target)) {
                     searchResultsDiv.classList.add('hidden');
                 }
             });
 
-            // Fungsi untuk memilih produk dari hasil pencarian
             function selectProduct(productId, productName) {
                 searchableField.value = productName;
                 selectedProductIdInput.value = productId;
                 searchResultsDiv.classList.add('hidden');
-                // Opsional: Tambahkan produk yang dipilih ke daftar item PO secara otomatis
-                // addItemField(productName, 1); // Contoh: tambahkan dengan quantity default 1
             }
 
-            // Override openPOModal untuk reset/isi field pencarian
             const originalOpenPOModal = openPOModal;
             openPOModal = function(poId = null) {
-                originalOpenPOModal(poId); // Panggil fungsi asli
-                if (!poId) { // Jika ini adalah PO baru
+                originalOpenPOModal(poId);
+                if (!poId) {
                     searchableField.value = '';
                     selectedProductIdInput.value = '';
                     searchResultsDiv.classList.add('hidden');
                 } else {
-                    // Jika edit PO, Anda mungkin ingin mengisi searchableField
-                    // dengan data yang sudah ada di PO
                     const po = pos.find(p => p.id === poId);
                     if (po && po.selectedProduct && po.selectedProduct.name) { 
                         searchableField.value = po.selectedProduct.name;
@@ -1337,7 +1240,7 @@
             const poForm = document.getElementById('poForm');
             
             poForm.reset();
-            document.getElementById('itemsList').innerHTML = ''; // Pastikan ini kosong sebelum mengisi
+            document.getElementById('itemsList').innerHTML = '';
             document.getElementById('poId').value = '';
 
             if (poId) {
@@ -1349,21 +1252,20 @@
                     document.getElementById('noPO').value = po.noPO || '';
                     document.getElementById('supplierName').value = po.supplierName || '';
                     
-                    // Isi field produk terpilih jika ada
                     if (po.selectedProduct && po.selectedProduct.name) {
                         document.getElementById('searchableField').value = po.selectedProduct.name;
                         document.getElementById('selectedProductId').value = po.selectedProduct.id || '';
                     } else {
                         document.getElementById('searchableField').value = '';
-                        selectedProductIdInput.value = '';
+                        document.getElementById('selectedProductId').value = '';
                     }
 
-                    if (po.items && Array.isArray(po.items) && po.items.length > 0) { // Cek jika ada item
+                    if (po.items && Array.isArray(po.items) && po.items.length > 0) {
                         po.items.forEach(item => {
                             addItemField(item.itemName, item.quantity);
                         });
                     } else {
-                        addItemField(); // Tambahkan minimal satu jika tidak ada item
+                        addItemField();
                     }
 
                     document.getElementById('allocation').value = po.allocation || '';
@@ -1373,7 +1275,6 @@
                     document.getElementById('airForwarder').value = po.airForwarder || '';
                     document.getElementById('disrc').value = po.disrc || '';
                     
-                    // Perbaikan: Pastikan po.planDelivery adalah objek Date sebelum memanggil toISOString()
                     document.getElementById('planDelivery').value = po.planDelivery instanceof Date ? po.planDelivery.toISOString().split('T')[0] : '';
                     document.getElementById('eta').value = po.eta instanceof Date ? po.eta.toISOString().split('T')[0] : '';
                     document.getElementById('actualDelivery').value = po.actualDelivery instanceof Date ? po.actualDelivery.toISOString().split('T')[0] : '';
@@ -1382,16 +1283,12 @@
                     document.getElementById('hsCode').value = po.hsCode || '';
                     document.getElementById('revisiHS').value = po.revisiHS || '';
                     document.getElementById('note').value = po.note || '';
-                    // Status tidak lagi diambil dari input tersembunyi
-                    // document.getElementById('status').value = po.status || DEFAULT_STATUS; 
                 }
             } else {
                 modalTitle.textContent = 'Tambah PO Baru';
-                // Status tidak lagi diatur dari input tersembunyi
-                // document.getElementById('status').value = DEFAULT_STATUS;
-                document.getElementById('searchableField').value = ''; // Reset untuk PO baru
-                document.getElementById('selectedProductId').value = ''; // Reset untuk PO baru
-                addItemField(); // Tambahkan minimal satu form item saat membuat PO baru
+                document.getElementById('searchableField').value = '';
+                document.getElementById('selectedProductId').value = '';
+                addItemField();
             }
             
             poModal.classList.remove('hidden');
@@ -1419,9 +1316,8 @@
             const noPO = document.getElementById('noPO').value;
             const supplierName = document.getElementById('supplierName').value;
             
-            // Ambil data dari form pencarian produk
             const selectedProductId = document.getElementById('selectedProductId').value;
-            const selectedProductName = document.getElementById('searchableField').value; // Ambil nama dari input field
+            const selectedProductName = document.getElementById('searchableField').value;
 
             const itemInputs = document.querySelectorAll('#itemsList .item-name-input');
             const quantityInputs = document.querySelectorAll('#itemsList .item-quantity-input');
@@ -1449,11 +1345,9 @@
             const hsCode = document.getElementById('hsCode').value;
             const revisiHS = document.getElementById('revisiHS').value;
             const note = document.getElementById('note').value;
-            // Status tidak lagi diambil dari input tersembunyi, selalu gunakan DEFAULT_STATUS
-            // const status = document.getElementById('status').value; 
 
-            if (!noPO) { // Hanya No. PO yang required
-                showCustomAlert("No. PO harus diisi.", "error"); // Menggunakan custom alert
+            if (!noPO) {
+                showCustomAlert("No. PO harus diisi.", "error");
                 return;
             }
 
@@ -1461,7 +1355,6 @@
                 orderConfirmation: orderConfirmation,
                 noPO: noPO,
                 supplierName: supplierName,
-                // Tambahkan data produk yang dipilih
                 selectedProduct: selectedProductId ? { id: selectedProductId, name: selectedProductName } : null,
                 items: itemsToSave,
                 allocation: allocation,
@@ -1477,7 +1370,7 @@
                 hsCode: hsCode,
                 revisiHS: revisiHS,
                 note: note,
-                status: DEFAULT_STATUS, // Status selalu diatur ke default
+                status: DEFAULT_STATUS,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
 
@@ -1485,18 +1378,19 @@
                 showGlobalLoading();
                 if (poId) {
                     await dealsCollection.doc(poId).update(poData);
-                    showCustomAlert("PO berhasil diperbarui!", "success"); // Menggunakan custom alert
+                    showCustomAlert("PO berhasil diperbarui!", "success");
                 } else {
                     poData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
                     poData.createdBy = auth.currentUser.email;
                     await dealsCollection.add(poData);
-                    showCustomAlert("PO baru berhasil ditambahkan!", "success"); // Menggunakan custom alert
+                    showCustomAlert("PO baru berhasil ditambahkan!", "success");
                 }
                 closePOModal();
-                await loadPOsFromFirebase();
+                // Tidak perlu memanggil loadPOsFromFirebase() atau filterPOs() di sini
+                // karena onSnapshot akan otomatis memperbarui data.
             } catch (error) {
                 console.error("Error saving PO:", error);
-                showCustomAlert("Gagal menyimpan PO. Silakan coba lagi.", "error"); // Menggunakan custom alert
+                showCustomAlert("Gagal menyimpan PO. Silakan coba lagi.", "error");
             } finally {
                 hideGlobalLoading();
             }
@@ -1524,12 +1418,13 @@
             try {
                 showGlobalLoading();
                 await dealsCollection.doc(poToDeleteId).delete();
-                showCustomAlert(`PO "${poToDeleteNo}" berhasil dihapus!`, "success"); // Menggunakan custom alert
-                closeDeleteModal(); // Ini seharusnya berfungsi sekarang
-                await loadPOsFromFirebase();
+                showCustomAlert(`PO "${poToDeleteNo}" berhasil dihapus!`, "success");
+                closeDeleteModal();
+                // Tidak perlu memanggil loadPOsFromFirebase() atau filterPOs() di sini
+                // karena onSnapshot akan otomatis memperbarui data.
             } catch (error) {
                 console.error("Error deleting PO:", error);
-                showCustomAlert("Gagal menghapus PO. Silakan coba lagi.", "error"); // Menggunakan custom alert
+                showCustomAlert("Gagal menghapus PO. Silakan coba lagi.", "error");
             } finally {
                 hideGlobalLoading();
             }
@@ -1538,7 +1433,7 @@
         function openPODetailModal(poId) {
             const po = pos.find(p => p.id === poId);
             if (!po) {
-                showCustomAlert("Detail PO tidak ditemukan.", "error"); // Menggunakan custom alert
+                showCustomAlert("Detail PO tidak ditemukan.", "error");
                 return;
             }
 
@@ -1547,7 +1442,6 @@
             document.getElementById('detailNoPO').textContent = po.noPO || '-';
             document.getElementById('detailSupplierName').textContent = po.supplierName || '-';
             
-            // Tampilkan produk terpilih
             document.getElementById('detailSelectedProduct').textContent = po.selectedProduct ? po.selectedProduct.name : '-';
 
             const detailItemsList = document.getElementById('detailItemsList');
@@ -1579,8 +1473,6 @@
             document.getElementById('detailHSCode').textContent = po.hsCode || '-';
             document.getElementById('detailRevisiHS').textContent = po.revisiHS || '-';
             document.getElementById('detailNote').textContent = po.note || '-';
-            // document.getElementById('detailStatus').textContent = po.status ? po.status.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : '-'; // Dihapus
-            // document.getElementById('detailCreatedDate').textContent = formatDate(po.createdAt) || '-'; // Dihapus
 
             document.getElementById('poDetailModal').classList.remove('hidden');
             document.getElementById('poDetailModalContent').classList.remove('modal-content-leave-active');
@@ -1606,23 +1498,7 @@
         function initSortable() {
             const pipelineStage = document.getElementById('pos-stage');
             if (!pipelineStage) return;
-
-            // Hapus atau komentari baris berikut untuk menonaktifkan SortableJS
-            // if (sortableInstances['pos-stage']) {
-            //     sortableInstances['pos-stage'].destroy();
-            // }
-
-            // sortableInstances['pos-stage'] = new Sortable(pipelineStage, {
-            //     animation: 150,
-            //     ghostClass: 'sortable-ghost',
-            //     chosenClass: 'sortable-chosen',
-            //     dragClass: 'sortable-drag',
-            //     disabled: true, // Selalu nonaktifkan drag
-            //     onEnd: function(evt) {
-            //         // Logika jika ada perubahan urutan (opsional, tidak diminta di sini)
-            //     }
-            // });
-            console.log("SortableJS is disabled."); // Tambahkan log untuk konfirmasi
+            console.log("SortableJS is disabled.");
         }
 
         // ==================== FUNGSI PERMISSIONS ====================
@@ -1634,29 +1510,23 @@
                 console.log("Applying permissions for Role:", currentUserRole);
                 
                 const newPOBtn = document.getElementById('newPOBtn');
-                const exportExcelBtn = document.getElementById('exportExcelBtn'); // New
+                const exportExcelBtn = document.getElementById('exportExcelBtn');
                 const searchInput = document.getElementById('searchPOs');
                 const openFilterPanelBtn = document.getElementById('openFilterPanelBtn');
                 const backButton = document.getElementById('backButton');
                 const authButton = document.getElementById('authButton');
 
                 if (newPOBtn) newPOBtn.classList.remove('hidden');
-                if (exportExcelBtn) exportExcelBtn.classList.remove('hidden'); // Show export button
+                if (exportExcelBtn) exportExcelBtn.classList.remove('hidden');
                 if (backButton) backButton.classList.remove('hidden');
                 if (authButton) authButton.classList.remove('hidden');
 
                 if (searchInput) searchInput.classList.remove('hidden');
                 if (openFilterPanelBtn) openFilterPanelBtn.classList.remove('hidden');
-
-                // Karena drag and drop dinonaktifkan secara global di initSortable,
-                // baris ini tidak lagi diperlukan untuk mengontrol disabled state berdasarkan role.
-                // if (sortableInstances['pos-stage']) {
-                //     sortableInstances['pos-stage'].option('disabled', !isAdmin);
-                // }
                 
             } catch (error) {
                 console.error("Error in applyUserPermissions:", error);
-                showCustomAlert("Gagal menerapkan permissions", "error"); // Menggunakan custom alert
+                showCustomAlert("Gagal menerapkan permissions", "error");
             }
         }
 
@@ -1676,7 +1546,7 @@
 
                 const buttons = [
                     { id: 'newPOBtn', func: openPOModal },
-                    { id: 'exportExcelBtn', func: exportToExcel }, // New
+                    { id: 'exportExcelBtn', func: exportToExcel },
                     { id: 'backButton', func: goToIndex },
                     { id: 'authButton', func: logout },
                     { id: 'openFilterPanelBtn', func: openFilterPanel }
@@ -1687,7 +1557,6 @@
                     if (element) {
                         element.removeEventListener('click', btn.func); 
                         element.addEventListener('click', btn.func);
-                        // Add ripple effect
                         element.addEventListener('click', createRipple);
                         console.log(`Event listener added for ${btn.id}`);
                     }
@@ -1700,11 +1569,10 @@
                 }
             } catch (error) {
                 console.error("Error initializing event listeners:", error);
-                showCustomAlert("Gagal memuat beberapa fungsi", "error"); // Menggunakan custom alert
+                showCustomAlert("Gagal memuat beberapa fungsi", "error");
             }
         }
 
-        // Ripple Effect Function
         function createRipple(event) {
             const button = event.currentTarget;
             const circle = document.createElement('span');
@@ -1736,16 +1604,14 @@
                 const allocationFilter = document.getElementById('filterAllocation').value;
                 const yearFilter = document.getElementById('filterYear').value;
                 
-                let basePOs = pos;
+                let basePOs = pos; // Gunakan array 'pos' yang sudah diperbarui oleh onSnapshot
 
-                // Logika pemfilteran yang sebenarnya
                 const filteredPOs = basePOs.filter(po => {
                     const matchesSearch = 
                         (po.noPO && po.noPO.toLowerCase().includes(searchTerm)) ||
                         (po.supplierName && po.supplierName.toLowerCase().includes(searchTerm)) ||
                         (po.items && Array.isArray(po.items) && po.items.some(item => item.itemName && item.itemName.toLowerCase().includes(searchTerm)));
                     
-                    // Status filter (tetap aktif meskipun tidak terlihat di card)
                     const matchesStatus = 
                         statusFilter === 'all' || 
                         (po.status && po.status === statusFilter);
@@ -1768,7 +1634,7 @@
                     return matchesSearch && matchesStatus && matchesSupplier && matchesItemName && matchesAllocation && matchesYear;
                 });
                 
-                renderFilteredPOs(filteredPOs); // Selalu panggil ini dengan hasil filter
+                renderFilteredPOs(filteredPOs);
             } catch (error) {
                 console.error("Error filtering POs:", error);
             }
@@ -1790,10 +1656,9 @@
                 return;
             }
             
-            filteredPOs.forEach((po, index) => { // Teruskan index di sini
-                const poCard = renderPO(po, index); // Panggil renderPO dengan index
+            filteredPOs.forEach((po, index) => {
+                const poCard = renderPO(po, index);
                 pipelineStage.appendChild(poCard);
-                // Animate cards on filter result
                 setTimeout(() => {
                     poCard.classList.add('show');
                 }, 50 * index);
@@ -1801,6 +1666,11 @@
         }
 
         function logout() {
+            // Unsubscribe dari listener onSnapshot saat logout
+            if (unsubscribeFromPOs) {
+                unsubscribeFromPOs();
+                unsubscribeFromPOs = null;
+            }
             auth.signOut()
                 .then(() => {
                     console.log("User logged out successfully");
@@ -1809,7 +1679,7 @@
                 })
                 .catch((error) => {
                     console.error("Error logging out:", error);
-                    showCustomAlert("Gagal logout. Silakan coba lagi.", "error"); // Menggunakan custom alert
+                    showCustomAlert("Gagal logout. Silakan coba lagi.", "error");
                 });
         }
 
@@ -1823,7 +1693,7 @@
 
             if (!filterPanel || !filterPanelContent) {
                 console.error("Elemen panel filter tidak ditemukan.");
-                showCustomAlert("Gagal membuka filter: Elemen tidak lengkap.", "error"); // Menggunakan custom alert
+                showCustomAlert("Gagal membuka filter: Elemen tidak lengkap.", "error");
                 return;
             }
 
@@ -1867,7 +1737,6 @@
             filterPOs();
         }
 
-        // Fungsi closeDeleteModal yang sudah ada
         function closeDeleteModal() {
             const deleteModalContent = document.getElementById('deleteModalContent');
             if (!deleteModalContent) return;
@@ -1887,7 +1756,6 @@
             showGlobalLoading();
             try {
                 const data = [];
-                // Headers for the Excel file
                 const headers = [
                     "No. Urut", "Order Confirmation", "No. PO", "Nama Supplier", "Produk Terpilih",
                     "Nama Barang & Quantity", "Allocation", "Invoice", "Tracking", "Sea Forwarder",
@@ -1938,7 +1806,7 @@
                         : '';
 
                     const row = [
-                        index + 1, // No. Urut
+                        index + 1,
                         po.orderConfirmation || '',
                         po.noPO || '',
                         po.supplierName || '',
@@ -1970,11 +1838,11 @@
 
                 const fileName = `Purchase_Orders_${new Date().toISOString().slice(0,10)}.xlsx`;
                 XLSX.writeFile(wb, fileName);
-                showCustomAlert("Data PO berhasil diekspor ke Excel!", "success"); // Menggunakan custom alert
+                showCustomAlert("Data PO berhasil diekspor ke Excel!", "success");
 
             } catch (error) {
                 console.error("Error exporting to Excel:", error);
-                showCustomAlert("Gagal mengekspor data ke Excel.", "error"); // Menggunakan custom alert
+                showCustomAlert("Gagal mengekspor data ke Excel.", "error");
             } finally {
                 hideGlobalLoading();
             }
@@ -1984,8 +1852,8 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             initSortable();
-            setupSearchableField(); // Panggil fungsi setup pencarian
-            // Initial load will be handled by auth.onAuthStateChanged
+            setupSearchableField();
+            // auth.onAuthStateChanged akan memanggil listenForPOs() setelah otentikasi
         });
     </script>
 </body>
