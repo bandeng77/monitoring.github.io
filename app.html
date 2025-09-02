@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Purchase Order Monitoring - Genetek</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js dihapus karena statistik dihapus -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
@@ -159,35 +158,8 @@
             opacity: 1;
             transform: translateX(0);
         }
-        #activityModalContent {
-            max-height: 85vh; /* Tinggi modal aktivitas sedikit lebih besar */
-            overflow-y: auto;
-        }
-        .activity-item {
-            padding: 0.9rem; /* Padding lebih besar */
-            background-color: #fefefe; /* Warna latar belakang lebih putih */
-            border-radius: 0.5rem; /* Border radius lebih besar */
-            border: 1px solid #e5e7eb;
-            margin-bottom: 0.6rem; /* Margin lebih besar */
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04); /* Bayangan lembut */
-            transition: all 0.2s ease-out;
-        }
-        .activity-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        }
-        .activity-item:last-child {
-            margin-bottom: 0;
-        }
-        .activity-item p {
-            font-size: 0.9rem; /* Ukuran font sedikit lebih besar */
-            color: #374151;
-        }
-        .activity-item .activity-date {
-            font-size: 0.7rem; /* Ukuran font sedikit lebih kecil */
-            color: #6b7280;
-            margin-top: 0.3rem; /* Margin sedikit lebih besar */
-        }
+        /* #activityModalContent { Dihapus } */
+        /* .activity-item { Dihapus } */
         
         /* Penyesuaian CSS untuk deal card yang lebih ringkas */
         .deal-card h3 {
@@ -415,19 +387,16 @@
                     <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900">Purchase Order Monitoring <i class="fas fa-box-open text-blue-600 ml-2"></i></h1>
                 </div>
                 <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 mt-4 sm:mt-0">
-                    <button id="authButton" onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
-                        <i class="fas fa-sign-out-alt mr-2"></i> Logout
-                    </button>
-
                     <button id="newPOBtn" onclick="openPOModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
                         <i class="fas fa-plus-circle mr-2"></i> PO Baru
                     </button>
                     
-                    <!-- Tombol Statistik dihapus -->
-                    
-                    <button id="activityBtn" onclick="openActivityModal()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
-                        <i class="fas fa-bell mr-2"></i> Aktivitas
-                        <span id="activity-badge" class="ml-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full hidden">0</span>
+                    <button id="backButton" onclick="goToIndex()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
+                        <i class="fas fa-arrow-left mr-2"></i> Kembali
+                    </button>
+
+                    <button id="authButton" onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
+                        <i class="fas fa-sign-out-alt mr-2"></i> Logout
                     </button>
                 </div>
             </div>
@@ -456,8 +425,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Stats Section dihapus -->
 
         <!-- Add/Edit PO Modal -->
         <div id="poModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
@@ -550,7 +517,6 @@
                                 <label class="block text-gray-700 text-sm font-semibold mb-2" for="note">Note</label>
                                 <textarea id="note" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" rows="3" placeholder="Tambahkan catatan atau deskripsi tambahan..."></textarea>
                             </div>
-                            <!-- Form Status dihapus -->
                             <input type="hidden" id="status" value="pending"> <!-- Status default disembunyikan -->
                         </div>
                     </div>
@@ -650,26 +616,6 @@
                 </div>
                 <div class="flex justify-end space-x-3 mt-6">
                     <button type="button" onclick="closePODetailModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
-                        Tutup
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Activity Modal -->
-        <div id="activityModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
-            <div class="bg-white rounded-xl p-8 w-full max-w-lg shadow-2xl modal-content-enter" id="activityModalContent">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900 flex items-center"><i class="fas fa-history mr-3 text-gray-500"></i> Aktivitas Terakhir</h2>
-                    <button onclick="closeActivityModal()" class="text-gray-500 hover:text-gray-700 transition duration-200">
-                        <i class="fas fa-times text-xl"></i>
-                    </button>
-                </div>
-                <div id="activity-feed-modal" class="space-y-3">
-                    <!-- Aktivitas akan dimuat di sini -->
-                </div>
-                <div class="flex justify-end mt-6">
-                    <button onclick="closeActivityModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
                         Tutup
                     </button>
                 </div>
@@ -778,14 +724,11 @@
         const db = firebase.firestore();
         const auth = firebase.auth();
         const dealsCollection = db.collection('purchaseOrders');
-        const activitiesCollection = db.collection('activities');
-        const usersCollection = db.collection('users');
+        const usersCollection = db.collection('users'); // Tetap diperlukan untuk menyimpan role admin
 
         let pos = [];
-        let activities = [];
-        // let charts = {}; // Dihapus karena statistik dihapus
         const DEFAULT_STATUS = 'pending';
-        let currentUserRole = 'user';
+        let currentUserRole = 'user'; // Default role, akan diubah jika admin
         let sortableInstances = {};
         let authInitialized = false;
 
@@ -794,21 +737,8 @@
         let uniqueAllocations = new Set();
         let uniqueYears = new Set();
 
-        const salesEmails = [
-            'pamungkas@genetek.co.id',
-            'rory@genetek.co.id',
-            'rangga@genetek.co.id',
-            'dhea@genetek.co.id',
-            'yib_wahyu@genetek.co.id',
-        ];
-
-        const managerEmails = [
-            'hadi@genetek.co.id',
-            'david@genetek.co.id',
-            'crenata@genetek.co.id',
-            'agoesdh@genetek.co.id',
-            'satriopk@genetek.co.id',
-        ];
+        // Hanya satu admin yang diizinkan
+        const ADMIN_EMAIL = 'maida@genetek.co.id';
 
         // ==================== FUNGSI UTAMA ====================
 
@@ -833,32 +763,22 @@
             if (user && window.location.pathname.includes('app.html')) {
                 try {
                     showGlobalLoading();
-                    if (user.email === 'admin@genetek.co.id') {
+                    if (user.email === ADMIN_EMAIL) {
                         currentUserRole = 'admin';
                         await usersCollection.doc(user.uid).set({ 
                             role: 'admin',
                             email: user.email 
                         }, { merge: true });
-                    } else if (managerEmails.includes(user.email)) {
-                        currentUserRole = 'manager';
-                        await usersCollection.doc(user.uid).set({ 
-                            role: 'manager',
-                            email: user.email 
-                        }, { merge: true });
-                    } else if (salesEmails.includes(user.email)) {
-                        currentUserRole = 'user';
-                        await usersCollection.doc(user.uid).set({ 
-                            role: 'user',
-                            email: user.email 
-                        }, { merge: true });
                     } else {
-                        const userDoc = await usersCollection.doc(user.uid).get();
-                        currentUserRole = userDoc.exists ? userDoc.data().role : 'user';
+                        // Jika bukan admin yang diizinkan, paksa logout dan redirect ke login
+                        console.log("Unauthorized user, logging out and redirecting to login.");
+                        await auth.signOut();
+                        window.location.href = 'login.html';
+                        return;
                     }
 
                     console.log("Current role:", currentUserRole);
                     applyUserPermissions();
-                    await loadActivitiesFromFirebase(); // Tunggu aktivitas dimuat
                     await loadPOsFromFirebase(); // Tunggu PO dimuat
                     initEventListeners();
                     hideGlobalLoading();
@@ -869,136 +789,6 @@
                 }
             }
         });
-
-        // ==================== FUNGSI AKTIVITAS ====================
-
-        async function loadActivitiesFromFirebase() {
-            console.log("Loading activities from Firebase...");
-            try {
-                let query = activitiesCollection.orderBy("timestamp", "desc").limit(50);
-                const querySnapshot = await query.get();
-                activities = [];
-                querySnapshot.forEach((doc) => {
-                    const activityData = doc.data();
-                    if (activityData.timestamp && typeof activityData.timestamp.toDate !== 'function') {
-                        activityData.timestamp = firebase.firestore.Timestamp.fromMillis(activityData.timestamp);
-                    }
-                    activities.push({ id: doc.id, ...activityData });
-                });
-                console.log("Activities loaded:", activities.length, activities);
-                updateActivityBadge();
-            } catch (error) {
-                console.error("Error loading activities:", error);
-                showToast("Gagal memuat aktivitas terbaru", 3000);
-            }
-        }
-
-        function updateActivityBadge() {
-            const activityBadge = document.getElementById('activity-badge');
-            if (!activityBadge) return;
-            
-            const unreadCount = activities.filter(act => !act.read).length;
-            
-            if (unreadCount > 0) {
-                activityBadge.textContent = unreadCount;
-                activityBadge.classList.remove('hidden');
-            } else {
-                activityBadge.classList.add('hidden');
-            }
-        }
-
-        function openActivityModal() {
-            try {
-                const activityModal = document.getElementById('activityModal');
-                const activityFeed = document.getElementById('activity-feed-modal');
-                const activityModalContent = document.getElementById('activityModalContent');
-
-                if (!activityModal || !activityFeed || !activityModalContent) {
-                    console.error("Elemen modal aktivitas tidak ditemukan.");
-                    showToast("Gagal membuka aktivitas: Elemen tidak lengkap.", 3000);
-                    return;
-                }
-                
-                activityFeed.innerHTML = '';
-                
-                if (activities.length === 0) {
-                    activityFeed.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-inbox"></i>
-                            <p>Tidak ada aktivitas terbaru.</p>
-                        </div>
-                    `;
-                } else {
-                    const sortedActivities = [...activities].sort((a, b) => {
-                        const tsA = a.timestamp ? (a.timestamp.toDate ? a.timestamp.toDate().getTime() : a.timestamp) : 0;
-                        const tsB = b.timestamp ? (b.timestamp.toDate ? b.timestamp.toDate().getTime() : b.timestamp) : 0;
-                        return tsB - tsA;
-                    });
-
-                    sortedActivities.forEach(activity => {
-                        const activityItem = document.createElement('div');
-                        activityItem.className = 'activity-item';
-                        activityItem.innerHTML = `
-                            <p>${activity.message || 'Aktivitas tidak tersedia'}</p>
-                            <div class="activity-date">
-                                ${formatDateTime(activity.timestamp)}
-                                ${activity.read ? '' : '<span class="ml-2 text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full">Baru</span>'}
-                            </div>
-                        `;
-                        activityFeed.appendChild(activityItem);
-                    });
-                }
-                
-                activityModal.classList.remove('hidden');
-                activityModalContent.classList.remove('modal-content-leave-active');
-                activityModalContent.classList.add('modal-content-enter-active');
-                
-                markActivitiesAsRead();
-            } catch (error) {
-                console.error("Error opening activity modal:", error);
-                showToast("Gagal membuka aktivitas", 3000);
-            }
-        }
-
-        function markActivitiesAsRead() {
-            const batch = db.batch();
-            const unreadActivities = activities.filter(act => !act.read);
-            
-            unreadActivities.forEach(activity => {
-                const activityRef = activitiesCollection.doc(activity.id);
-                batch.update(activityRef, { read: true });
-            });
-            
-            if (unreadActivities.length > 0) {
-                batch.commit()
-                    .then(() => {
-                        console.log("Activities marked as read");
-                        updateActivityBadge();
-                    })
-                    .catch(error => {
-                        console.error("Error marking activities as read:", error);
-                    });
-            }
-        }
-
-        function closeActivityModal() {
-            console.log("closeActivityModal() called.");
-            const activityModalContent = document.getElementById('activityModalContent');
-            if (!activityModalContent) {
-                console.error("Elemen activityModalContent tidak ditemukan saat menutup modal.");
-                return;
-            }
-
-            activityModalContent.classList.remove('modal-content-enter-active');
-            activityModalContent.classList.add('modal-content-leave-active');
-            
-            activityModalContent.addEventListener('transitionend', function handler() {
-                document.getElementById('activityModal').classList.add('hidden');
-                activityModalContent.classList.remove('modal-content-leave-active');
-                activityModalContent.removeEventListener('transitionend', handler);
-                console.log("Modal aktivitas disembunyikan.");
-            }, { once: true });
-        }
 
         // ==================== FUNGSI UTILITAS ====================
 
@@ -1426,27 +1216,14 @@
                 if (poId) {
                     await dealsCollection.doc(poId).update(poData);
                     showToast("PO berhasil diperbarui!", 2000);
-                    await activitiesCollection.add({
-                        message: `PO "${noPO}" diperbarui oleh ${auth.currentUser.email}.`,
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                        userEmail: auth.currentUser.email,
-                        read: false
-                    });
                 } else {
                     poData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
                     poData.createdBy = auth.currentUser.email;
                     await dealsCollection.add(poData);
                     showToast("PO baru berhasil ditambahkan!", 2000);
-                    await activitiesCollection.add({
-                        message: `PO baru "${noPO}" ditambahkan oleh ${auth.currentUser.email}.`,
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                        userEmail: auth.currentUser.email,
-                        read: false
-                    });
                 }
                 closePOModal();
                 await loadPOsFromFirebase();
-                await loadActivitiesFromFirebase();
             } catch (error) {
                 console.error("Error saving PO:", error);
                 showToast("Gagal menyimpan PO. Silakan coba lagi.", 3000);
@@ -1478,15 +1255,8 @@
                 showGlobalLoading();
                 await dealsCollection.doc(poToDeleteId).delete();
                 showToast(`PO "${poToDeleteNo}" berhasil dihapus!`, 2000);
-                await activitiesCollection.add({
-                    message: `PO "${poToDeleteNo}" dihapus oleh ${auth.currentUser.email}.`,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                    userEmail: auth.currentUser.email,
-                    read: false
-                });
                 closeDeleteModal();
                 await loadPOsFromFirebase();
-                await loadActivitiesFromFirebase();
             } catch (error) {
                 console.error("Error deleting PO:", error);
                 showToast("Gagal menghapus PO. Silakan coba lagi.", 3000);
@@ -1573,49 +1343,31 @@
                 ghostClass: 'sortable-ghost',
                 chosenClass: 'sortable-chosen',
                 dragClass: 'sortable-drag',
-                disabled: currentUserRole !== 'admin',
+                disabled: currentUserRole !== 'admin', // Hanya admin yang bisa drag
                 onEnd: function(evt) {
                     if (currentUserRole !== 'admin') return;
+                    // Logika jika ada perubahan urutan (opsional, tidak diminta di sini)
                 }
             });
         }
-
-        function updatePOStatus(poId, newStatus) {
-            dealsCollection.doc(poId).update({
-                status: newStatus,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            })
-            .then(() => {
-                showToast("PO berhasil diperbarui statusnya", 2000);
-            })
-            .catch((error) => {
-                console.error("Error updating PO status:", error);
-                showToast("Gagal memperbarui status PO", 3000);
-            });
-        }
-
-        // ==================== FUNGSI STATISTIK (DIHAPUS) ====================
 
         // ==================== FUNGSI PERMISSIONS ====================
 
         function applyUserPermissions() {
             try {
                 const isAdmin = currentUserRole === 'admin';
-                const isManager = currentUserRole === 'manager';
                 
                 console.log("Applying permissions for Role:", currentUserRole);
                 
-                // const viewStatsBtn = document.getElementById('viewStatsBtn'); // Dihapus
-                const activityBtn = document.getElementById('activityBtn');
                 const newPOBtn = document.getElementById('newPOBtn');
                 const searchInput = document.getElementById('searchPOs');
                 const openFilterPanelBtn = document.getElementById('openFilterPanelBtn');
+                const backButton = document.getElementById('backButton');
+                const authButton = document.getElementById('authButton');
 
-                // if (viewStatsBtn) viewStatsBtn.classList.toggle('hidden', !(isAdmin || isManager)); // Dihapus
-                
-                if (activityBtn) activityBtn.classList.remove('hidden');
-                
                 if (newPOBtn) newPOBtn.classList.remove('hidden');
+                if (backButton) backButton.classList.remove('hidden');
+                if (authButton) authButton.classList.remove('hidden');
 
                 if (searchInput) searchInput.classList.remove('hidden');
                 if (openFilterPanelBtn) openFilterPanelBtn.classList.remove('hidden');
@@ -1646,8 +1398,7 @@
 
                 const buttons = [
                     { id: 'newPOBtn', func: openPOModal },
-                    // { id: 'viewStatsBtn', func: showStats }, // Dihapus
-                    { id: 'activityBtn', func: openActivityModal },
+                    { id: 'backButton', func: goToIndex },
                     { id: 'authButton', func: logout },
                     { id: 'openFilterPanelBtn', func: openFilterPanel }
                 ];
@@ -1688,7 +1439,11 @@
                 if (searchTerm === '' && statusFilter === 'all' && supplierFilter === 'all' && itemNameFilter === 'all' &&
                     allocationFilter === 'all' && yearFilter === 'all') {
                     
-                    if (currentUserRole !== 'admin') {
+                    // Jika tidak ada filter yang diterapkan, dan user adalah admin, tampilkan semua PO
+                    if (currentUserRole === 'admin') {
+                        renderFilteredPOs(basePOs);
+                    } else {
+                        // Jika bukan admin dan tidak ada filter, tampilkan pesan kosong
                         const pipelineStage = document.getElementById('pos-stage');
                         if (pipelineStage) {
                             pipelineStage.innerHTML = `
@@ -1698,11 +1453,8 @@
                                 </div>
                             `;
                         }
-                        return;
-                    } else {
-                        renderFilteredPOs(basePOs);
-                        return;
                     }
+                    return;
                 }
 
                 const filteredPOs = basePOs.filter(po => {
@@ -1770,13 +1522,16 @@
                 .then(() => {
                     console.log("User logged out successfully");
                     pos = [];
-                    activities = [];
                     window.location.href = 'login.html';
                 })
                 .catch((error) => {
                     console.error("Error logging out:", error);
                     showToast("Gagal logout. Silakan coba lagi.", 5000);
                 });
+        }
+
+        function goToIndex() {
+            window.location.href = 'index.html';
         }
 
         function openFilterPanel() {
