@@ -387,6 +387,18 @@
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        /* CSS untuk nomor urut */
+        .po-card-number {
+            position: absolute;
+            top: 0.5rem;
+            left: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #6b7280;
+            background-color: #e5e7eb;
+            padding: 0.1rem 0.4rem;
+            border-radius: 0.25rem;
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
@@ -458,6 +470,24 @@
                                 <label class="block text-gray-700 text-sm font-semibold mb-2" for="supplierName">Nama Supplier</label>
                                 <input type="text" id="supplierName" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
                             </div>
+                            <!-- Dipindahkan ke sini -->
+                            <div class="mb-4 relative"> 
+                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="searchableField">No ID</label>
+                                <input type="text" id="searchableField" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="Cari produk...">
+                                <div id="searchResults" class="absolute z-10 bg-white border border-gray-300 rounded-lg shadow-lg mt-1 w-full max-h-48 overflow-y-auto hidden">
+                                    <!-- Hasil pencarian akan ditampilkan di sini -->
+                                </div>
+                                <input type="hidden" id="selectedProductId">
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">Nama Barang & Quantity</label>
+                                <div id="itemsList" class="space-y-3 mb-3">
+                                    <!-- Item barang akan ditambahkan di sini secara dinamis oleh JS -->
+                                </div>
+                                <button type="button" onclick="addItemField()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-1.5 rounded-lg text-xs flex items-center transition duration-200 ease-in-out transform hover:scale-105">
+                                    <i class="fas fa-plus mr-1"></i> Tambah Barang
+                                </button>
+                            </div>
                         </div>
                         <!-- Kolom 2 -->
                         <div>
@@ -484,26 +514,6 @@
                         </div>
                         <!-- Kolom 3 -->
                         <div>
-                            <!-- Form Tambahan Baru dengan Fitur Search -->
-                            <div class="mb-4 relative"> <!-- Tambahkan relative untuk positioning absolute search results -->
-                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="searchableField">No ID</label>
-                                <input type="text" id="searchableField" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="Cari produk...">
-                                <div id="searchResults" class="absolute z-10 bg-white border border-gray-300 rounded-lg shadow-lg mt-1 w-full max-h-48 overflow-y-auto hidden">
-                                    <!-- Hasil pencarian akan ditampilkan di sini -->
-                                </div>
-                                <input type="hidden" id="selectedProductId">
-                            </div>
-                            <!-- Akhir Form Tambahan Baru -->
-
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-2">Nama Barang & Quantity</label>
-                                <div id="itemsList" class="space-y-3 mb-3">
-                                    <!-- Item barang akan ditambahkan di sini secara dinamis oleh JS -->
-                                </div>
-                                <button type="button" onclick="addItemField()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-1.5 rounded-lg text-xs flex items-center transition duration-200 ease-in-out transform hover:scale-105">
-                                    <i class="fas fa-plus mr-1"></i> Tambah Barang
-                                </button>
-                            </div>
                             <div class="mb-4">
                                 <label class="block text-gray-700 text-sm font-semibold mb-2" for="disrc">DISRC</label>
                                 <input type="text" id="disrc" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
@@ -1004,7 +1014,7 @@
             poCard.className = 'deal-card';
             poCard.dataset.id = po.id;
             
-            // Status color class (tetap ada tapi tidak digunakan untuk tampilan badge)
+            // Status color class is still generated but not used for the badge
             let statusColorClass = '';
             switch (po.status) {
                 case 'pending':
@@ -1026,25 +1036,14 @@
                     statusColorClass = 'bg-gray-100 text-gray-800';
             }
 
-            // Mengumpulkan nama barang dan kuantitas
-            let itemsHtml = '';
-            if (po.items && Array.isArray(po.items) && po.items.length > 0) {
-                itemsHtml = po.items.map(item => `
-                    <p class="ml-4"><i class="fas fa-box mr-1"></i> ${item.itemName || '-'} (Qty: ${item.quantity || 0})</p>
-                `).join('');
-            } else {
-                itemsHtml = '<p class="ml-4"><i class="fas fa-box mr-1"></i> -</p>';
-            }
-
             poCard.innerHTML = `
+                <span class="po-card-number">${index + 1}</span> <!-- Nomor urut -->
                 <div class="flex justify-between items-start">
-                    <h3 class="font-bold text-gray-800">No. ${index + 1}. PO: ${po.noPO || 'No PO'}</h3> <!-- Menambahkan nomor urut -->
+                    <h3 class="font-bold text-gray-800">No. PO: ${po.noPO || 'No PO'}</h3>
                     <!-- Status badge dihapus dari sini -->
                 </div>
                 <div class="mt-1 text-sm text-gray-600 deal-details">
                     <p><i class="fas fa-building mr-1"></i> Supplier: ${po.supplierName || '-'}</p>
-                    <p><i class="fas fa-id-card mr-1"></i> No ID: ${po.selectedProduct && po.selectedProduct.name ? po.selectedProduct.name : '-'}</p> <!-- No ID (Nama Produk) -->
-                    ${itemsHtml} <!-- Nama Barang & Quantity -->
                     <p><i class="fas fa-globe mr-1"></i> COO: ${po.coo || '-'}</p>
                     <p><i class="fas fa-calendar-alt mr-1"></i> Plan Delivery: ${po.planDelivery ? formatDate(po.planDelivery) : '-'}</p>
                 </div>
