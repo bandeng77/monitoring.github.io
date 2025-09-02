@@ -125,7 +125,9 @@
         .pipeline-stage-header {
             padding: 1.25rem 1.5rem;
             border-bottom: 1px solid var(--bg-medium);
-            background-color: var(--bg-light);
+            background-image: linear-gradient(to right, var(--primary-blue), var(--accent-teal)); /* Animasi: Gradien pada header */
+            color: white; /* Animasi: Warna teks agar kontras dengan gradien */
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); /* Animasi: Bayangan pada header */
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -134,7 +136,7 @@
         .pipeline-stage-header h3 {
             font-size: 1.2rem; /* Lebih besar */
             font-weight: 700;
-            color: var(--text-dark);
+            color: white; /* Animasi: Pastikan teks judul tetap putih */
             flex-shrink: 0;
             text-align: center;
             width: 100%;
@@ -150,11 +152,12 @@
             flex-wrap: wrap;
             gap: 1rem;
             align-content: flex-start;
+            background-image: linear-gradient(to bottom right, var(--bg-light), var(--bg-soft)); /* Animasi: Gradien lembut pada konten */
         }
 
         /* Deal Card */
         .deal-card {
-            transition: transform 0.3s ease-out, box-shadow 0.3s ease-out, opacity 0.3s ease-out;
+            transition: transform 0.4s ease-out, opacity 0.4s ease-out, box-shadow 0.3s ease-out; /* Animasi: Transisi yang lebih halus */
             cursor: grab;
             position: relative;
             background-color: #ffffff;
@@ -167,8 +170,8 @@
             width: calc(25% - 0.75rem); /* Disesuaikan untuk 4 kolom */
             min-width: 220px; /* Min-width sedikit lebih kecil agar muat 4 kolom */
             box-sizing: border-box;
-            opacity: 0;
-            transform: translateY(20px);
+            opacity: 0; /* Animasi: Mulai dengan tidak terlihat */
+            transform: translateY(20px); /* Animasi: Mulai sedikit di bawah */
             display: flex; /* Menggunakan flexbox untuk tata letak internal */
             flex-direction: column;
             justify-content: space-between;
@@ -178,7 +181,7 @@
             transform: translateY(0);
         }
         .deal-card:hover {
-            transform: translateY(-7px); /* Efek hover lebih dramatis */
+            transform: translateY(-7px) scale(1.02); /* Animasi: Efek hover lebih dramatis (naik dan membesar) */
             box-shadow: 0 15px 35px var(--shadow-medium); /* Bayangan hover lebih kuat */
         }
         .deal-card:active {
@@ -244,10 +247,21 @@
         }
 
         /* Scrollbar */
-        .pipeline-stage-content::-webkit-scrollbar { width: 10px; }
-        .pipeline-stage-content::-webkit-scrollbar-track { background: var(--bg-light); border-radius: 10px; }
-        .pipeline-stage-content::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
-        .pipeline-stage-content::-webkit-scrollbar-thumb:hover { background: var(--text-light); }
+        .pipeline-stage-content::-webkit-scrollbar {
+            width: 8px; /* Animasi: Lebar scrollbar */
+        }
+        .pipeline-stage-content::-webkit-scrollbar-track {
+            background: var(--bg-soft); /* Animasi: Warna track */
+            border-radius: 10px;
+        }
+        .pipeline-stage-content::-webkit-scrollbar-thumb {
+            background: var(--primary-blue); /* Animasi: Warna thumb */
+            border-radius: 10px;
+            border: 2px solid var(--bg-soft); /* Animasi: Border agar terlihat lebih baik */
+        }
+        .pipeline-stage-content::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-dark-blue); /* Animasi: Warna thumb saat hover */
+        }
 
         /* Modals */
         .modal-content-enter-active, .modal-content-leave-active {
@@ -334,7 +348,8 @@
         .po-card-number {
             position: absolute;
             top: 0.6rem;
-            left: 0.6rem; /* Pindah ke kiri atas */
+            right: 0.6rem; /* Pindah ke kanan atas */
+            left: unset; /* Pastikan tidak ada properti left yang mengganggu */
             font-size: 0.8rem; /* Sedikit lebih besar */
             font-weight: 700;
             color: var(--text-dark); /* Warna teks lebih gelap */
@@ -564,7 +579,8 @@
                                 <label class="block text-gray-700 text-sm font-semibold mb-2" for="note">Note</label>
                                 <textarea id="note" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" rows="3" placeholder="Tambahkan catatan atau deskripsi tambahan..."></textarea>
                             </div>
-                            <input type="hidden" id="status" value="pending"> <!-- Status default disembunyikan -->
+                            <!-- Status default disembunyikan dan diatur di JS -->
+                            <!-- <input type="hidden" id="status" value="pending"> -->
                         </div>
                     </div>
                     <div class="flex justify-end space-x-3 mt-6">
@@ -771,7 +787,7 @@
         const usersCollection = db.collection('users'); // Tetap diperlukan untuk menyimpan role admin
 
         let pos = [];
-        const DEFAULT_STATUS = 'pending';
+        const DEFAULT_STATUS = 'pending'; // Status default yang akan digunakan
         let currentUserRole = 'user'; // Default role, akan diubah jika admin
         let sortableInstances = {};
         let authInitialized = false;
@@ -1052,7 +1068,7 @@
             }
 
             poCard.innerHTML = `
-                <span class="po-card-number">${index + 1}</span> <!-- Nomor urut -->
+                <span class="po-card-number">${index + 1}</span> <!-- Nomor urut di kanan atas -->
                 <div class="flex justify-between items-start">
                     <h3 class="font-bold text-gray-800">No. PO: ${po.noPO || 'No PO'}</h3>
                 </div>
@@ -1302,11 +1318,13 @@
                     document.getElementById('hsCode').value = po.hsCode || '';
                     document.getElementById('revisiHS').value = po.revisiHS || '';
                     document.getElementById('note').value = po.note || '';
-                    document.getElementById('status').value = po.status || DEFAULT_STATUS; // Tetap set status, tapi inputnya hidden
+                    // Status tidak lagi diambil dari input tersembunyi
+                    // document.getElementById('status').value = po.status || DEFAULT_STATUS; 
                 }
             } else {
                 modalTitle.textContent = 'Tambah PO Baru';
-                document.getElementById('status').value = DEFAULT_STATUS;
+                // Status tidak lagi diatur dari input tersembunyi
+                // document.getElementById('status').value = DEFAULT_STATUS;
                 document.getElementById('searchableField').value = ''; // Reset untuk PO baru
                 document.getElementById('selectedProductId').value = ''; // Reset untuk PO baru
                 addItemField(); // Tambahkan minimal satu form item saat membuat PO baru
@@ -1367,7 +1385,8 @@
             const hsCode = document.getElementById('hsCode').value;
             const revisiHS = document.getElementById('revisiHS').value;
             const note = document.getElementById('note').value;
-            const status = document.getElementById('status').value; // Ambil dari hidden input
+            // Status tidak lagi diambil dari input tersembunyi, selalu gunakan DEFAULT_STATUS
+            // const status = document.getElementById('status').value; 
 
             if (!noPO) { // Hanya No. PO yang required
                 showToast("No. PO harus diisi.", 3000);
@@ -1394,7 +1413,7 @@
                 hsCode: hsCode,
                 revisiHS: revisiHS,
                 note: note,
-                status: status,
+                status: DEFAULT_STATUS, // Status selalu diatur ke default
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
 
