@@ -10,51 +10,138 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <!-- Library untuk Export Excel -->
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
 
     <style>
+        /* Palet Warna Baru */
+        :root {
+            --primary-blue: #3b82f6; /* Biru utama */
+            --primary-dark-blue: #2563eb; /* Biru gelap */
+            --accent-teal: #14b8a6; /* Aksen teal */
+            --accent-green: #22c55e; /* Aksen hijau */
+            --text-dark: #1e293b; /* Teks gelap */
+            --text-medium: #475569; /* Teks sedang */
+            --text-light: #64748b; /* Teks terang */
+            --bg-light: #f8fafc; /* Latar belakang terang */
+            --bg-medium: #e2e8f0; /* Latar belakang sedang */
+            --bg-soft: #f0f2f5; /* Latar belakang sangat lembut */
+            --border-color: #cbd5e1; /* Warna border */
+            --shadow-light: rgba(0, 0, 0, 0.05);
+            --shadow-medium: rgba(0, 0, 0, 0.1);
+            --shadow-strong: rgba(0, 0, 0, 0.2);
+        }
+
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f0f2f5; /* Warna latar belakang yang lebih lembut */
-            color: #334155; /* Warna teks default */
+            background-color: var(--bg-soft);
+            color: var(--text-medium);
+            line-height: 1.6;
         }
+
+        /* Header Styling */
+        .header {
+            background-color: #ffffff;
+            border-radius: 1rem; /* Lebih bulat */
+            box-shadow: 0 8px 20px var(--shadow-light); /* Bayangan lebih halus */
+            padding: 1.75rem 2rem;
+            position: relative; /* Untuk menempatkan tombol logout */
+        }
+        .header h1 {
+            color: var(--text-dark);
+            font-size: 2.25rem; /* Lebih besar */
+            font-weight: 800;
+        }
+        .header .logout-btn-container {
+            position: absolute;
+            top: 1.75rem;
+            right: 2rem;
+        }
+        .header button {
+            font-weight: 600;
+            border-radius: 0.65rem;
+            padding: 0.75rem 1.25rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .header button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px var(--shadow-medium);
+        }
+        .header button.bg-blue-600 { background-color: var(--primary-blue); }
+        .header button.bg-blue-600:hover { background-color: var(--primary-dark-blue); }
+        .header button.bg-green-500 { background-color: var(--accent-green); } /* Menggunakan accent-green */
+        .header button.bg-green-500:hover { background-color: #16a34a; } /* Darker green */
+        .header button.bg-red-500 { background-color: #ef4444; }
+        .header button.bg-red-500:hover { background-color: #dc2626; }
+        .header button.bg-gray-500 { background-color: #6b7280; }
+        .header button.bg-gray-500:hover { background-color: #4b5563; }
+        .header button.bg-gray-200 { background-color: var(--bg-medium); color: var(--text-dark); }
+        .header button.bg-gray-200:hover { background-color: var(--border-color); }
+
+        /* Ripple Effect */
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.7);
+            animation: ripple-animation 0.6s linear forwards;
+            transform: scale(0);
+            pointer-events: none;
+        }
+        @keyframes ripple-animation {
+            from { transform: scale(0); opacity: 1; }
+            to { transform: scale(4); opacity: 0; }
+        }
+
+        /* Input & Select Styling */
+        input[type="text"], input[type="date"], input[type="number"], select, textarea {
+            border: 1px solid var(--border-color);
+            border-radius: 0.65rem;
+            padding: 0.75rem 1rem;
+            font-size: 0.95rem;
+            color: var(--text-dark);
+            transition: all 0.2s ease;
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+            outline: none;
+        }
+
+        /* Pipeline Stage */
         .pipeline-stage {
             min-height: 480px;
             max-height: 600px;
-            transition: all 0.4s ease-out; /* Transisi lebih halus */
-            border-radius: 0.75rem;
+            transition: all 0.4s ease-out;
+            border-radius: 1rem; /* Lebih bulat */
             overflow: hidden;
             display: flex;
             flex-direction: column;
             background-color: #ffffff;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08); /* Bayangan lebih dalam */
+            box-shadow: 0 12px 30px var(--shadow-light); /* Bayangan lebih dalam */
             box-sizing: border-box;
         }
         .pipeline-stage-header {
-            padding: 1.25rem;
-            border-bottom: 1px solid #e2e8f0;
-            background-color: #f8fafc; /* Warna header yang lebih terang */
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--bg-medium);
+            background-color: var(--bg-light);
             display: flex;
             flex-direction: column;
-            align-items: center; /* Mengubah dari flex-start menjadi center */
+            align-items: center;
             gap: 0.25rem;
         }
         .pipeline-stage-header h3 {
-            font-size: 1.1rem; /* Ukuran font sedikit lebih besar */
+            font-size: 1.2rem; /* Lebih besar */
             font-weight: 700;
-            color: #1e293b; /* Warna teks yang lebih gelap */
+            color: var(--text-dark);
             flex-shrink: 0;
-            text-align: center; /* Tambahkan ini untuk menengahkan teks */
-            width: 100%; /* Pastikan mengambil lebar penuh untuk penengahan */
-        }
-        .pipeline-stage-header span {
-            font-size: 0.8rem; /* Ukuran font sedikit lebih besar */
-            font-weight: 600;
-            white-space: nowrap;
-            color: #64748b; /* Warna teks yang lebih lembut */
+            text-align: center;
+            width: 100%;
         }
         .pipeline-stage-content {
             flex-grow: 1;
-            padding: 1rem;
+            padding: 1.25rem; /* Padding lebih besar */
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
             min-height: 100px;
@@ -64,176 +151,218 @@
             gap: 1rem;
             align-content: flex-start;
         }
+
+        /* Deal Card */
         .deal-card {
-            transition: transform 0.3s ease-out, box-shadow 0.3s ease-out, opacity 0.3s ease-out; /* Animasi lebih halus */
+            transition: transform 0.3s ease-out, box-shadow 0.3s ease-out, opacity 0.3s ease-out;
             cursor: grab;
             position: relative;
             background-color: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 0.65rem; /* Border radius sedikit lebih besar */
-            padding: 0.9rem; /* Padding sedikit lebih besar */
+            border: 1px solid var(--bg-medium);
+            border-radius: 0.85rem; /* Lebih bulat */
+            padding: 1.1rem; /* Padding lebih besar */
             margin-bottom: 0;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06); /* Bayangan lebih jelas */
+            box-shadow: 0 6px 15px var(--shadow-light); /* Bayangan lebih jelas */
             font-size: 0.875rem;
             width: calc(25% - 0.75rem); /* Disesuaikan untuk 4 kolom */
             min-width: 220px; /* Min-width sedikit lebih kecil agar muat 4 kolom */
             box-sizing: border-box;
-            opacity: 0; /* Default hidden for animation */
-            transform: translateY(20px); /* Default position for animation */
+            opacity: 0;
+            transform: translateY(20px);
+            display: flex; /* Menggunakan flexbox untuk tata letak internal */
+            flex-direction: column;
+            justify-content: space-between;
         }
         .deal-card.show {
             opacity: 1;
             transform: translateY(0);
         }
         .deal-card:hover {
-            transform: translateY(-5px); /* Efek hover lebih dramatis */
-            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.18); /* Bayangan hover lebih kuat */
+            transform: translateY(-7px); /* Efek hover lebih dramatis */
+            box-shadow: 0 15px 35px var(--shadow-medium); /* Bayangan hover lebih kuat */
         }
         .deal-card:active {
             cursor: grabbing;
         }
-        .sortable-ghost {
-            opacity: 0.3; /* Opacity lebih rendah */
-            background-color: #e0f7fa; /* Warna ghost yang lebih cerah */
-            border: 1px dashed #80deea; /* Border yang lebih cerah */
-        }
-        .sortable-chosen {
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25); /* Bayangan chosen lebih kuat */
-            transform: scale(1.03); /* Skala sedikit lebih besar */
-        }
-        .sortable-drag {
-            opacity: 0.95; /* Opacity lebih tinggi saat drag */
-        }
-        .stage-main-pipeline { border-left: 6px solid #3b82f6; /* Border lebih tebal */ }
-        .pipeline-stage-content::-webkit-scrollbar {
-            width: 8px;
-        }
-        .pipeline-stage-content::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
-        }
-        .pipeline-stage-content::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 10px;
-        }
-        .pipeline-stage-content::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
-        .modal-content-enter {
-            opacity: 0;
-            transform: scale(0.9); /* Skala awal lebih kecil */
-        }
-        .modal-content-enter-active {
-            opacity: 1;
-            transform: scale(1);
-            transition: opacity 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); /* Kurva transisi yang lebih baik */
-        }
-        .modal-content-leave {
-            opacity: 1;
-            transform: scale(1);
-        }
-        .modal-content-leave-active {
-            opacity: 0;
-            transform: scale(0.9); /* Skala akhir lebih kecil */
-            transition: opacity 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-        }
-        #toast-container {
-            position: fixed;
-            top: 1.5rem; /* Posisi sedikit lebih rendah */
-            right: 1.5rem; /* Posisi sedikit lebih ke kiri */
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem; /* Jarak antar toast lebih besar */
-        }
-        .toast {
-            background-color: #333;
-            color: white;
-            padding: 0.9rem 1.5rem; /* Padding lebih besar */
-            border-radius: 0.65rem; /* Border radius lebih besar */
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25); /* Bayangan lebih kuat */
-            opacity: 0;
-            transform: translateX(120%); /* Animasi masuk lebih jauh */
-            transition: opacity 0.4s ease-out, transform 0.4s ease-out;
-        }
-        .toast.show {
-            opacity: 1;
-            transform: translateX(0);
-        }
-        /* #activityModalContent { Dihapus } */
-        /* .activity-item { Dihapus } */
-        
-        /* Penyesuaian CSS untuk deal card yang lebih ringkas */
         .deal-card h3 {
-            font-size: 1rem; /* Ukuran font sedikit lebih besar */
+            font-size: 1.05rem; /* Ukuran font sedikit lebih besar */
             font-weight: 700;
-            color: #1f2937;
+            color: var(--text-dark);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             max-width: calc(100% - 60px);
+            margin-bottom: 0.5rem; /* Spasi di bawah judul */
         }
-
-        .priority-badge {
-            font-size: 0.7rem; /* Ukuran font sedikit lebih besar */
-            padding: 0.2rem 0.5rem; /* Padding sedikit lebih besar */
-            line-height: 1;
-            border-radius: 9999px; /* Bentuk pil */
-            font-weight: 600;
+        .deal-details {
+            flex-grow: 1; /* Memungkinkan detail mengisi ruang */
+            margin-bottom: 1rem; /* Spasi di bawah detail */
         }
-
         .deal-details p {
-            font-size: 0.8rem; /* Ukuran font sedikit lebih besar */
-            margin-top: 0.2rem; /* Margin sedikit lebih besar */
+            font-size: 0.85rem; /* Ukuran font sedikit lebih besar */
+            margin-top: 0.3rem;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            color: #4b5563; /* Warna teks yang lebih gelap */
+            color: var(--text-medium);
+            display: flex;
+            align-items: center;
         }
-
         .deal-details p i {
-            font-size: 0.75rem; /* Ukuran font sedikit lebih besar */
-            color: #6b7280; /* Warna ikon yang lebih lembut */
+            font-size: 0.8rem;
+            color: var(--text-light);
+            margin-right: 0.5rem; /* Spasi antara ikon dan teks */
+            width: 1rem; /* Lebar tetap untuk ikon */
+            text-align: center;
         }
-
+        .deal-actions {
+            display: flex;
+            justify-content: flex-end; /* Tombol aksi ke kanan */
+            gap: 0.5rem; /* Spasi antar tombol aksi */
+        }
         .deal-actions button {
-            padding: 0.2rem 0.4rem; /* Padding lebih besar */
-            font-size: 0.75rem; /* Ukuran font sedikit lebih besar */
-            border-radius: 0.375rem; /* Border radius lebih besar */
+            padding: 0.3rem 0.6rem;
+            font-size: 0.8rem;
+            border-radius: 0.5rem;
             transition: background-color 0.2s ease-out, transform 0.2s ease-out;
+            color: var(--text-medium); /* Warna ikon default */
+            background-color: var(--bg-light); /* Latar belakang tombol aksi */
+            border: 1px solid var(--border-color);
         }
         .deal-actions button:hover {
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+            background-color: var(--bg-medium);
         }
-        .deal-actions button i {
-            font-size: 0.75rem; /* Ukuran font sedikit lebih besar */
-        }
+        .deal-actions button.text-blue-600:hover { color: var(--primary-blue); }
+        .deal-actions button.text-green-600:hover { color: var(--accent-green); }
+        .deal-actions button.text-red-600:hover { color: #ef4444; }
 
         .deal-footer {
-            margin-top: 0.75rem; /* Margin lebih besar */
-            padding-top: 0.5rem;
-            border-top: 1px solid #f3f4f6; /* Garis pemisah yang lebih halus */
+            margin-top: 1rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--bg-medium);
+        }
+
+        /* Scrollbar */
+        .pipeline-stage-content::-webkit-scrollbar { width: 10px; }
+        .pipeline-stage-content::-webkit-scrollbar-track { background: var(--bg-light); border-radius: 10px; }
+        .pipeline-stage-content::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
+        .pipeline-stage-content::-webkit-scrollbar-thumb:hover { background: var(--text-light); }
+
+        /* Modals */
+        .modal-content-enter-active, .modal-content-leave-active {
+            transition: opacity 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        #poModalContent, #poDetailModalContent, #deleteModalContent, #filterPanelContent {
+            background-color: #ffffff;
+            border-radius: 1rem;
+            box-shadow: 0 20px 50px var(--shadow-strong);
+            padding: 2.5rem;
+        }
+        #poModalContent {
+            max-height: 90vh; /* Sedikit lebih kecil dari 100vh */
+            max-width: 90vw; /* Sedikit lebih kecil dari 100vw */
+            border-radius: 1rem; /* Kembali ke border-radius */
+            box-shadow: 0 20px 50px var(--shadow-strong); /* Kembali ke bayangan */
+        }
+        #poModalContent h2, #poDetailModalContent h2, #deleteModalContent h2, #filterPanelContent h2 {
+            color: var(--text-dark);
+            font-weight: 800;
+            font-size: 2rem;
+            margin-bottom: 1.75rem;
+        }
+        #poForm label {
+            color: var(--text-dark);
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-bottom: 0.35rem;
+        }
+        #poForm input, #poForm select, #poForm textarea {
+            border-radius: 0.5rem;
+            padding: 0.6rem 1rem;
+            font-size: 0.9rem;
+        }
+        #poForm textarea { height: 100px; } /* Sedikit lebih pendek */
+
+        /* Detail Grid */
+        #poDetailModalContent .detail-grid {
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* Lebih rapat */
+            gap: 1rem;
+        }
+        #poDetailModalContent .detail-item p:first-child {
+            color: var(--text-light);
+            font-size: 0.75rem;
+        }
+        #poDetailModalContent .detail-item p {
+            color: var(--text-dark);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: var(--primary-blue);
+            border-radius: 50%;
+            width: 40px; /* Lebih besar */
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        /* Empty State */
+        .empty-state {
+            color: var(--text-light);
+            text-align: center;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+        .empty-state i {
+            font-size: 3rem;
+            color: var(--bg-medium);
+            margin-bottom: 1rem;
+        }
+        .empty-state p {
+            font-size: 1rem;
+            color: var(--text-light);
+        }
+
+        /* PO Card Number */
+        .po-card-number {
+            position: absolute;
+            top: 0.6rem;
+            left: 0.6rem; /* Pindah ke kiri atas */
+            font-size: 0.8rem; /* Sedikit lebih besar */
+            font-weight: 700;
+            color: var(--text-dark); /* Warna teks lebih gelap */
+            background-color: var(--bg-medium);
+            padding: 0.15rem 0.5rem;
+            border-radius: 0.35rem;
+            z-index: 10; /* Pastikan di atas konten lain */
         }
 
         /* Media Queries untuk responsivitas */
-        @media (max-width: 1280px) { /* Tambahkan breakpoint untuk 3 kolom */
+        @media (max-width: 1280px) { /* Untuk layar laptop besar, 3 kolom */
             .deal-card {
                 width: calc(33.333% - 0.666rem);
                 min-width: 280px;
             }
         }
 
-        @media (max-width: 1024px) {
+        @media (max-width: 1024px) { /* Untuk tablet, 2 kolom */
             .deal-card {
                 width: calc(50% - 0.5rem);
                 min-width: 280px;
             }
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 768px) { /* Untuk mobile, 1 kolom */
             .deal-card {
                 width: 100%;
-                min-width: unset; /* Hapus min-width di mobile */
+                min-width: unset;
             }
             .max-w-7xl {
                 padding-left: 1rem;
@@ -242,8 +371,17 @@
             .header {
                 flex-direction: column;
                 align-items: flex-start;
+                padding: 1.25rem 1.5rem;
             }
-            .header > div:last-child {
+            .header h1 {
+                font-size: 1.75rem;
+            }
+            .header .logout-btn-container {
+                position: static; /* Kembali ke posisi normal di mobile */
+                margin-top: 1rem;
+                width: 100%;
+            }
+            .header > div:last-child { /* Ini adalah div yang berisi tombol-tombol di bawah judul */
                 margin-top: 1rem;
                 width: 100%;
                 flex-direction: column;
@@ -253,6 +391,8 @@
             .header button {
                 width: 100%;
                 justify-content: center;
+                padding: 0.65rem 1rem;
+                font-size: 0.9rem;
             }
             .header .flex-col.sm\:flex-row {
                 flex-direction: column;
@@ -260,151 +400,12 @@
             .header .sm\:w-1\/2 {
                 width: 100%;
             }
-        }
-
-        /* Penyesuaian untuk modal Tambah/Edit PO */
-        #poModalContent {
-            max-height: 100vh; /* Disesuaikan menjadi 100% tinggi viewport */
-            max-width: 100vw; /* Disesuaikan menjadi 100% lebar viewport */
-            width: 100%; /* Mengambil lebar 100% */
-            height: 100%; /* Mengambil tinggi 100% */
-            border-radius: 0; /* Hapus border-radius agar lebih menyatu dengan layar */
-            box-sizing: border-box;
-            padding: 2rem; /* Padding lebih besar */
-            box-shadow: none; /* Hapus bayangan untuk tampilan fullscreen */
-            overflow-y: auto; /* Tambahkan scroll jika konten melebihi tinggi layar */
-        }
-
-        /* Menyamakan tinggi input dan select */
-        #poForm input[type="text"],
-        #poForm input[type="number"],
-        #poForm input[type="date"],
-        #poForm select,
-        #poForm textarea {
-            height: 44px; /* Disesuaikan */
-            padding: 0.65rem 1rem; /* Disesuaikan */
-            box-sizing: border-box;
-            font-size: 0.9rem; /* Disesuaikan */
-            border-width: 1px;
-            border-color: #d1d5db; /* Warna border yang lebih lembut */
-            border-radius: 0.5rem; /* Border radius lebih besar */
-            transition: border-color 0.2s ease-out, box-shadow 0.2s ease-out;
-        }
-        #poForm input:focus,
-        #poForm select:focus,
-        #poForm textarea:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25); /* Efek fokus yang lebih jelas */
-            outline: none;
-        }
-
-        /* Menyesuaikan tinggi textarea note */
-        #note {
-            height: 120px; /* Disesuaikan */
-            resize: vertical;
-        }
-
-        /* Menyesuaikan ukuran font label */
-        #poForm label {
-            font-size: 0.8rem; /* Disesuaikan */
-            margin-bottom: 0.25rem; /* Disesuaikan */
-            color: #4a5568; /* Warna label yang lebih gelap */
-        }
-
-        /* Menyesuaikan ukuran font judul modal */
-        #poModalContent h2 {
-            font-size: 1.8rem; /* Disesuaikan */
-            margin-bottom: 1.5rem; /* Disesuaikan */
-            color: #1e293b;
-            font-weight: 800;
-        }
-
-        /* CSS untuk modal detail PO 3 kolom */
-        #poDetailModalContent .detail-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Lebih fleksibel, 3 kolom */
-            gap: 1.25rem; /* Jarak antar kolom dan baris lebih besar */
-        }
-        #poDetailModalContent .detail-item p {
-            font-size: 0.9rem;
-            line-height: 1.4;
-        }
-        #poDetailModalContent .detail-item p:first-child {
-            font-size: 0.8rem;
-            color: #64748b;
-            margin-bottom: 0.2rem;
-        }
-
-        /* Loading Spinner */
-        .spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            border-left-color: #3b82f6;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(255, 255, 255, 0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1001;
-            transition: opacity 0.3s ease-out;
-            opacity: 0;
-            pointer-events: none;
-        }
-        .loading-overlay.show {
-            opacity: 1;
-            pointer-events: all;
-        }
-
-        /* Empty State Styling */
-        .empty-state {
-            text-align: center;
-            padding: 3rem 1rem;
-            color: #94a3b8;
-            font-size: 1rem;
-            animation: fadeIn 0.5s ease-out;
-            /* Untuk penengahan vertikal dan horizontal di dalam parent */
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100%; /* Penting agar flexbox bisa menengahkan secara vertikal */
-            width: 100%; /* Penting agar flexbox bisa menengahkan secara horizontal */
-        }
-        .empty-state i {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-            color: #cbd5e1;
-        }
-        .empty-state p {
-            margin-bottom: 0.5rem;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        /* CSS untuk nomor urut */
-        .po-card-number {
-            position: absolute;
-            top: 0.5rem;
-            right: 0.5rem; /* Diubah ke kanan */
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: #6b7280;
-            background-color: #e5e7eb;
-            padding: 0.1rem 0.4rem;
-            border-radius: 0.25rem;
+            #poModalContent {
+                padding: 1.5rem;
+            }
+            #poModalContent h2 {
+                font-size: 1.5rem;
+            }
         }
     </style>
 </head>
@@ -412,25 +413,32 @@
     <div class="max-w-7xl mx-auto px-4 py-8">
         <!-- Header -->
         <header class="mb-8 bg-white p-6 rounded-lg shadow-md header">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+            <div class="flex justify-between items-start">
                 <div>
                     <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900">Purchase Order Monitoring <i class="fas fa-box-open text-blue-600 ml-2"></i></h1>
                 </div>
-                <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 mt-4 sm:mt-0">
-                    <button id="newPOBtn" onclick="openPOModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
-                        <i class="fas fa-plus-circle mr-2"></i> PO Baru
-                    </button>
-                    
-                    <button id="backButton" onclick="goToIndex()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
-                        <i class="fas fa-arrow-left mr-2"></i> Kembali
-                    </button>
-
+                <div class="logout-btn-container">
                     <button id="authButton" onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
                         <i class="fas fa-sign-out-alt mr-2"></i> Logout
                     </button>
                 </div>
             </div>
             
+            <!-- Buttons below title -->
+            <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 mt-4">
+                <button id="newPOBtn" onclick="openPOModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
+                    <i class="fas fa-plus-circle mr-2"></i> PO Baru
+                </button>
+                
+                <button id="exportExcelBtn" onclick="exportToExcel()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
+                    <i class="fas fa-file-excel mr-2"></i> Export Excel
+                </button>
+
+                <button id="backButton" onclick="goToIndex()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
+                    <i class="fas fa-arrow-left mr-2"></i> Kembali
+                </button>
+            </div>
+
             <!-- Combined Filter Section -->
             <div class="mt-6 flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 items-center">
                 <input type="text" id="searchPOs" onkeyup="filterPOs()" placeholder="Cari PO berdasarkan nomor, supplier, barang..." class="w-full sm:w-1/2 p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
@@ -1047,14 +1055,14 @@
                 <span class="po-card-number">${index + 1}</span> <!-- Nomor urut -->
                 <div class="flex justify-between items-start">
                     <h3 class="font-bold text-gray-800">No. PO: ${po.noPO || 'No PO'}</h3>
-                    <!-- Status badge dihapus dari sini -->
                 </div>
                 <div class="mt-1 text-sm text-gray-600 deal-details">
-                    <p><i class="fas fa-building mr-1"></i> Supplier: ${po.supplierName || '-'}</p>
-                    <p><i class="fas fa-globe mr-1"></i> COO: ${po.coo || '-'}</p>
-                    <p><i class="fas fa-calendar-alt mr-1"></i> Plan Delivery: ${po.planDelivery ? formatDate(po.planDelivery) : '-'}</p>
+                    <p><i class="fas fa-building"></i> Supplier: ${po.supplierName || '-'}</p>
+                    <p><i class="fas fa-box"></i> Produk: ${po.selectedProduct ? po.selectedProduct.name : '-'}</p>
+                    <p><i class="fas fa-calendar-alt"></i> Plan Delivery: ${po.planDelivery ? formatDate(po.planDelivery) : '-'}</p>
+                    <p><i class="fas fa-info-circle"></i> Status: <span class="font-semibold ${statusColorClass.replace('bg-', 'text-')}">${po.status ? po.status.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : '-'}</span></p>
                 </div>
-                <div class="mt-2 flex justify-between items-center deal-footer">
+                <div class="mt-2 flex justify-end items-center deal-footer">
                     <div class="flex space-x-1 deal-actions">
                         <button onclick="openPODetailModal('${po.id}')" class="text-blue-600 hover:text-blue-800" title="Lihat Detail">
                             <i class="fas fa-eye"></i>
@@ -1543,12 +1551,14 @@
                 console.log("Applying permissions for Role:", currentUserRole);
                 
                 const newPOBtn = document.getElementById('newPOBtn');
+                const exportExcelBtn = document.getElementById('exportExcelBtn'); // New
                 const searchInput = document.getElementById('searchPOs');
                 const openFilterPanelBtn = document.getElementById('openFilterPanelBtn');
                 const backButton = document.getElementById('backButton');
                 const authButton = document.getElementById('authButton');
 
                 if (newPOBtn) newPOBtn.classList.remove('hidden');
+                if (exportExcelBtn) exportExcelBtn.classList.remove('hidden'); // Show export button
                 if (backButton) backButton.classList.remove('hidden');
                 if (authButton) authButton.classList.remove('hidden');
 
@@ -1583,6 +1593,7 @@
 
                 const buttons = [
                     { id: 'newPOBtn', func: openPOModal },
+                    { id: 'exportExcelBtn', func: exportToExcel }, // New
                     { id: 'backButton', func: goToIndex },
                     { id: 'authButton', func: logout },
                     { id: 'openFilterPanelBtn', func: openFilterPanel }
@@ -1593,6 +1604,8 @@
                     if (element) {
                         element.removeEventListener('click', btn.func); 
                         element.addEventListener('click', btn.func);
+                        // Add ripple effect
+                        element.addEventListener('click', createRipple);
                         console.log(`Event listener added for ${btn.id}`);
                     }
                 });
@@ -1606,6 +1619,27 @@
                 console.error("Error initializing event listeners:", error);
                 showToast("Gagal memuat beberapa fungsi", 3000);
             }
+        }
+
+        // Ripple Effect Function
+        function createRipple(event) {
+            const button = event.currentTarget;
+            const circle = document.createElement('span');
+            const diameter = Math.max(button.clientWidth, button.clientHeight);
+            const radius = diameter / 2;
+
+            circle.style.width = circle.style.height = `${diameter}px`;
+            circle.style.left = `${event.clientX - (button.getBoundingClientRect().left + radius)}px`;
+            circle.style.top = `${event.clientY - (button.getBoundingClientRect().top + radius)}px`;
+            circle.classList.add('ripple');
+
+            const ripple = button.getElementsByClassName('ripple')[0];
+
+            if (ripple) {
+                ripple.remove();
+            }
+
+            button.appendChild(circle);
         }
 
         // ==================== FUNGSI LAINNYA ====================
@@ -1782,6 +1816,104 @@
                 deleteModalContent.classList.remove('modal-content-leave-active');
                 deleteModalContent.removeEventListener('transitionend', handler);
             }, { once: true });
+        }
+
+        // ==================== FUNGSI EXPORT TO EXCEL ====================
+        function exportToExcel() {
+            showGlobalLoading();
+            try {
+                const data = [];
+                // Headers for the Excel file
+                const headers = [
+                    "No. Urut", "Order Confirmation", "No. PO", "Nama Supplier", "Produk Terpilih",
+                    "Nama Barang & Quantity", "Allocation", "Invoice", "Tracking", "Sea Forwarder",
+                    "Air Forwarder", "DISRC", "Plan Delivery", "ETA", "Actual Delivery",
+                    "COO", "HS Code", "Revisi HS", "Note", "Status", "Dibuat Oleh", "Tanggal Dibuat"
+                ];
+                data.push(headers);
+
+                // Get the currently displayed POs (after filtering)
+                const currentPOs = pos.filter(po => {
+                    const searchTerm = document.getElementById('searchPOs').value.toLowerCase();
+                    const statusFilter = document.getElementById('filterStatus').value;
+                    const supplierFilter = document.getElementById('filterSupplier').value;
+                    const itemNameFilter = document.getElementById('filterItemName').value;
+                    const allocationFilter = document.getElementById('filterAllocation').value;
+                    const yearFilter = document.getElementById('filterYear').value;
+                    
+                    const matchesSearch = 
+                        (po.noPO && po.noPO.toLowerCase().includes(searchTerm)) ||
+                        (po.supplierName && po.supplierName.toLowerCase().includes(searchTerm)) ||
+                        (po.items && Array.isArray(po.items) && po.items.some(item => item.itemName && item.itemName.toLowerCase().includes(searchTerm)));
+                    
+                    const matchesStatus = 
+                        statusFilter === 'all' || 
+                        (po.status && po.status === statusFilter);
+                    
+                    const matchesSupplier = 
+                        supplierFilter === 'all' || 
+                        (po.supplierName && po.supplierName === supplierFilter);
+
+                    const matchesItemName = 
+                        itemNameFilter === 'all' || 
+                        (po.items && Array.isArray(po.items) && po.items.some(item => item.itemName && item.itemName === itemNameFilter));
+
+                    const matchesAllocation = 
+                        allocationFilter === 'all' || 
+                        (po.allocation && po.allocation === allocationFilter);
+
+                    const matchesYear = yearFilter === 'all' || 
+                                        (po.createdAt instanceof Date && po.createdAt.getFullYear().toString() === yearFilter);
+                    
+                    return matchesSearch && matchesStatus && matchesSupplier && matchesItemName && matchesAllocation && matchesYear;
+                });
+
+                currentPOs.forEach((po, index) => {
+                    const itemsString = po.items && Array.isArray(po.items)
+                        ? po.items.map(item => `${item.itemName || ''} (Qty: ${item.quantity || 0})`).join('; ')
+                        : '';
+
+                    const row = [
+                        index + 1, // No. Urut
+                        po.orderConfirmation || '',
+                        po.noPO || '',
+                        po.supplierName || '',
+                        po.selectedProduct ? po.selectedProduct.name : '',
+                        itemsString,
+                        po.allocation || '',
+                        po.invoice || '',
+                        po.tracking || '',
+                        po.seaForwarder || '',
+                        po.airForwarder || '',
+                        po.disrc || '',
+                        po.planDelivery ? formatDate(po.planDelivery) : '',
+                        po.eta ? formatDate(po.eta) : '',
+                        po.actualDelivery ? formatDate(po.actualDelivery) : '',
+                        po.coo || '',
+                        po.hsCode || '',
+                        po.revisiHS || '',
+                        po.note || '',
+                        po.status ? po.status.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : '',
+                        po.createdBy || '',
+                        po.createdAt ? formatDateTime(po.createdAt) : ''
+                    ];
+                    data.push(row);
+                });
+
+                const ws = XLSX.utils.aoa_to_sheet(data);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Purchase Orders");
+
+                const fileName = `Purchase_Orders_${new Date().toISOString().slice(0,10)}.xlsx`;
+                XLSX.writeFile(wb, fileName);
+                showToast("Data PO berhasil diekspor ke Excel!", 3000);
+
+            } catch (error) {
+                console.error("Error exporting to Excel:", error);
+                showToast("Gagal mengekspor data ke Excel.", 5000);
+            } finally {
+                hideGlobalLoading();
+            }
         }
 
         // ==================== INISIALISASI ====================
