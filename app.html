@@ -719,18 +719,7 @@
                     </button>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Kolom 1 -->
-                    <div>
-                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterStatus">Status</label>
-                        <select id="filterStatus" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
-                            <option value="all">Semua Status</option>
-                            <option value="pending">Pending</option>
-                            <option value="in-transit">In Transit</option>
-                            <option value="delivered">Delivered</option>
-                            <option value="cancelled">Cancelled</option>
-                            <option value="on-hold">On Hold</option>
-                        </select>
-                    </div>
+                    <!-- Filter: Nama Supplier -->
                     <div>
                         <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterSupplier">Supplier</label>
                         <select id="filterSupplier" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
@@ -738,29 +727,7 @@
                             <!-- Opsi akan diisi secara dinamis oleh JavaScript -->
                         </select>
                     </div>
-                    <div>
-                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterItemName">Nama Barang</label>
-                        <select id="filterItemName" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
-                            <option value="all">Semua Barang</option>
-                            <!-- Opsi akan diisi secara dinamis oleh JavaScript -->
-                        </select>
-                    </div>
-                    <!-- Kolom 2 -->
-                    <div>
-                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterAllocation">Allocation</label>
-                        <select id="filterAllocation" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
-                            <option value="all">Semua Allocation</option>
-                            <!-- Opsi akan diisi secara dinamis oleh JavaScript -->
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterYear">Tahun PO</label>
-                        <select id="filterYear" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
-                            <option value="all">Semua Tahun</option>
-                            <!-- Tahun akan diisi secara dinamis oleh JavaScript -->
-                        </select>
-                    </div>
-                    <!-- New Filters -->
+                    <!-- Filter: No ID -->
                     <div>
                         <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterNoID">No ID</label>
                         <select id="filterNoID" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
@@ -768,6 +735,15 @@
                             <!-- Options populated dynamically -->
                         </select>
                     </div>
+                    <!-- Filter: Nama Barang -->
+                    <div>
+                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterItemName">Nama Barang</label>
+                        <select id="filterItemName" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            <option value="all">Semua Barang</option>
+                            <!-- Opsi akan diisi secara dinamis oleh JavaScript -->
+                        </select>
+                    </div>
+                    <!-- Filter: COO -->
                     <div>
                         <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterCOO">COO</label>
                         <select id="filterCOO" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
@@ -775,6 +751,7 @@
                             <!-- Options populated dynamically -->
                         </select>
                     </div>
+                    <!-- Filter: HS Code -->
                     <div>
                         <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterHSCode">HS Code</label>
                         <select id="filterHSCode" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
@@ -841,13 +818,16 @@
         let authInitialized = false;
         let unsubscribeFromPOs = null;
 
+        // Hanya menyimpan Set untuk filter yang diinginkan
         let uniqueSuppliers = new Set();
         let uniqueItemNames = new Set();
-        let uniqueAllocations = new Set();
-        let uniqueYears = new Set();
-        let uniqueNoIDs = new Set(); // New Set for No ID
-        let uniqueCOOs = new Set(); // New Set for COO
-        let uniqueHSCodes = new Set(); // New Set for HS Code
+        let uniqueNoIDs = new Set(); 
+        let uniqueCOOs = new Set(); 
+        let uniqueHSCodes = new Set(); 
+
+        // Variabel yang tidak lagi digunakan untuk filter, bisa dihapus atau diabaikan
+        // let uniqueAllocations = new Set();
+        // let uniqueYears = new Set();
 
         const ADMIN_EMAIL = 'maida@genetek.co.id';
 
@@ -891,7 +871,6 @@
 
                     console.log("Current role:", currentUserRole);
                     await fetchProductData(); 
-                    applyUserPermissions();
                     listenForPOs(); 
                     initEventListeners();
                     hideGlobalLoading();
@@ -996,22 +975,23 @@
 
         // ==================== FUNGSI PO ====================
 
-        function populateYearDropdown() {
-            const filterYearSelect = document.getElementById('filterYear');
-            if (!filterYearSelect) return;
+        // Fungsi ini tidak lagi diperlukan karena filter tahun dihapus
+        // function populateYearDropdown() {
+        //     const filterYearSelect = document.getElementById('filterYear');
+        //     if (!filterYearSelect) return;
 
-            const allYearsOption = filterYearSelect.querySelector('option[value="all"]');
-            filterYearSelect.innerHTML = '';
-            filterYearSelect.appendChild(allYearsOption);
+        //     const allYearsOption = filterYearSelect.querySelector('option[value="all"]');
+        //     filterYearSelect.innerHTML = '';
+        //     filterYearSelect.appendChild(allYearsOption);
 
-            const sortedYears = Array.from(uniqueYears).sort((a, b) => parseInt(b) - parseInt(a));
-            sortedYears.forEach(year => {
-                const option = document.createElement('option');
-                option.value = year;
-                option.textContent = year;
-                filterYearSelect.appendChild(option);
-            });
-        }
+        //     const sortedYears = Array.from(uniqueYears).sort((a, b) => parseInt(b) - parseInt(a));
+        //     sortedYears.forEach(year => {
+        //         const option = document.createElement('option');
+        //         option.value = year;
+        //         option.textContent = year;
+        //         filterYearSelect.appendChild(option);
+        //     });
+        // }
 
         function listenForPOs() {
             console.log("Listening for POs from Firebase (onSnapshot)...");
@@ -1028,13 +1008,12 @@
 
             unsubscribeFromPOs = dealsCollection.orderBy("createdAt", "asc").onSnapshot(snapshot => {
                 pos = [];
+                // Hanya clear Set untuk filter yang diinginkan
                 uniqueSuppliers.clear();
                 uniqueItemNames.clear();
-                uniqueAllocations.clear();
-                uniqueYears.clear();
-                uniqueNoIDs.clear(); // Clear for new data
-                uniqueCOOs.clear(); // Clear for new data
-                uniqueHSCodes.clear(); // Clear for new data
+                uniqueNoIDs.clear(); 
+                uniqueCOOs.clear(); 
+                uniqueHSCodes.clear(); 
 
                 snapshot.forEach((doc) => {
                     const poData = doc.data();
@@ -1046,22 +1025,23 @@
                     pos.push({ id: doc.id, ...poData });
 
                     if (poData.supplierName) uniqueSuppliers.add(poData.supplierName);
-                    if (poData.allocation) uniqueAllocations.add(poData.allocation);
                     if (poData.items && Array.isArray(poData.items)) {
                         poData.items.forEach(item => {
                             if (item.itemName) uniqueItemNames.add(item.itemName);
                         });
                     }
-                    if (poData.selectedProduct && poData.selectedProduct.name) uniqueNoIDs.add(poData.selectedProduct.name); // Add No ID
-                    if (poData.coo) uniqueCOOs.add(poData.coo); // Add COO
-                    if (poData.hsCode) uniqueHSCodes.add(poData.hsCode); // Add HS Code
+                    if (poData.selectedProduct && poData.selectedProduct.name) uniqueNoIDs.add(poData.selectedProduct.name); 
+                    if (poData.coo) uniqueCOOs.add(poData.coo); 
+                    if (poData.hsCode) uniqueHSCodes.add(poData.hsCode); 
                     
-                    if (poData.createdAt instanceof Date) {
-                        uniqueYears.add(poData.createdAt.getFullYear().toString());
-                    }
+                    // Logika untuk uniqueYears dan uniqueAllocations dihapus
+                    // if (poData.allocation) uniqueAllocations.add(poData.allocation);
+                    // if (poData.createdAt instanceof Date) {
+                    //     uniqueYears.add(poData.createdAt.getFullYear().toString());
+                    // }
                 });
                 console.log("Total POs updated by onSnapshot:", pos.length);
-                populateYearDropdown();
+                // populateYearDropdown(); // Tidak lagi dipanggil
                 populateFilterDropdowns();
                 filterPOs();
                 if (loadingSpinner) {
@@ -1089,7 +1069,7 @@
                 </div>
                 <div class="mt-1 text-sm text-gray-600 deal-details">
                     <p><i class="fas fa-building"></i> Supplier: ${po.supplierName || '-'}</p>
-                    <p><i class="fas fa-tag"></i> No ID: ${po.selectedProduct ? po.selectedProduct.name : '-'}</p> <!-- Changed label to No ID -->
+                    <p><i class="fas fa-tag"></i> No ID: ${po.selectedProduct ? po.selectedProduct.name : '-'}</p> 
                     <p><i class="fas fa-calendar-alt"></i> Plan Delivery: ${po.planDelivery ? formatDate(po.planDelivery) : '-'}</p>
                 </div>
                 <div class="mt-2 flex justify-end items-center deal-footer">
@@ -1153,10 +1133,12 @@
         function populateFilterDropdowns() {
             populateDropdown('filterSupplier', uniqueSuppliers, document.getElementById('filterSupplier').value);
             populateDropdown('filterItemName', uniqueItemNames, document.getElementById('filterItemName').value);
-            populateDropdown('filterAllocation', uniqueAllocations, document.getElementById('filterAllocation').value);
-            populateDropdown('filterNoID', uniqueNoIDs, document.getElementById('filterNoID').value); // Populate No ID filter
-            populateDropdown('filterCOO', uniqueCOOs, document.getElementById('filterCOO').value); // Populate COO filter
-            populateDropdown('filterHSCode', uniqueHSCodes, document.getElementById('filterHSCode').value); // Populate HS Code filter
+            populateDropdown('filterNoID', uniqueNoIDs, document.getElementById('filterNoID').value); 
+            populateDropdown('filterCOO', uniqueCOOs, document.getElementById('filterCOO').value); 
+            populateDropdown('filterHSCode', uniqueHSCodes, document.getElementById('filterHSCode').value); 
+            // Filter allocation dan year tidak lagi dipanggil
+            // populateDropdown('filterAllocation', uniqueAllocations, document.getElementById('filterAllocation').value);
+            // populateDropdown('filterYear', uniqueYears, document.getElementById('filterYear').value);
         }
 
         function addItemField(initialItemName = '', initialQuantity = '') {
@@ -1617,14 +1599,16 @@
         function filterPOs() {
             try {
                 const searchTerm = document.getElementById('searchPOs').value.toLowerCase();
-                const statusFilter = document.getElementById('filterStatus').value;
+                // Hapus variabel filter yang tidak lagi digunakan
+                // const statusFilter = document.getElementById('filterStatus').value;
+                // const allocationFilter = document.getElementById('filterAllocation').value;
+                // const yearFilter = document.getElementById('filterYear').value;
+
                 const supplierFilter = document.getElementById('filterSupplier').value;
                 const itemNameFilter = document.getElementById('filterItemName').value;
-                const allocationFilter = document.getElementById('filterAllocation').value;
-                const yearFilter = document.getElementById('filterYear').value;
-                const noIDFilter = document.getElementById('filterNoID').value; // New filter variable
-                const cooFilter = document.getElementById('filterCOO').value; // New filter variable
-                const hsCodeFilter = document.getElementById('filterHSCode').value; // New filter variable
+                const noIDFilter = document.getElementById('filterNoID').value; 
+                const cooFilter = document.getElementById('filterCOO').value; 
+                const hsCodeFilter = document.getElementById('filterHSCode').value; 
                 
                 let basePOs = pos;
 
@@ -1634,9 +1618,10 @@
                         (po.supplierName && po.supplierName.toLowerCase().includes(searchTerm)) ||
                         (po.items && Array.isArray(po.items) && po.items.some(item => item.itemName && item.itemName.toLowerCase().includes(searchTerm)));
                     
-                    const matchesStatus = 
-                        statusFilter === 'all' || 
-                        (po.status && po.status === statusFilter);
+                    // Hapus kondisi filter yang tidak lagi digunakan
+                    // const matchesStatus = 
+                    //     statusFilter === 'all' || 
+                    //     (po.status && po.status === statusFilter);
                     
                     const matchesSupplier = 
                         supplierFilter === 'all' || 
@@ -1646,14 +1631,14 @@
                         itemNameFilter === 'all' || 
                         (po.items && Array.isArray(po.items) && po.items.some(item => item.itemName && item.itemName === itemNameFilter));
 
-                    const matchesAllocation = 
-                        allocationFilter === 'all' || 
-                        (po.allocation && po.allocation === allocationFilter);
+                    // Hapus kondisi filter yang tidak lagi digunakan
+                    // const matchesAllocation = 
+                    //     allocationFilter === 'all' || 
+                    //     (po.allocation && po.allocation === allocationFilter);
 
-                    const matchesYear = yearFilter === 'all' || 
-                                        (po.createdAt instanceof Date && po.createdAt.getFullYear().toString() === yearFilter);
+                    // const matchesYear = yearFilter === 'all' || 
+                    //                     (po.createdAt instanceof Date && po.createdAt.getFullYear().toString() === yearFilter);
                     
-                    // New filter conditions
                     const matchesNoID = 
                         noIDFilter === 'all' || 
                         (po.selectedProduct && po.selectedProduct.name === noIDFilter);
@@ -1666,7 +1651,8 @@
                         hsCodeFilter === 'all' || 
                         (po.hsCode && po.hsCode === hsCodeFilter);
 
-                    return matchesSearch && matchesStatus && matchesSupplier && matchesItemName && matchesAllocation && matchesYear && matchesNoID && matchesCOO && matchesHSCode;
+                    // Sesuaikan return statement
+                    return matchesSearch && matchesSupplier && matchesItemName && matchesNoID && matchesCOO && matchesHSCode;
                 });
                 
                 renderFilteredPOs(filteredPOs);
@@ -1729,7 +1715,7 @@
                 return;
             }
 
-            populateYearDropdown();
+            // populateYearDropdown(); // Tidak lagi dipanggil
             populateFilterDropdowns();
 
             filterPanel.classList.remove('hidden');
@@ -1750,14 +1736,16 @@
         }
 
         function resetFilters() {
-            document.getElementById('filterStatus').value = 'all';
+            // Hapus reset untuk filter yang tidak lagi digunakan
+            // document.getElementById('filterStatus').value = 'all';
+            // document.getElementById('filterAllocation').value = 'all';
+            // document.getElementById('filterYear').value = 'all';
+
             document.getElementById('filterSupplier').value = 'all';
             document.getElementById('filterItemName').value = 'all';
-            document.getElementById('filterAllocation').value = 'all';
-            document.getElementById('filterYear').value = 'all';
-            document.getElementById('filterNoID').value = 'all'; // Reset new filter
-            document.getElementById('filterCOO').value = 'all'; // Reset new filter
-            document.getElementById('filterHSCode').value = 'all'; // Reset new filter
+            document.getElementById('filterNoID').value = 'all'; 
+            document.getElementById('filterCOO').value = 'all'; 
+            document.getElementById('filterHSCode').value = 'all'; 
             document.getElementById('searchPOs').value = '';
             filterPOs();
         }
@@ -1774,7 +1762,7 @@
             try {
                 const data = [];
                 const headers = [
-                    "No. Urut", "Order Confirmation", "No. PO", "Nama Supplier", "No ID", // Changed header
+                    "No. Urut", "Order Confirmation", "No. PO", "Nama Supplier", "No ID", 
                     "Nama Barang & Quantity", "Allocation", "Invoice", "Tracking", "Sea Forwarder",
                     "Air Forwarder", "DISRC", "Plan Delivery", "ETA", "Actual Delivery",
                     "COO", "HS Code", "Revisi HS", "Note", "Status", "Dibuat Oleh", "Tanggal Dibuat"
@@ -1783,23 +1771,26 @@
 
                 const currentPOs = pos.filter(po => {
                     const searchTerm = document.getElementById('searchPOs').value.toLowerCase();
-                    const statusFilter = document.getElementById('filterStatus').value;
+                    // Hapus variabel filter yang tidak lagi digunakan
+                    // const statusFilter = document.getElementById('filterStatus').value;
+                    // const allocationFilter = document.getElementById('filterAllocation').value;
+                    // const yearFilter = document.getElementById('filterYear').value;
+
                     const supplierFilter = document.getElementById('filterSupplier').value;
                     const itemNameFilter = document.getElementById('filterItemName').value;
-                    const allocationFilter = document.getElementById('filterAllocation').value;
-                    const yearFilter = document.getElementById('filterYear').value;
-                    const noIDFilter = document.getElementById('filterNoID').value; // New filter variable
-                    const cooFilter = document.getElementById('filterCOO').value; // New filter variable
-                    const hsCodeFilter = document.getElementById('filterHSCode').value; // New filter variable
+                    const noIDFilter = document.getElementById('filterNoID').value; 
+                    const cooFilter = document.getElementById('filterCOO').value; 
+                    const hsCodeFilter = document.getElementById('filterHSCode').value; 
                     
                     const matchesSearch = 
                         (po.noPO && po.noPO.toLowerCase().includes(searchTerm)) ||
                         (po.supplierName && po.supplierName.toLowerCase().includes(searchTerm)) ||
                         (po.items && Array.isArray(po.items) && po.items.some(item => item.itemName && item.itemName.toLowerCase().includes(searchTerm)));
                     
-                    const matchesStatus = 
-                        statusFilter === 'all' || 
-                        (po.status && po.status === statusFilter);
+                    // Hapus kondisi filter yang tidak lagi digunakan
+                    // const matchesStatus = 
+                    //     statusFilter === 'all' || 
+                    //     (po.status && po.status === statusFilter);
                     
                     const matchesSupplier = 
                         supplierFilter === 'all' || 
@@ -1809,14 +1800,14 @@
                         itemNameFilter === 'all' || 
                         (po.items && Array.isArray(po.items) && po.items.some(item => item.itemName && item.itemName === itemNameFilter));
 
-                    const matchesAllocation = 
-                        allocationFilter === 'all' || 
-                        (po.allocation && po.allocation === allocationFilter);
+                    // Hapus kondisi filter yang tidak lagi digunakan
+                    // const matchesAllocation = 
+                    //     allocationFilter === 'all' || 
+                    //     (po.allocation && po.allocation === allocationFilter);
 
-                    const matchesYear = yearFilter === 'all' || 
-                                        (po.createdAt instanceof Date && po.createdAt.getFullYear().toString() === yearFilter);
+                    // const matchesYear = yearFilter === 'all' || 
+                    //                     (po.createdAt instanceof Date && po.createdAt.getFullYear().toString() === yearFilter);
                     
-                    // New filter conditions
                     const matchesNoID = 
                         noIDFilter === 'all' || 
                         (po.selectedProduct && po.selectedProduct.name === noIDFilter);
@@ -1829,7 +1820,8 @@
                         hsCodeFilter === 'all' || 
                         (po.hsCode && po.hsCode === hsCodeFilter);
 
-                    return matchesSearch && matchesStatus && matchesSupplier && matchesItemName && matchesAllocation && matchesYear && matchesNoID && matchesCOO && matchesHSCode;
+                    // Sesuaikan return statement
+                    return matchesSearch && matchesSupplier && matchesItemName && matchesNoID && matchesCOO && matchesHSCode;
                 });
 
                 currentPOs.forEach((po, index) => {
@@ -1842,7 +1834,7 @@
                         po.orderConfirmation || '',
                         po.noPO || '',
                         po.supplierName || '',
-                        po.selectedProduct ? po.selectedProduct.name : '', // Changed to No ID
+                        po.selectedProduct ? po.selectedProduct.name : '', 
                         itemsString,
                         po.allocation || '',
                         po.invoice || '',
