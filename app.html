@@ -624,7 +624,7 @@
                         <p id="detailSupplierName" class="text-gray-900"></p>
                     </div>
                     <div class="detail-item">
-                        <p class="text-gray-700 font-semibold">Produk Terpilih:</p>
+                        <p class="text-gray-700 font-semibold">No ID:</p> <!-- Changed from Produk Terpilih -->
                         <p id="detailSelectedProduct" class="text-gray-900"></p>
                     </div>
                     <div class="detail-item">
@@ -760,6 +760,28 @@
                             <!-- Tahun akan diisi secara dinamis oleh JavaScript -->
                         </select>
                     </div>
+                    <!-- New Filters -->
+                    <div>
+                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterNoID">No ID</label>
+                        <select id="filterNoID" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            <option value="all">Semua No ID</option>
+                            <!-- Options populated dynamically -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterCOO">COO</label>
+                        <select id="filterCOO" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            <option value="all">Semua COO</option>
+                            <!-- Options populated dynamically -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterHSCode">HS Code</label>
+                        <select id="filterHSCode" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            <option value="all">Semua HS Code</option>
+                            <!-- Options populated dynamically -->
+                        </select>
+                    </div>
                 </div>
                 <div class="flex justify-end space-x-3 mt-6">
                     <button type="button" onclick="resetFilters()" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
@@ -810,7 +832,6 @@
         const auth = firebase.auth();
         const dealsCollection = db.collection('purchaseOrders');
         const usersCollection = db.collection('users');
-        // Tambahkan koleksi untuk produk jika ingin persistensi
         const productsCollection = db.collection('products'); 
 
         let pos = [];
@@ -824,10 +845,12 @@
         let uniqueItemNames = new Set();
         let uniqueAllocations = new Set();
         let uniqueYears = new Set();
+        let uniqueNoIDs = new Set(); // New Set for No ID
+        let uniqueCOOs = new Set(); // New Set for COO
+        let uniqueHSCodes = new Set(); // New Set for HS Code
 
         const ADMIN_EMAIL = 'maida@genetek.co.id';
 
-        // productData sekarang akan diisi dari database atau dimulai kosong
         let productData = []; 
 
         // ==================== FUNGSI UTAMA ====================
@@ -867,7 +890,7 @@
                     }
 
                     console.log("Current role:", currentUserRole);
-                    await fetchProductData(); // Ambil data produk saat inisialisasi
+                    await fetchProductData(); 
                     applyUserPermissions();
                     listenForPOs(); 
                     initEventListeners();
@@ -880,7 +903,6 @@
             }
         });
 
-        // Fungsi untuk mengambil data produk dari Firestore
         async function fetchProductData() {
             try {
                 const snapshot = await productsCollection.get();
@@ -1004,14 +1026,15 @@
                 unsubscribeFromPOs();
             }
 
-            // Mengubah pengurutan dari "desc" (terbaru di atas) menjadi "asc" (terlama di atas)
-            // Ini akan membuat PO baru selalu muncul di akhir daftar dan mendapatkan nomor urut terakhir
             unsubscribeFromPOs = dealsCollection.orderBy("createdAt", "asc").onSnapshot(snapshot => {
                 pos = [];
                 uniqueSuppliers.clear();
                 uniqueItemNames.clear();
                 uniqueAllocations.clear();
                 uniqueYears.clear();
+                uniqueNoIDs.clear(); // Clear for new data
+                uniqueCOOs.clear(); // Clear for new data
+                uniqueHSCodes.clear(); // Clear for new data
 
                 snapshot.forEach((doc) => {
                     const poData = doc.data();
@@ -1029,6 +1052,9 @@
                             if (item.itemName) uniqueItemNames.add(item.itemName);
                         });
                     }
+                    if (poData.selectedProduct && poData.selectedProduct.name) uniqueNoIDs.add(poData.selectedProduct.name); // Add No ID
+                    if (poData.coo) uniqueCOOs.add(poData.coo); // Add COO
+                    if (poData.hsCode) uniqueHSCodes.add(poData.hsCode); // Add HS Code
                     
                     if (poData.createdAt instanceof Date) {
                         uniqueYears.add(poData.createdAt.getFullYear().toString());
@@ -1063,7 +1089,7 @@
                 </div>
                 <div class="mt-1 text-sm text-gray-600 deal-details">
                     <p><i class="fas fa-building"></i> Supplier: ${po.supplierName || '-'}</p>
-                    <p><i class="fas fa-box"></i> Produk: ${po.selectedProduct ? po.selectedProduct.name : '-'}</p>
+                    <p><i class="fas fa-tag"></i> No ID: ${po.selectedProduct ? po.selectedProduct.name : '-'}</p> <!-- Changed label to No ID -->
                     <p><i class="fas fa-calendar-alt"></i> Plan Delivery: ${po.planDelivery ? formatDate(po.planDelivery) : '-'}</p>
                 </div>
                 <div class="mt-2 flex justify-end items-center deal-footer">
@@ -1128,6 +1154,9 @@
             populateDropdown('filterSupplier', uniqueSuppliers, document.getElementById('filterSupplier').value);
             populateDropdown('filterItemName', uniqueItemNames, document.getElementById('filterItemName').value);
             populateDropdown('filterAllocation', uniqueAllocations, document.getElementById('filterAllocation').value);
+            populateDropdown('filterNoID', uniqueNoIDs, document.getElementById('filterNoID').value); // Populate No ID filter
+            populateDropdown('filterCOO', uniqueCOOs, document.getElementById('filterCOO').value); // Populate COO filter
+            populateDropdown('filterHSCode', uniqueHSCodes, document.getElementById('filterHSCode').value); // Populate HS Code filter
         }
 
         function addItemField(initialItemName = '', initialQuantity = '') {
@@ -1184,12 +1213,11 @@
                         searchResultsDiv.appendChild(resultItem);
                     });
                 } else {
-                    // Jika tidak ada hasil, tawarkan untuk menambahkan sebagai produk baru
                     const addAsNewItem = document.createElement('div');
                     addAsNewItem.className = 'p-2 cursor-pointer hover:bg-gray-100 text-blue-600';
                     addAsNewItem.innerHTML = `Tambahkan "<strong>${this.value}</strong>" sebagai produk baru`;
                     addAsNewItem.addEventListener('click', function() {
-                        selectProduct(null, searchableField.value.trim()); // ID null menandakan produk baru
+                        selectProduct(null, searchableField.value.trim()); 
                     });
                     searchResultsDiv.appendChild(addAsNewItem);
                 }
@@ -1204,7 +1232,7 @@
 
             function selectProduct(productId, productName) {
                 searchableField.value = productName;
-                selectedProductIdInput.value = productId || ''; // Jika null, set ke string kosong
+                selectedProductIdInput.value = productId || ''; 
                 searchResultsDiv.classList.add('hidden');
             }
 
@@ -1304,7 +1332,6 @@
                 return;
             }
 
-            // Tutup modal segera dan tampilkan loading
             closePOModal(); 
             showGlobalLoading(); 
 
@@ -1314,14 +1341,11 @@
             let selectedProductId = document.getElementById('selectedProductId').value;
             const selectedProductName = document.getElementById('searchableField').value.trim();
 
-            // Logika untuk menambahkan produk baru jika belum ada ID
             if (!selectedProductId && selectedProductName) {
-                // Cek apakah produk sudah ada di productData (case-insensitive)
                 const existingProduct = productData.find(p => p.name.toLowerCase() === selectedProductName.toLowerCase());
                 if (existingProduct) {
                     selectedProductId = existingProduct.id;
                 } else {
-                    // Tambahkan produk baru ke Firestore dan productData lokal
                     try {
                         const newProductRef = await productsCollection.add({ name: selectedProductName });
                         selectedProductId = newProductRef.id;
@@ -1330,7 +1354,7 @@
                     } catch (error) {
                         console.error("Error adding new product:", error);
                         showCustomAlert("Gagal menambahkan produk baru. PO akan disimpan tanpa ID produk.", "warning");
-                        selectedProductId = null; // Pastikan tidak ada ID jika gagal
+                        selectedProductId = null; 
                     }
                 }
             }
@@ -1421,7 +1445,6 @@
         async function deletePO() {
             if (!poToDeleteId) return;
 
-            // Tutup modal segera dan tampilkan loading
             closeDeleteModal(); 
             showGlobalLoading(); 
 
@@ -1599,6 +1622,9 @@
                 const itemNameFilter = document.getElementById('filterItemName').value;
                 const allocationFilter = document.getElementById('filterAllocation').value;
                 const yearFilter = document.getElementById('filterYear').value;
+                const noIDFilter = document.getElementById('filterNoID').value; // New filter variable
+                const cooFilter = document.getElementById('filterCOO').value; // New filter variable
+                const hsCodeFilter = document.getElementById('filterHSCode').value; // New filter variable
                 
                 let basePOs = pos;
 
@@ -1627,7 +1653,20 @@
                     const matchesYear = yearFilter === 'all' || 
                                         (po.createdAt instanceof Date && po.createdAt.getFullYear().toString() === yearFilter);
                     
-                    return matchesSearch && matchesStatus && matchesSupplier && matchesItemName && matchesAllocation && matchesYear;
+                    // New filter conditions
+                    const matchesNoID = 
+                        noIDFilter === 'all' || 
+                        (po.selectedProduct && po.selectedProduct.name === noIDFilter);
+
+                    const matchesCOO = 
+                        cooFilter === 'all' || 
+                        (po.coo && po.coo === cooFilter);
+
+                    const matchesHSCode = 
+                        hsCodeFilter === 'all' || 
+                        (po.hsCode && po.hsCode === hsCodeFilter);
+
+                    return matchesSearch && matchesStatus && matchesSupplier && matchesItemName && matchesAllocation && matchesYear && matchesNoID && matchesCOO && matchesHSCode;
                 });
                 
                 renderFilteredPOs(filteredPOs);
@@ -1716,6 +1755,9 @@
             document.getElementById('filterItemName').value = 'all';
             document.getElementById('filterAllocation').value = 'all';
             document.getElementById('filterYear').value = 'all';
+            document.getElementById('filterNoID').value = 'all'; // Reset new filter
+            document.getElementById('filterCOO').value = 'all'; // Reset new filter
+            document.getElementById('filterHSCode').value = 'all'; // Reset new filter
             document.getElementById('searchPOs').value = '';
             filterPOs();
         }
@@ -1732,7 +1774,7 @@
             try {
                 const data = [];
                 const headers = [
-                    "No. Urut", "Order Confirmation", "No. PO", "Nama Supplier", "Produk Terpilih",
+                    "No. Urut", "Order Confirmation", "No. PO", "Nama Supplier", "No ID", // Changed header
                     "Nama Barang & Quantity", "Allocation", "Invoice", "Tracking", "Sea Forwarder",
                     "Air Forwarder", "DISRC", "Plan Delivery", "ETA", "Actual Delivery",
                     "COO", "HS Code", "Revisi HS", "Note", "Status", "Dibuat Oleh", "Tanggal Dibuat"
@@ -1746,6 +1788,9 @@
                     const itemNameFilter = document.getElementById('filterItemName').value;
                     const allocationFilter = document.getElementById('filterAllocation').value;
                     const yearFilter = document.getElementById('filterYear').value;
+                    const noIDFilter = document.getElementById('filterNoID').value; // New filter variable
+                    const cooFilter = document.getElementById('filterCOO').value; // New filter variable
+                    const hsCodeFilter = document.getElementById('filterHSCode').value; // New filter variable
                     
                     const matchesSearch = 
                         (po.noPO && po.noPO.toLowerCase().includes(searchTerm)) ||
@@ -1771,7 +1816,20 @@
                     const matchesYear = yearFilter === 'all' || 
                                         (po.createdAt instanceof Date && po.createdAt.getFullYear().toString() === yearFilter);
                     
-                    return matchesSearch && matchesStatus && matchesSupplier && matchesItemName && matchesAllocation && matchesYear;
+                    // New filter conditions
+                    const matchesNoID = 
+                        noIDFilter === 'all' || 
+                        (po.selectedProduct && po.selectedProduct.name === noIDFilter);
+
+                    const matchesCOO = 
+                        cooFilter === 'all' || 
+                        (po.coo && po.coo === cooFilter);
+
+                    const matchesHSCode = 
+                        hsCodeFilter === 'all' || 
+                        (po.hsCode && po.hsCode === hsCodeFilter);
+
+                    return matchesSearch && matchesStatus && matchesSupplier && matchesItemName && matchesAllocation && matchesYear && matchesNoID && matchesCOO && matchesHSCode;
                 });
 
                 currentPOs.forEach((po, index) => {
@@ -1784,7 +1842,7 @@
                         po.orderConfirmation || '',
                         po.noPO || '',
                         po.supplierName || '',
-                        po.selectedProduct ? po.selectedProduct.name : '',
+                        po.selectedProduct ? po.selectedProduct.name : '', // Changed to No ID
                         itemsString,
                         po.allocation || '',
                         po.invoice || '',
