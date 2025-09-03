@@ -433,8 +433,7 @@
             #poModalContent h2 {
                 font-size: 1.5rem;
             }
-        }
-    </style>
+        </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
     <div class="max-w-7xl mx-auto px-4 py-8">
@@ -811,6 +810,8 @@
         const auth = firebase.auth();
         const dealsCollection = db.collection('purchaseOrders');
         const usersCollection = db.collection('users');
+        // Tambahkan koleksi untuk produk jika ingin persistensi
+        const productsCollection = db.collection('products'); 
 
         let pos = [];
         const DEFAULT_STATUS = 'pending';
@@ -826,23 +827,8 @@
 
         const ADMIN_EMAIL = 'maida@genetek.co.id';
 
-        const productData = [
-            { id: 'prod001', name: 'Laptop Gaming XYZ', description: 'Laptop dengan RTX 3080' },
-            { id: 'prod002', name: 'Monitor UltraWide 34"', description: 'Monitor 144Hz QHD' },
-            { id: 'prod003', name: 'Keyboard Mekanikal RGB', description: 'Switch Cherry MX Brown' },
-            { id: 'prod004', name: 'Mouse Gaming Wireless', description: 'Sensor Hero 25K' },
-            { id: 'prod005', name: 'Headset Gaming Surround', description: 'Audio 7.1 Virtual' },
-            { id: 'prod006', name: 'Webcam Full HD', description: '1080p 60fps' },
-            { id: 'prod007', name: 'Microphone Kondenser USB', description: 'Cocok untuk streaming' },
-            { id: 'prod008', name: 'SSD NVMe 1TB', description: 'Kecepatan baca 7000MB/s' },
-            { id: 'prod009', name: 'RAM DDR4 16GB (2x8GB)', description: '3200MHz CL16' },
-            { id: 'prod010', name: 'Router Wi-Fi 6', description: 'Dual-band AX3000' },
-            { id: 'prod011', name: 'Printer Laser Monokrom', description: 'Cepat dan efisien' },
-            { id: 'prod012', name: 'Speaker Bluetooth Portable', description: 'Suara jernih, baterai tahan lama' },
-            { id: 'prod013', name: 'Smartwatch Sport', description: 'Fitur kesehatan lengkap' },
-            { id: 'prod014', 'name': 'Drone Mini dengan Kamera', description: 'Mudah diterbangkan' },
-            { id: 'prod015', name: 'Power Bank 20000mAh', description: 'Fast charging' },
-        ];
+        // productData sekarang akan diisi dari database atau dimulai kosong
+        let productData = []; 
 
         // ==================== FUNGSI UTAMA ====================
 
@@ -881,6 +867,7 @@
                     }
 
                     console.log("Current role:", currentUserRole);
+                    await fetchProductData(); // Ambil data produk saat inisialisasi
                     applyUserPermissions();
                     listenForPOs(); 
                     initEventListeners();
@@ -892,6 +879,18 @@
                 }
             }
         });
+
+        // Fungsi untuk mengambil data produk dari Firestore
+        async function fetchProductData() {
+            try {
+                const snapshot = await productsCollection.get();
+                productData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                console.log("Product data fetched:", productData);
+            } catch (error) {
+                console.error("Error fetching product data:", error);
+                showCustomAlert("Gagal memuat data produk.", "error");
+            }
+        }
 
         // ==================== FUNGSI UTILITAS ====================
 
@@ -1169,8 +1168,7 @@
                 }
 
                 const filteredProducts = productData.filter(product => 
-                    product.name.toLowerCase().includes(searchTerm) || 
-                    product.description.toLowerCase().includes(searchTerm)
+                    product.name.toLowerCase().includes(searchTerm)
                 );
 
                 if (filteredProducts.length > 0) {
@@ -1185,14 +1183,17 @@
                         });
                         searchResultsDiv.appendChild(resultItem);
                     });
-                    searchResultsDiv.classList.remove('hidden');
                 } else {
-                    const noResultItem = document.createElement('div');
-                    noResultItem.className = 'p-2 text-gray-500';
-                    noResultItem.textContent = 'Tidak ada hasil.';
-                    searchResultsDiv.appendChild(noResultItem);
-                    searchResultsDiv.classList.remove('hidden');
+                    // Jika tidak ada hasil, tawarkan untuk menambahkan sebagai produk baru
+                    const addAsNewItem = document.createElement('div');
+                    addAsNewItem.className = 'p-2 cursor-pointer hover:bg-gray-100 text-blue-600';
+                    addAsNewItem.innerHTML = `Tambahkan "<strong>${this.value}</strong>" sebagai produk baru`;
+                    addAsNewItem.addEventListener('click', function() {
+                        selectProduct(null, searchableField.value.trim()); // ID null menandakan produk baru
+                    });
+                    searchResultsDiv.appendChild(addAsNewItem);
                 }
+                searchResultsDiv.classList.remove('hidden');
             });
 
             document.addEventListener('click', function(event) {
@@ -1203,7 +1204,7 @@
 
             function selectProduct(productId, productName) {
                 searchableField.value = productName;
-                selectedProductIdInput.value = productId;
+                selectedProductIdInput.value = productId || ''; // Jika null, set ke string kosong
                 searchResultsDiv.classList.add('hidden');
             }
 
@@ -1310,8 +1311,30 @@
             const orderConfirmation = document.getElementById('orderConfirmation').value;
             const supplierName = document.getElementById('supplierName').value;
             
-            const selectedProductId = document.getElementById('selectedProductId').value;
-            const selectedProductName = document.getElementById('searchableField').value;
+            let selectedProductId = document.getElementById('selectedProductId').value;
+            const selectedProductName = document.getElementById('searchableField').value.trim();
+
+            // Logika untuk menambahkan produk baru jika belum ada ID
+            if (!selectedProductId && selectedProductName) {
+                // Cek apakah produk sudah ada di productData (case-insensitive)
+                const existingProduct = productData.find(p => p.name.toLowerCase() === selectedProductName.toLowerCase());
+                if (existingProduct) {
+                    selectedProductId = existingProduct.id;
+                } else {
+                    // Tambahkan produk baru ke Firestore dan productData lokal
+                    try {
+                        const newProductRef = await productsCollection.add({ name: selectedProductName });
+                        selectedProductId = newProductRef.id;
+                        productData.push({ id: selectedProductId, name: selectedProductName });
+                        console.log("New product added:", { id: selectedProductId, name: selectedProductName });
+                    } catch (error) {
+                        console.error("Error adding new product:", error);
+                        showCustomAlert("Gagal menambahkan produk baru. PO akan disimpan tanpa ID produk.", "warning");
+                        selectedProductId = null; // Pastikan tidak ada ID jika gagal
+                    }
+                }
+            }
+
 
             const itemInputs = document.querySelectorAll('#itemsList .item-name-input');
             const quantityInputs = document.querySelectorAll('#itemsList .item-quantity-input');
