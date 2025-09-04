@@ -1,201 +1,1882 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Monitoring Purchasing - redirect</title>
-
-    <!-- Tailwind CSS CDN -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase Order Monitoring - Genetek</title>
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Font Awesome CDN -->
-    <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-        crossorigin="anonymous"
-        referrerpolicy="no-referrer"
-    />
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <!-- Library untuk Export Excel -->
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
 
     <style>
+        /* Palet Warna Baru */
+        :root {
+            --primary-blue: #3b82f6; /* Biru utama */
+            --primary-dark-blue: #2563eb; /* Biru gelap */
+            --accent-teal: #14b8a6; /* Aksen teal */
+            --accent-green: #22c55e; /* Aksen hijau */
+            --text-dark: #1e293b; /* Teks gelap */
+            --text-medium: #475569; /* Teks sedang */
+            --text-light: #64748b; /* Teks terang */
+            --bg-light: #f8fafc; /* Latar belakang terang */
+            --bg-medium: #e2e8f0; /* Latar belakang sedang */
+            --bg-soft: #f0f2f5; /* Latar belakang sangat lembut */
+            --border-color: #cbd5e1; /* Warna border */
+            --shadow-light: rgba(0, 0, 0, 0.05);
+            --shadow-medium: rgba(0, 0, 0, 0.1);
+            --shadow-strong: rgba(0, 0, 0, 0.2);
+        }
+
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f0f2f5;
-            color: #334155;
-            margin: 0;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 2rem 1rem;
-            position: relative;
+            background-color: var(--bg-soft);
+            color: var(--text-medium);
+            line-height: 1.6;
         }
-        .menu-container {
-            max-width: 960px;
-            width: 100%;
-            display: grid;
-            grid-template-columns: repeat(2, 1fr); /* Diubah menjadi 2 kolom */
-            gap: 1.5rem;
-        }
-        .menu-card {
+
+        /* Header Styling */
+        .header {
             background-color: #ffffff;
-            border-radius: 0.75rem;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-            padding: 2.5rem 1.5rem;
+            border-radius: 1rem; /* Lebih bulat */
+            box-shadow: 0 8px 20px var(--shadow-light); /* Bayangan lebih halus */
+            padding: 1.75rem 2rem;
+            position: relative; /* Untuk menempatkan tombol logout */
+        }
+        .header h1 {
+            color: var(--text-dark);
+            font-size: 2.25rem; /* Lebih besar */
+            font-weight: 800;
+        }
+        .header .logout-btn-container {
+            position: absolute;
+            top: 1.75rem;
+            right: 2rem;
+        }
+        .header button {
+            font-weight: 600;
+            border-radius: 0.65rem;
+            padding: 0.75rem 1.25rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .header button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px var(--shadow-medium);
+        }
+        .header button.bg-blue-600 { background-color: var(--primary-blue); }
+        .header button.bg-blue-600:hover { background-color: var(--primary-dark-blue); }
+        .header button.bg-green-500 { background-color: var(--accent-green); } /* Menggunakan accent-green */
+        .header button.bg-green-500:hover { background-color: #16a34a; } /* Darker green */
+        .header button.bg-red-500 { background-color: #ef4444; }
+        .header button.bg-red-500:hover { background-color: #dc2626; }
+        .header button.bg-gray-500 { background-color: #6b7280; }
+        .header button.bg-gray-500:hover { background-color: #4b5563; }
+        .header button.bg-gray-200 { background-color: var(--bg-medium); color: var(--text-dark); }
+        .header button.bg-gray-200:hover { background-color: var(--border-color); }
+
+        /* Ripple Effect */
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.7);
+            animation: ripple-animation 0.6s linear forwards;
+            transform: scale(0);
+            pointer-events: none;
+        }
+        @keyframes ripple-animation {
+            from { transform: scale(0); opacity: 1; }
+            to { transform: scale(4); opacity: 0; }
+        }
+
+        /* Input & Select Styling */
+        input[type="text"], input[type="date"], input[type="number"], select, textarea {
+            border: 1px solid var(--border-color);
+            border-radius: 0.65rem;
+            padding: 0.75rem 1rem;
+            font-size: 0.95rem;
+            color: var(--text-dark);
+            transition: all 0.2s ease;
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+            outline: none;
+        }
+
+        /* Pipeline Stage */
+        .pipeline-stage {
+            min-height: 480px;
+            max-height: 600px;
+            transition: all 0.4s ease-out;
+            border-radius: 1rem; /* Lebih bulat */
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background-color: #ffffff;
+            box-shadow: 0 12px 30px var(--shadow-light); /* Bayangan lebih dalam */
+            box-sizing: border-box;
+        }
+        .pipeline-stage-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--bg-medium);
+            background-image: linear-gradient(to right, var(--primary-blue), var(--accent-teal)); /* Animasi: Gradien pada header */
+            color: white; /* Animasi: Warna teks agar kontras dengan gradien */
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); /* Animasi: Bayangan pada header */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        .pipeline-stage-header h3 {
+            font-size: 1.2rem; /* Lebih besar */
+            font-weight: 700;
+            color: white; /* Animasi: Pastikan teks judul tetap putih */
+            flex-shrink: 0;
             text-align: center;
-            cursor: pointer;
+            width: 100%;
+        }
+        .pipeline-stage-content {
+            flex-grow: 1;
+            padding: 1.25rem; /* Padding lebih besar */
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            min-height: 100px;
+            height: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-content: flex-start;
+            background-image: linear-gradient(to bottom right, var(--bg-light), var(--bg-soft)); /* Animasi: Gradien lembut pada konten */
+        }
+
+        /* Deal Card */
+        .deal-card {
+            transition: transform 0.4s ease-out, opacity 0.4s ease-out, box-shadow 0.3s ease-out; /* Animasi: Transisi yang lebih halus */
+            cursor: grab;
+            position: relative;
+            background-color: #ffffff;
+            border: 1px solid var(--bg-medium);
+            border-radius: 0.85rem; /* Lebih bulat */
+            padding: 1.1rem; /* Padding lebih besar */
+            margin-bottom: 0;
+            box-shadow: 0 6px 15px var(--shadow-light); /* Bayangan lebih jelas */
+            font-size: 0.875rem;
+            width: calc(25% - 0.75rem); /* Disesuaikan untuk 4 kolom */
+            min-width: 220px; /* Min-width sedikit lebih kecil agar muat 4 kolom */
+            box-sizing: border-box;
+            opacity: 0; /* Animasi: Mulai dengan tidak terlihat */
+            transform: translateY(20px); /* Animasi: Mulai sedikit di bawah */
+            display: flex; /* Menggunakan flexbox untuk tata letak internal */
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .deal-card.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .deal-card:hover {
+            transform: translateY(-7px) scale(1.02); /* Animasi: Efek hover lebih dramatis (naik dan membesar) */
+            box-shadow: 0 15px 35px var(--shadow-medium); /* Bayangan hover lebih kuat */
+        }
+        .deal-card:active {
+            cursor: grabbing;
+        }
+        .deal-card h3 {
+            font-size: 1.05rem; /* Ukuran font sedikit lebih besar */
+            font-weight: 700;
+            color: var(--text-dark);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: calc(100% - 60px);
+            margin-bottom: 0.5rem; /* Spasi di bawah judul */
+        }
+        .deal-details {
+            flex-grow: 1; /* Memungkinkan detail mengisi ruang */
+            margin-bottom: 1rem; /* Spasi di bawah detail */
+        }
+        .deal-details p {
+            font-size: 0.85rem; /* Ukuran font sedikit lebih besar */
+            margin-top: 0.3rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--text-medium);
+            display: flex;
+            align-items: center;
+        }
+        .deal-details p i {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            margin-right: 0.5rem; /* Spasi antara ikon dan teks */
+            width: 1rem; /* Lebar tetap untuk ikon */
+            text-align: center;
+        }
+        .deal-actions {
+            display: flex;
+            justify-content: flex-end; /* Tombol aksi ke kanan */
+            gap: 0.5rem; /* Spasi antar tombol aksi */
+        }
+        .deal-actions button {
+            padding: 0.3rem 0.6rem;
+            font-size: 0.8rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s ease-out, transform 0.2s ease-out;
+            color: var(--text-medium); /* Warna ikon default */
+            background-color: var(--bg-light); /* Latar belakang tombol aksi */
+            border: 1px solid var(--border-color);
+        }
+        .deal-actions button:hover {
+            transform: translateY(-2px);
+            background-color: var(--bg-medium);
+        }
+        .deal-actions button.text-blue-600:hover { color: var(--primary-blue); }
+        .deal-actions button.text-green-600:hover { color: #22c55e; } /* Menggunakan accent-green */
+        .deal-actions button.text-red-600:hover { color: #ef4444; }
+
+        .deal-footer {
+            margin-top: 1rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--bg-medium);
+        }
+
+        /* Scrollbar */
+        .pipeline-stage-content::-webkit-scrollbar {
+            width: 8px; /* Animasi: Lebar scrollbar */
+        }
+        .pipeline-stage-content::-webkit-scrollbar-track {
+            background: var(--bg-soft); /* Animasi: Warna track */
+            border-radius: 10px;
+        }
+        .pipeline-stage-content::-webkit-scrollbar-thumb {
+            background: var(--primary-blue); /* Animasi: Warna thumb */
+            border-radius: 10px;
+            border: 2px solid var(--bg-soft); /* Animasi: Border agar terlihat lebih baik */
+        }
+        .pipeline-stage-content::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-dark-blue); /* Animasi: Warna thumb saat hover */
+        }
+
+        /* Modals */
+        /* Hapus properti transition untuk menghilangkan animasi */
+        .modal-content-enter-active, .modal-content-leave-active {
+            /* transition: opacity 0.15s cubic-bezier(0.25, 0.8, 0.25, 1), transform 0.15s cubic-bezier(0.25, 0.8, 0.25, 1); */
+        }
+        #poModalContent, #poDetailModalContent, #deleteModalContent, #filterPanelContent, #successAlertModalContent {
+            background-color: #ffffff;
+            border-radius: 1rem;
+            box-shadow: 0 20px 50px var(--shadow-strong);
+            padding: 2.5rem;
+        }
+        #poModalContent {
+            max-height: 90vh; /* Sedikit lebih kecil dari 100vh */
+            max-width: 90vw; /* Sedikit lebih kecil dari 100vw */
+            border-radius: 1rem; /* Kembali ke border-radius */
+            box-shadow: 0 20px 50px var(--shadow-strong); /* Kembali ke bayangan */
+        }
+        #poModalContent h2, #poDetailModalContent h2, #deleteModalContent h2, #filterPanelContent h2, #successAlertModalContent h2 {
+            color: var(--text-dark);
+            font-weight: 800;
+            font-size: 2rem;
+            margin-bottom: 1.75rem;
+        }
+        #poForm label {
+            color: var(--text-dark);
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-bottom: 0.35rem;
+        }
+        #poForm input, #poForm select, #poForm textarea {
+            border-radius: 0.5rem;
+            padding: 0.6rem 1rem;
+            font-size: 0.9rem;
+        }
+        #poForm textarea { height: 100px; } /* Sedikit lebih pendek */
+
+        /* Detail Grid */
+        #poDetailModalContent .detail-grid {
+            display: grid; /* Pastikan ini adalah grid */
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* Lebih rapat */
+            gap: 1rem;
+        }
+        /* Modifikasi untuk 3 kolom pada detail PO */
+        @media (min-width: 768px) { /* Untuk tablet dan desktop */
+            #poDetailModalContent .detail-grid {
+                grid-template-columns: repeat(3, 1fr); /* 3 kolom */
+            }
+        }
+        #poDetailModalContent .detail-item p:first-child {
+            color: var(--text-light);
+            font-size: 0.75rem;
+        }
+        #poDetailModalContent .detail-item p {
+            color: var(--text-dark);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: var(--primary-blue);
+            border-radius: 50%;
+            width: 40px; /* Lebih besar */
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        /* Global Loading Overlay */
+        #global-loading-overlay.show {
+            display: flex; /* Pastikan overlay terlihat saat 'show' */
+        }
+
+        /* Empty State */
+        .empty-state {
+            color: var(--text-light);
+            text-align: center;
+            padding: 2rem;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            min-height: 180px;
-            user-select: none;
-            box-sizing: border-box;
+            width: 100%;
         }
-        .menu-card:hover,
-        .menu-card:focus {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.18);
-            outline: none;
+        .empty-state i {
+            font-size: 3rem;
+            color: var(--bg-medium);
+            margin-bottom: 1rem;
         }
-        .menu-card i {
-            font-size: 3.75rem;
-            margin-bottom: 1.25rem;
-            color: #3b82f6;
-            transition: color 0.3s ease;
+        .empty-state p {
+            font-size: 1rem;
+            color: var(--text-light);
         }
-        .menu-card:hover i,
-        .menu-card:focus i {
-            color: #2563eb;
-        }
-        .menu-card h3 {
-            font-size: 1.25rem;
-            font-weight: 800;
-            color: #1e293b;
-            user-select: none;
-        }
-        .logout-button {
-            position: fixed;
-            top: 1.5rem;
-            right: 1.5rem;
-            background-color: #ef4444;
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.75rem;
+
+        /* PO Card Number */
+        .po-card-number {
+            position: absolute;
+            top: 0.6rem;
+            right: 0.6rem; /* Pindah ke kanan atas */
+            left: unset; /* Pastikan tidak ada properti left yang mengganggu */
+            font-size: 0.8rem; /* Sedikit lebih besar */
             font-weight: 700;
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
-            cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.2s ease;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            border: none;
-            user-select: none;
-            z-index: 1000;
+            color: var(--text-dark); /* Warna teks lebih gelap */
+            background-color: var(--bg-medium);
+            padding: 0.15rem 0.5rem;
+            border-radius: 0.35rem;
+            z-index: 10; /* Pastikan di atas konten lain */
         }
-        .logout-button:hover,
-        .logout-button:focus {
-            background-color: #dc2626;
-            transform: translateY(-2px);
-            outline: none;
+
+        /* Media Queries untuk responsivitas */
+        @media (max-width: 1280px) { /* Untuk layar laptop besar, 3 kolom */
+            .deal-card {
+                width: calc(33.333% - 0.666rem);
+                min-width: 280px;
+            }
         }
-    </style>
+
+        @media (max-width: 1024px) { /* Untuk tablet, 2 kolom */
+            .deal-card {
+                width: calc(50% - 0.5rem);
+                min-width: 280px;
+            }
+        }
+
+        @media (max-width: 768px) { /* Untuk mobile, 1 kolom */
+            .deal-card {
+                width: 100%;
+                min-width: unset;
+            }
+            .max-w-7xl {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 1.25rem 1.5rem;
+            }
+            .header h1 {
+                font-size: 1.75rem;
+            }
+            .header .logout-btn-container {
+                position: static; /* Kembali ke posisi normal di mobile */
+                margin-top: 1rem;
+                width: 100%;
+            }
+            .header > div:last-child { /* Ini adalah div yang berisi tombol-tombol di bawah judul */
+                margin-top: 1rem;
+                width: 100%;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.75rem;
+            }
+            .header button {
+                width: 100%;
+                justify-content: center;
+                padding: 0.65rem 1rem;
+                font-size: 0.9rem;
+            }
+            .header .flex-col.sm\:flex-row {
+                flex-direction: column;
+            }
+            .header .sm\:w-1\/2 {
+                width: 100%;
+            }
+            #poModalContent {
+                padding: 1.5rem;
+            }
+            #poModalContent h2 {
+                font-size: 1.5rem;
+            }
+        </style>
 </head>
-<body>
-    <button id="logoutButton" class="logout-button" aria-label="Logout">
-        <i class="fas fa-sign-out-alt"></i> Logout
-    </button>
+<body class="bg-gray-50 text-gray-800">
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="mb-8 bg-white p-6 rounded-lg shadow-md header">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900">Purchase Order Monitoring <i class="fas fa-box-open text-blue-600 ml-2"></i></h1>
+                </div>
+                <div class="logout-btn-container">
+                    <button id="authButton" onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
+                        <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Buttons below title -->
+            <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 mt-4">
+                <button id="newPOBtn" onclick="openPOModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
+                    <i class="fas fa-plus-circle mr-2"></i> PO Baru
+                </button>
+                
+                <button id="exportExcelBtn" onclick="exportToExcel()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
+                    <i class="fas fa-file-excel mr-2"></i> Export Excel
+                </button>
 
-    <main class="menu-container" role="main" aria-label="Menu Dashboard">
-        <div
-            class="menu-card"
-            role="button"
-            tabindex="0"
-            aria-pressed="false"
-            onclick="navigateTo('app.html')"
-            onkeypress="if(event.key==='Enter' || event.key===' ') navigateTo('app.html')"
-        >
-            <i class="fas fa-box-open" aria-hidden="true"></i>
-            <h3>PO Monitoring</h3>
-        </div>
-        <div
-            class="menu-card"
-            role="button"
-            tabindex="0"
-            aria-pressed="false"
-            onclick="alert('Fitur ini belum tersedia!')"
-            onkeypress="if(event.key==='Enter' || event.key===' ') alert('Fitur ini belum tersedia!')"
-        >
-            <i class="fas fa-chart-line" aria-hidden="true"></i>
-            <h3>Laporan Penjualan</h3>
-        </div>
-        <div
-            class="menu-card"
-            role="button"
-            tabindex="0"
-            aria-pressed="false"
-            onclick="alert('Fitur ini belum tersedia!')"
-            onkeypress="if(event.key==='Enter' || event.key===' ') alert('Fitur ini belum tersedia!')"
-        >
-            <i class="fas fa-users" aria-hidden="true"></i>
-            <h3>Manajemen Pengguna</h3>
-        </div>
-        <div
-            class="menu-card"
-            role="button"
-            tabindex="0"
-            aria-pressed="false"
-            onclick="alert('Fitur ini belum tersedia!')"
-            onkeypress="if(event.key==='Enter' || event.key===' ') alert('Fitur ini belum tersedia!')"
-        >
-            <i class="fas fa-cogs" aria-hidden="true"></i>
-            <h3>Pengaturan Sistem</h3>
-        </div>
-    </main>
+                <button id="backButton" onclick="goToIndex()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
+                    <i class="fas fa-arrow-left mr-2"></i> Kembali
+                </button>
+            </div>
 
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+            <!-- Combined Filter Section -->
+            <div class="mt-6 flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 items-center">
+                <input type="text" id="searchPOs" onkeyup="filterPOs()" placeholder="Cari PO berdasarkan nomor, supplier, barang..." class="w-full sm:w-1/2 p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                
+                <button id="openFilterPanelBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
+                    <i class="fas fa-filter mr-2"></i> Filter
+                </button>
+            </div>
+        </header>
+
+        <!-- Pipeline Visualization -->
+        <div class="grid grid-cols-1 gap-6 mb-10">
+            <div class="pipeline-stage stage-main-pipeline">
+                <div class="pipeline-stage-header">
+                    <h3>Daftar PO</h3>
+                </div>
+                <div id="pos-stage" class="pipeline-stage-content">
+                    <!-- POs akan ditampilkan di sini -->
+                    <div id="loading-spinner" class="flex justify-center items-center w-full h-full hidden">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add/Edit PO Modal -->
+        <div id="poModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+            <div class="bg-white rounded-none p-8 w-full h-full shadow-2xl modal-content-enter" id="poModalContent">
+                <h2 class="text-xl sm:text-2xl font-bold mb-6 text-gray-900" id="modalTitle">Tambah PO Baru</h2>
+                <form id="poForm">
+                    <input type="hidden" id="poId">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"> <!-- Gap lebih besar -->
+                        <!-- Kolom 1 -->
+                        <div>
+                            <div class="mb-4"> <!-- Margin lebih besar -->
+                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="orderConfirmation">Order Confirmation</label>
+                                <input type="text" id="orderConfirmation" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="noPO">No. PO <span class="text-red-500">*</span></label>
+                                <input type="text" id="noPO" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" required>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="supplierName">Nama Supplier</label>
+                                <input type="text" id="supplierName" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            </div>
+                            <!-- Dipindahkan ke sini -->
+                            <div class="mb-4 relative"> 
+                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="searchableField">No ID</label>
+                                <input type="text" id="searchableField" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="Cari produk...">
+                                <div id="searchResults" class="absolute z-10 bg-white border border-gray-300 rounded-lg shadow-lg mt-1 w-full max-h-48 overflow-y-auto hidden">
+                                    <!-- Hasil pencarian akan ditampilkan di sini -->
+                                </div>
+                                <input type="hidden" id="selectedProductId">
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">Nama Barang & Quantity</label>
+                                <div id="itemsList" class="space-y-3 mb-3">
+                                    <!-- Item barang akan ditambahkan di sini secara dinamis oleh JS -->
+                                </div>
+                                <button type="button" onclick="addItemField()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-1.5 rounded-lg text-xs flex items-center transition duration-200 ease-in-out transform hover:scale-105">
+                                    <i class="fas fa-plus mr-1"></i> Tambah Barang
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Kolom 2 -->
+                        <div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="allocation">Allocation</label>
+                                <input type="text" id="allocation" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="invoice">Invoice</label>
+                                <input type="text" id="invoice" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="tracking">Tracking</label>
+                                <input type="text" id="tracking" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="seaForwarder">Sea Forwarder</label>
+                                <input type="text" id="seaForwarder" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="airForwarder">Air Forwarder</label>
+                                <input type="text" id="airForwarder" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            </div>
+                        </div>
+                        <!-- Kolom 3 -->
+                        <div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="disrc">DISRC</label>
+                                <input type="text" id="disrc" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="planDelivery">Plan Delivery</label>
+                                <input type="date" id="planDelivery" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="eta">ETA</label>
+                                <input type="date" id="eta" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="actualDelivery">Actual Delivery</label>
+                                <input type="date" id="actualDelivery" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            </div>
+                        </div>
+                        <!-- Kolom 4 -->
+                        <div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="coo">COO</label>
+                                <input type="text" id="coo" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="hsCode">HS Code</label>
+                                <input type="text" id="hsCode" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="revisiHS">Revisi HS</label>
+                                <input type="text" id="revisiHS" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="note">Note</label>
+                                <textarea id="note" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" rows="3" placeholder="Tambahkan catatan atau deskripsi tambahan..."></textarea>
+                            </div>
+                            <!-- Status default disembunyikan dan diatur di JS -->
+                            <!-- <input type="hidden" id="status" value="pending"> -->
+                        </div>
+                    </div>
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button type="button" onclick="closePOModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
+                            Batal
+                        </button>
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105 text-sm">
+                            Simpan PO
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- PO Detail Modal -->
+        <div id="poDetailModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+            <div class="bg-white rounded-xl p-8 w-full max-w-3xl shadow-2xl modal-content-enter" id="poDetailModalContent"> <!-- Max-width lebih besar -->
+                <h2 class="text-xl sm:text-2xl font-bold mb-6 text-gray-900" id="poDetailTitle">Detail PO</h2>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <p class="text-gray-700 font-semibold">Order Confirmation:</p>
+                        <p id="detailOrderConfirmation" class="text-gray-900"></p>
+                    </div>
+                    <div class="detail-item">
+                        <p class="text-gray-700 font-semibold">No. PO:</p>
+                        <p id="detailNoPO" class="text-gray-900"></p>
+                    </div>
+                    <div class="detail-item">
+                        <p class="text-gray-700 font-semibold">Nama Supplier:</p>
+                        <p id="detailSupplierName" class="text-gray-900"></p>
+                    </div>
+                    <div class="detail-item">
+                        <p class="text-gray-700 font-semibold">No ID:</p> <!-- Changed from Produk Terpilih -->
+                        <p id="detailSelectedProduct" class="text-gray-900"></p>
+                    </div>
+                    <div class="detail-item">
+                        <p class="text-gray-700 font-semibold">Allocation:</p>
+                        <p id="detailAllocation" class="text-gray-900"></p>
+                    </div>
+                    <div class="detail-item">
+                        <p class="text-gray-700 font-semibold">Invoice:</p>
+                        <p id="detailInvoice" class="text-gray-900"></p>
+                    </div>
+                    <div class="detail-item">
+                        <p class="text-gray-700 font-semibold">Tracking:</p>
+                        <p id="detailTracking" class="text-gray-900"></p>
+                    </div>
+                    <div class="detail-item">
+                        <p class="text-gray-700 font-semibold">Sea Forwarder:</p>
+                        <p id="detailSeaForwarder" class="text-gray-900"></p>
+                    </div>
+                    <div class="detail-item">
+                        <p class="text-gray-700 font-semibold">Air Forwarder:</p>
+                        <p id="detailAirForwarder" class="text-gray-900"></p>
+                    </div>
+                    <div class="detail-item">
+                        <p class="text-gray-700 font-semibold">DISRC:</p>
+                        <p id="detailDisrc" class="text-gray-900"></p>
+                    </div>
+                    <div class="detail-item">
+                        <p class="text-gray-700 font-semibold">Plan Delivery:</p>
+                        <p id="detailPlanDelivery" class="text-gray-900"></p>
+                    </div>
+                    <div class="detail-item">
+                        <p class="text-gray-700 font-semibold">ETA:</p>
+                        <p id="detailETA" class="text-gray-900"></p>
+                    </div>
+                    <div class="detail-item">
+                        <p class="text-gray-700 font-semibold">Actual Delivery:</p>
+                        <p id="detailActualDelivery" class="text-gray-900"></p>
+                    </div>
+                    <div class="detail-item">
+                        <p class="text-gray-700 font-semibold">COO:</p>
+                        <p id="detailCOO" class="text-gray-900"></p>
+                    </div>
+                    <div class="detail-item">
+                        <p class="text-gray-700 font-semibold">HS Code:</p>
+                        <p id="detailHSCode" class="text-gray-900"></p>
+                    </div>
+                    <div class="detail-item">
+                        <p class="text-gray-700 font-semibold">Revisi HS:</p>
+                        <p id="detailRevisiHS" class="text-gray-900"></p>
+                    </div>
+                    <!-- Status dan Tanggal Dibuat dihapus dari sini -->
+                    <div class="detail-item col-span-full"> <!-- Mengambil lebar penuh -->
+                        <p class="text-gray-700 font-semibold">Nama Barang & Quantity:</p>
+                        <ul id="detailItemsList" class="list-disc list-inside text-gray-900"></ul>
+                    </div>
+                    <div class="detail-item col-span-full">
+                        <p class="text-gray-700 font-semibold">Note:</p>
+                        <p id="detailNote" class="text-gray-900"></p>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" onclick="closePODetailModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
+                        Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delete Confirmation Modal -->
+        <div id="deleteModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+            <div class="bg-white rounded-xl p-8 w-full max-w-sm shadow-2xl modal-content-enter" id="deleteModalContent">
+                <h2 class="text-xl font-bold mb-4 text-gray-900">Konfirmasi Penghapusan</h2>
+                <p class="text-gray-700 mb-6 text-sm">Apakah Anda yakin ingin menghapus "<span id="dealToDeleteName" class="font-semibold"></span>"? Aksi ini tidak dapat dibatalkan.</p>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="closeDeleteModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
+                        Batal
+                    </button>
+                    <button type="button" id="confirmDeleteBtn" onclick="deletePO()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105 text-sm">
+                        Hapus
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Panel Modal -->
+        <div id="filterPanel" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+            <div class="bg-white rounded-xl p-8 w-full max-w-2xl shadow-2xl modal-content-enter" id="filterPanelContent">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900 flex items-center"><i class="fas fa-filter mr-3 text-gray-500"></i> Filter POs</h2>
+                    <button onclick="closeFilterPanel()" class="text-gray-500 hover:text-gray-700 transition duration-200">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Filter: Nama Supplier -->
+                    <div>
+                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterSupplier">Supplier</label>
+                        <select id="filterSupplier" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            <option value="all">Semua Supplier</option>
+                            <!-- Opsi akan diisi secara dinamis oleh JavaScript -->
+                        </select>
+                    </div>
+                    <!-- Filter: No ID -->
+                    <div>
+                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterNoID">No ID</label>
+                        <select id="filterNoID" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            <option value="all">Semua No ID</option>
+                            <!-- Options populated dynamically -->
+                        </select>
+                    </div>
+                    <!-- Filter: Nama Barang -->
+                    <div>
+                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterItemName">Nama Barang</label>
+                        <select id="filterItemName" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            <option value="all">Semua Barang</option>
+                            <!-- Opsi akan diisi secara dinamis oleh JavaScript -->
+                        </select>
+                    </div>
+                    <!-- Filter: COO -->
+                    <div>
+                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterCOO">COO</label>
+                        <select id="filterCOO" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            <option value="all">Semua COO</option>
+                            <!-- Options populated dynamically -->
+                        </select>
+                    </div>
+                    <!-- Filter: HS Code -->
+                    <div>
+                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterHSCode">HS Code</label>
+                        <select id="filterHSCode" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            <option value="all">Semua HS Code</option>
+                            <!-- Options populated dynamically -->
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" onclick="resetFilters()" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
+                        Reset Filter
+                    </button>
+                    <button type="button" onclick="applyFiltersAndClosePanel()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105 text-sm">
+                        Terapkan Filter
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Success Alert Modal (New) -->
+        <div id="successAlertModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+            <div class="bg-white rounded-xl p-8 w-full max-w-sm text-center shadow-2xl modal-content-enter" id="successAlertModalContent">
+                <div class="text-green-500 text-6xl mb-4">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h2 class="text-2xl font-bold mb-4 text-gray-900">Berhasil!</h2>
+                <p class="text-gray-700 mb-6" id="successAlertMessage">PO berhasil disimpan.</p>
+                <button type="button" onclick="closeSuccessAlertModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105">
+                    OK
+                </button>
+            </div>
+        </div>
+
+        <!-- Global Loading Overlay -->
+        <div id="global-loading-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-[9999] hidden">
+            <div class="spinner"></div>
+        </div>
+
+    </div>
 
     <script>
-        // Firebase config (samakan dengan konfigurasi di app.html)
+        // Konfigurasi Firebase
         const firebaseConfig = {
-            apiKey: "AIzaSyB9s6k2K75vrbe1lWgiu42SAXV_lySHHNU",
-            authDomain: "monitoring-efk.firebaseapp.com",
-            projectId: "monitoring-efk",
-            storageBucket: "monitoring-efk.firebasestorage.app",
-            messagingSenderId: "1083858508151",
-            appId: "1:1083858508151:web:3d505dec79d715f9cd6972"
+              apiKey: "AIzaSyB9s6k2K75vrbe1lWgiu42SAXV_lySHHNU",
+              authDomain: "monitoring-efk.firebaseapp.com",
+              projectId: "monitoring-efk",
+              storageBucket: "monitoring-efk.firebasestorage.app",
+              messagingSenderId: "1083858508151",
+              appId: "1:1083858508151:web:3d505dec79d715f9cd6972"
         };
 
-        // Initialize Firebase
+        // Inisialisasi Firebase
         firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
         const auth = firebase.auth();
+        const dealsCollection = db.collection('purchaseOrders');
+        const usersCollection = db.collection('users');
+        const productsCollection = db.collection('products'); 
 
-        // Cek status login saat halaman dimuat
-        auth.onAuthStateChanged((user) => {
-            if (!user) {
-                // Jika belum login, redirect ke login.html
+        let pos = [];
+        const DEFAULT_STATUS = 'pending';
+        let currentUserRole = 'user';
+        let sortableInstances = {};
+        let authInitialized = false;
+        let unsubscribeFromPOs = null;
+
+        // Hanya menyimpan Set untuk filter yang diinginkan
+        let uniqueSuppliers = new Set();
+        let uniqueItemNames = new Set();
+        let uniqueNoIDs = new Set(); 
+        let uniqueCOOs = new Set(); 
+        let uniqueHSCodes = new Set(); 
+
+        // Variabel yang tidak lagi digunakan untuk filter, bisa dihapus atau diabaikan
+        // let uniqueAllocations = new Set();
+        // let uniqueYears = new Set();
+
+        const ADMIN_EMAIL = 'maida@genetek.co.id';
+
+        let productData = []; 
+
+        // ==================== FUNGSI UTAMA ====================
+
+        auth.onAuthStateChanged(async (user) => {
+            if (authInitialized) return;
+            authInitialized = true;
+            
+            console.log("Auth state changed:", user ? user.email : "no user");
+            
+            if (!user && window.location.pathname.includes('app.html')) {
+                console.log("No user, redirecting to login");
                 window.location.href = 'login.html';
+                return;
             }
-            // Jika sudah login, tetap di halaman ini
+            
+            if (user && window.location.pathname.includes('login.html')) {
+                console.log("User already logged in, redirecting to app");
+                window.location.href = 'app.html';
+                return;
+            }
+
+            if (user && window.location.pathname.includes('app.html')) {
+                try {
+                    showGlobalLoading();
+                    if (user.email === ADMIN_EMAIL) {
+                        currentUserRole = 'admin';
+                        await usersCollection.doc(user.uid).set({ 
+                            role: 'admin',
+                            email: user.email 
+                        }, { merge: true });
+                    } else {
+                        console.log("Unauthorized user, logging out and redirecting to login.");
+                        await auth.signOut();
+                        window.location.href = 'login.html';
+                        return;
+                    }
+
+                    console.log("Current role:", currentUserRole);
+                    await fetchProductData(); 
+                    listenForPOs(); 
+                    initEventListeners();
+                    hideGlobalLoading();
+                } catch (error) {
+                    console.error("Error checking user role or loading data:", error);
+                    showCustomAlert("Gagal memuat data pengguna atau aplikasi. Silakan refresh halaman.", "error");
+                    hideGlobalLoading();
+                }
+            }
         });
 
-        // Fungsi navigasi ke halaman lain
-        function navigateTo(url) {
-            window.location.href = url;
+        async function fetchProductData() {
+            try {
+                const snapshot = await productsCollection.get();
+                productData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                console.log("Product data fetched:", productData);
+            } catch (error) {
+                console.error("Error fetching product data:", error);
+                showCustomAlert("Gagal memuat data produk.", "error");
+            }
         }
 
-        // Logout function
-        document.getElementById('logoutButton').addEventListener('click', () => {
+        // ==================== FUNGSI UTILITAS ====================
+
+        function formatDateTime(timestamp) {
+            if (!timestamp) return '-';
+            try {
+                const date = timestamp instanceof Date ? timestamp : (timestamp && typeof timestamp.toDate === 'function' ? timestamp.toDate() : null);
+                if (!date) return '-';
+
+                return date.toLocaleString('id-ID', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch (e) {
+                console.error("Error formatting date time:", e);
+                return '-';
+            }
+        }
+
+        function formatNumber(num) {
+            if (num === null || num === undefined || isNaN(num)) {
+                return '0';
+            }
+            return new Intl.NumberFormat('id-ID').format(num);
+        }
+
+        function formatDate(timestamp) {
+            if (!timestamp) return '-';
+            try {
+                const date = timestamp instanceof Date ? timestamp : (timestamp && typeof timestamp.toDate === 'function' ? timestamp.toDate() : null);
+                if (!date) return '-';
+                
+                return date.toLocaleDateString('id-ID');
+            } catch (e) {
+                console.error("Error formatting date:", e);
+                return '-';
+            }
+        }
+
+        function showCustomAlert(message, type = 'success') {
+            const modal = document.getElementById('successAlertModal');
+            const modalContent = document.getElementById('successAlertModalContent');
+            const alertMessage = document.getElementById('successAlertMessage');
+            const alertIcon = modalContent.querySelector('.text-6xl i');
+
+            alertMessage.textContent = message;
+
+            if (type === 'success') {
+                alertIcon.className = 'fas fa-check-circle text-green-500';
+            } else if (type === 'error') {
+                alertIcon.className = 'fas fa-times-circle text-red-500';
+            } else if (type === 'info') {
+                alertIcon.className = 'fas fa-info-circle text-blue-500';
+            } else if (type === 'warning') {
+                alertIcon.className = 'fas fa-exclamation-triangle text-yellow-500';
+            }
+
+            modal.classList.remove('hidden');
+            // Tidak perlu menambahkan kelas enter-active jika tidak ada transisi
+        }
+
+        function closeSuccessAlertModal() {
+            const modal = document.getElementById('successAlertModal');
+            const modalContent = document.getElementById('successAlertModalContent');
+            if (!modalContent || !modal) return;
+
+            // Langsung sembunyikan modal tanpa transisi
+            modal.classList.add('hidden');
+        }
+
+        function showGlobalLoading() {
+            document.getElementById('global-loading-overlay').classList.add('show');
+        }
+
+        function hideGlobalLoading() {
+            document.getElementById('global-loading-overlay').classList.remove('show');
+        }
+
+        // ==================== FUNGSI PO ====================
+
+        // Fungsi ini tidak lagi diperlukan karena filter tahun dihapus
+        // function populateYearDropdown() {
+        //     const filterYearSelect = document.getElementById('filterYear');
+        //     if (!filterYearSelect) return;
+
+        //     const allYearsOption = filterYearSelect.querySelector('option[value="all"]');
+        //     filterYearSelect.innerHTML = '';
+        //     filterYearSelect.appendChild(allYearsOption);
+
+        //     const sortedYears = Array.from(uniqueYears).sort((a, b) => parseInt(b) - parseInt(a));
+        //     sortedYears.forEach(year => {
+        //         const option = document.createElement('option');
+        //         option.value = year;
+        //         option.textContent = year;
+        //         filterYearSelect.appendChild(option);
+        //     });
+        // }
+
+        function listenForPOs() {
+            console.log("Listening for POs from Firebase (onSnapshot)...");
+            const pipelineStage = document.getElementById('pos-stage');
+            const loadingSpinner = document.getElementById('loading-spinner');
+            if (pipelineStage && loadingSpinner) {
+                pipelineStage.innerHTML = '';
+                loadingSpinner.classList.remove('hidden');
+            }
+
+            if (unsubscribeFromPOs) {
+                unsubscribeFromPOs();
+            }
+
+            unsubscribeFromPOs = dealsCollection.orderBy("createdAt", "asc").onSnapshot(snapshot => {
+                pos = [];
+                // Hanya clear Set untuk filter yang diinginkan
+                uniqueSuppliers.clear();
+                uniqueItemNames.clear();
+                uniqueNoIDs.clear(); 
+                uniqueCOOs.clear(); 
+                uniqueHSCodes.clear(); 
+
+                snapshot.forEach((doc) => {
+                    const poData = doc.data();
+                    poData.createdAt = poData.createdAt && typeof poData.createdAt.toDate === 'function' ? poData.createdAt.toDate() : null;
+                    poData.planDelivery = poData.planDelivery && typeof poData.planDelivery.toDate === 'function' ? poData.planDelivery.toDate() : null;
+                    poData.eta = poData.eta && typeof poData.eta.toDate === 'function' ? poData.eta.toDate() : null;
+                    poData.actualDelivery = poData.actualDelivery && typeof poData.actualDelivery.toDate === 'function' ? poData.actualDelivery.toDate() : null;
+
+                    pos.push({ id: doc.id, ...poData });
+
+                    if (poData.supplierName) uniqueSuppliers.add(poData.supplierName);
+                    if (poData.items && Array.isArray(poData.items)) {
+                        poData.items.forEach(item => {
+                            if (item.itemName) uniqueItemNames.add(item.itemName);
+                        });
+                    }
+                    if (poData.selectedProduct && poData.selectedProduct.name) uniqueNoIDs.add(poData.selectedProduct.name); 
+                    if (poData.coo) uniqueCOOs.add(poData.coo); 
+                    if (poData.hsCode) uniqueHSCodes.add(poData.hsCode); 
+                    
+                    // Logika untuk uniqueYears dan uniqueAllocations dihapus
+                    // if (poData.allocation) uniqueAllocations.add(poData.allocation);
+                    // if (poData.createdAt instanceof Date) {
+                    //     uniqueYears.add(poData.createdAt.getFullYear().toString());
+                    // }
+                });
+                console.log("Total POs updated by onSnapshot:", pos.length);
+                // populateYearDropdown(); // Tidak lagi dipanggil
+                populateFilterDropdowns();
+                filterPOs();
+                if (loadingSpinner) {
+                    loadingSpinner.classList.add('hidden');
+                }
+            }, (error) => {
+                console.error("Error listening to POs:", error);
+                showCustomAlert("Gagal memuat data PO secara realtime.", "error");
+                if (loadingSpinner) {
+                    loadingSpinner.classList.add('hidden');
+                }
+            });
+        }
+
+
+        function renderPO(po, index) {
+            const poCard = document.createElement('div');
+            poCard.className = 'deal-card';
+            poCard.dataset.id = po.id;
+            
+            poCard.innerHTML = `
+                <span class="po-card-number">${index + 1}</span>
+                <div class="flex justify-between items-start">
+                    <h3 class="font-bold text-gray-800">No. PO: ${po.noPO || 'No PO'}</h3>
+                </div>
+                <div class="mt-1 text-sm text-gray-600 deal-details">
+                    <p><i class="fas fa-building"></i> Supplier: ${po.supplierName || '-'}</p>
+                    <p><i class="fas fa-tag"></i> No ID: ${po.selectedProduct ? po.selectedProduct.name : '-'}</p> 
+                    <p><i class="fas fa-calendar-alt"></i> Plan Delivery: ${po.planDelivery ? formatDate(po.planDelivery) : '-'}</p>
+                </div>
+                <div class="mt-2 flex justify-end items-center deal-footer">
+                    <div class="flex space-x-1 deal-actions">
+                        <button onclick="openPODetailModal('${po.id}')" class="text-blue-600 hover:text-blue-800" title="Lihat Detail">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button onclick="prepareEditPO('${po.id}')" class="text-green-600 hover:text-green-800" title="Edit PO">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="confirmDeletePO('${po.id}', '${po.noPO}')" class="text-red-600 hover:text-red-800" title="Hapus PO">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            return poCard;
+        }
+
+        function renderAllPOs() {
+            // This function is now effectively replaced by filterPOs() calling renderFilteredPOs()
+            // No direct call to renderAllPOs() is needed anymore.
+        }
+
+        function populateDropdown(selectElementId, uniqueValues, selectedValue = 'all') {
+            const selectElement = document.getElementById(selectElementId);
+            if (!selectElement) {
+                console.warn(`Element with ID '${selectElementId}' not found.`);
+                return;
+            }
+
+            const currentSelectedValue = selectElement.value;
+
+            selectElement.innerHTML = '';
+
+            const defaultOption = document.createElement('option');
+            defaultOption.value = 'all';
+            const labelElement = selectElement.previousElementSibling;
+            const labelText = labelElement ? labelElement.textContent.replace(':', '').replace('*', '').trim() : '';
+            defaultOption.textContent = `Semua ${labelText}`;
+            selectElement.appendChild(defaultOption);
+
+            const sortedValues = Array.from(uniqueValues).sort();
+            sortedValues.forEach(value => {
+                if (value) {
+                    const option = document.createElement('option');
+                    option.value = value;
+                    option.textContent = value;
+                    selectElement.appendChild(option);
+                }
+            });
+
+            if (Array.from(selectElement.options).some(option => option.value === currentSelectedValue)) {
+                selectElement.value = currentSelectedValue;
+            } else {
+                selectElement.value = 'all';
+            }
+        }
+
+        function populateFilterDropdowns() {
+            populateDropdown('filterSupplier', uniqueSuppliers, document.getElementById('filterSupplier').value);
+            populateDropdown('filterItemName', uniqueItemNames, document.getElementById('filterItemName').value);
+            populateDropdown('filterNoID', uniqueNoIDs, document.getElementById('filterNoID').value); 
+            populateDropdown('filterCOO', uniqueCOOs, document.getElementById('filterCOO').value); 
+            populateDropdown('filterHSCode', uniqueHSCodes, document.getElementById('filterHSCode').value); 
+            // Filter allocation dan year tidak lagi dipanggil
+            // populateDropdown('filterAllocation', uniqueAllocations, document.getElementById('filterAllocation').value);
+            // populateDropdown('filterYear', uniqueYears, document.getElementById('filterYear').value);
+        }
+
+        function addItemField(initialItemName = '', initialQuantity = '') {
+            const itemsListDiv = document.getElementById('itemsList');
+            const newItemDiv = document.createElement('div');
+            newItemDiv.className = 'flex items-center space-x-2 mb-2';
+
+            newItemDiv.innerHTML = `
+                <input type="text" class="item-name-input w-3/5 p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="Nama Barang" value="${initialItemName}">
+                <input type="number" class="item-quantity-input w-1/5 p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="Qty" min="1" value="${initialQuantity}">
+                <button type="button" onclick="removeItemField(this)" class="text-red-500 hover:text-red-700 p-1">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            itemsListDiv.appendChild(newItemDiv);
+        }
+
+        function removeItemField(buttonElement) {
+            buttonElement.closest('.flex').remove();
+        }
+
+        // ==================== FUNGSI UNTUK FORM TAMBAHAN DENGAN SEARCH ====================
+
+        function setupSearchableField() {
+            const searchableField = document.getElementById('searchableField');
+            const searchResultsDiv = document.getElementById('searchResults');
+            const selectedProductIdInput = document.getElementById('selectedProductId');
+
+            if (!searchableField || !searchResultsDiv || !selectedProductIdInput) return;
+
+            searchableField.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                searchResultsDiv.innerHTML = '';
+
+                if (searchTerm.length < 2) {
+                    searchResultsDiv.classList.add('hidden');
+                    return;
+                }
+
+                const filteredProducts = productData.filter(product => 
+                    product.name.toLowerCase().includes(searchTerm)
+                );
+
+                if (filteredProducts.length > 0) {
+                    filteredProducts.forEach(product => {
+                        const resultItem = document.createElement('div');
+                        resultItem.className = 'p-2 cursor-pointer hover:bg-gray-100 border-b border-gray-200 last:border-b-0';
+                        resultItem.textContent = product.name;
+                        resultItem.dataset.productId = product.id;
+                        resultItem.dataset.productName = product.name;
+                        resultItem.addEventListener('click', function() {
+                            selectProduct(this.dataset.productId, this.dataset.productName);
+                        });
+                        searchResultsDiv.appendChild(resultItem);
+                    });
+                } else {
+                    const addAsNewItem = document.createElement('div');
+                    addAsNewItem.className = 'p-2 cursor-pointer hover:bg-gray-100 text-blue-600';
+                    addAsNewItem.innerHTML = `Tambahkan "<strong>${this.value}</strong>" sebagai produk baru`;
+                    addAsNewItem.addEventListener('click', function() {
+                        selectProduct(null, searchableField.value.trim()); 
+                    });
+                    searchResultsDiv.appendChild(addAsNewItem);
+                }
+                searchResultsDiv.classList.remove('hidden');
+            });
+
+            document.addEventListener('click', function(event) {
+                if (!searchableField.contains(event.target) && !searchResultsDiv.contains(event.target)) {
+                    searchResultsDiv.classList.add('hidden');
+                }
+            });
+
+            function selectProduct(productId, productName) {
+                searchableField.value = productName;
+                selectedProductIdInput.value = productId || ''; 
+                searchResultsDiv.classList.add('hidden');
+            }
+
+            const originalOpenPOModal = openPOModal;
+            openPOModal = function(poId = null) {
+                originalOpenPOModal(poId);
+                if (!poId) {
+                    searchableField.value = '';
+                    selectedProductIdInput.value = '';
+                    searchResultsDiv.classList.add('hidden');
+                } else {
+                    const po = pos.find(p => p.id === poId);
+                    if (po && po.selectedProduct && po.selectedProduct.name) { 
+                        searchableField.value = po.selectedProduct.name;
+                        selectedProductIdInput.value = po.selectedProduct.id || '';
+                    } else {
+                        searchableField.value = '';
+                        selectedProductIdInput.value = '';
+                    }
+                }
+            };
+        }
+
+
+        function openPOModal(poId = null) {
+            const poModal = document.getElementById('poModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const poForm = document.getElementById('poForm');
+            
+            poForm.reset();
+            document.getElementById('itemsList').innerHTML = '';
+            document.getElementById('poId').value = '';
+
+            if (poId) {
+                modalTitle.textContent = 'Edit PO';
+                const po = pos.find(p => p.id === poId);
+                if (po) {
+                    document.getElementById('poId').value = po.id;
+                    document.getElementById('orderConfirmation').value = po.orderConfirmation || '';
+                    document.getElementById('noPO').value = po.noPO || '';
+                    document.getElementById('supplierName').value = po.supplierName || '';
+                    
+                    if (po.selectedProduct && po.selectedProduct.name) {
+                        document.getElementById('searchableField').value = po.selectedProduct.name;
+                        document.getElementById('selectedProductId').value = po.selectedProduct.id || '';
+                    } else {
+                        document.getElementById('searchableField').value = '';
+                        document.getElementById('selectedProductId').value = '';
+                    }
+
+                    if (po.items && Array.isArray(po.items) && po.items.length > 0) {
+                        po.items.forEach(item => {
+                            addItemField(item.itemName, item.quantity);
+                        });
+                    } else {
+                        addItemField();
+                    }
+
+                    document.getElementById('allocation').value = po.allocation || '';
+                    document.getElementById('invoice').value = po.invoice || '';
+                    document.getElementById('tracking').value = po.tracking || '';
+                    document.getElementById('seaForwarder').value = po.seaForwarder || '';
+                    document.getElementById('airForwarder').value = po.airForwarder || '';
+                    document.getElementById('disrc').value = po.disrc || '';
+                    
+                    document.getElementById('planDelivery').value = po.planDelivery instanceof Date ? po.planDelivery.toISOString().split('T')[0] : '';
+                    document.getElementById('eta').value = po.eta instanceof Date ? po.eta.toISOString().split('T')[0] : '';
+                    document.getElementById('actualDelivery').value = po.actualDelivery instanceof Date ? po.actualDelivery.toISOString().split('T')[0] : '';
+
+                    document.getElementById('coo').value = po.coo || '';
+                    document.getElementById('hsCode').value = po.hsCode || '';
+                    document.getElementById('revisiHS').value = po.revisiHS || '';
+                    document.getElementById('note').value = po.note || '';
+                }
+            } else {
+                modalTitle.textContent = 'Tambah PO Baru';
+                document.getElementById('searchableField').value = '';
+                document.getElementById('selectedProductId').value = '';
+                addItemField();
+            }
+            
+            poModal.classList.remove('hidden');
+        }
+
+        function closePOModal() {
+            const poModal = document.getElementById('poModal');
+            if (!poModal) return;
+            poModal.classList.add('hidden');
+        }
+
+        async function savePO() {
+            const poId = document.getElementById('poId').value;
+            const noPO = document.getElementById('noPO').value;
+
+            if (!noPO) {
+                showCustomAlert("No. PO harus diisi.", "error");
+                return;
+            }
+
+            closePOModal(); 
+            showGlobalLoading(); 
+
+            const orderConfirmation = document.getElementById('orderConfirmation').value;
+            const supplierName = document.getElementById('supplierName').value;
+            
+            let selectedProductId = document.getElementById('selectedProductId').value;
+            const selectedProductName = document.getElementById('searchableField').value.trim();
+
+            if (!selectedProductId && selectedProductName) {
+                const existingProduct = productData.find(p => p.name.toLowerCase() === selectedProductName.toLowerCase());
+                if (existingProduct) {
+                    selectedProductId = existingProduct.id;
+                } else {
+                    try {
+                        const newProductRef = await productsCollection.add({ name: selectedProductName });
+                        selectedProductId = newProductRef.id;
+                        productData.push({ id: selectedProductId, name: selectedProductName });
+                        console.log("New product added:", { id: selectedProductId, name: selectedProductName });
+                    } catch (error) {
+                        console.error("Error adding new product:", error);
+                        showCustomAlert("Gagal menambahkan produk baru. PO akan disimpan tanpa ID produk.", "warning");
+                        selectedProductId = null; 
+                    }
+                }
+            }
+
+
+            const itemInputs = document.querySelectorAll('#itemsList .item-name-input');
+            const quantityInputs = document.querySelectorAll('#itemsList .item-quantity-input');
+            const itemsToSave = [];
+            itemInputs.forEach((input, index) => {
+                const itemName = input.value.trim();
+                const quantity = parseInt(quantityInputs[index].value) || 0;
+                if (itemName) {
+                    itemsToSave.push({ itemName, quantity });
+                }
+            });
+
+            const allocation = document.getElementById('allocation').value;
+            const invoice = document.getElementById('invoice').value;
+            const tracking = document.getElementById('tracking').value;
+            const seaForwarder = document.getElementById('seaForwarder').value;
+            const airForwarder = document.getElementById('airForwarder').value;
+            const disrc = document.getElementById('disrc').value;
+            
+            const planDelivery = document.getElementById('planDelivery').value ? firebase.firestore.Timestamp.fromDate(new Date(document.getElementById('planDelivery').value)) : null;
+            const eta = document.getElementById('eta').value ? firebase.firestore.Timestamp.fromDate(new Date(document.getElementById('eta').value)) : null;
+            const actualDelivery = document.getElementById('actualDelivery').value ? firebase.firestore.Timestamp.fromDate(new Date(document.getElementById('actualDelivery').value)) : null;
+
+            const coo = document.getElementById('coo').value;
+            const hsCode = document.getElementById('hsCode').value;
+            const revisiHS = document.getElementById('revisiHS').value;
+            const note = document.getElementById('note').value;
+
+            const poData = {
+                orderConfirmation: orderConfirmation,
+                noPO: noPO,
+                supplierName: supplierName,
+                selectedProduct: selectedProductId ? { id: selectedProductId, name: selectedProductName } : null,
+                items: itemsToSave,
+                allocation: allocation,
+                invoice: invoice,
+                tracking: tracking,
+                seaForwarder: seaForwarder,
+                airForwarder: airForwarder,
+                disrc: disrc,
+                planDelivery: planDelivery,
+                eta: eta,
+                actualDelivery: actualDelivery,
+                coo: coo,
+                hsCode: hsCode,
+                revisiHS: revisiHS,
+                note: note,
+                status: DEFAULT_STATUS,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            try {
+                if (poId) {
+                    await dealsCollection.doc(poId).update(poData);
+                    showCustomAlert("PO berhasil diperbarui!", "success");
+                } else {
+                    poData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                    poData.createdBy = auth.currentUser.email;
+                    await dealsCollection.add(poData);
+                    showCustomAlert("PO baru berhasil ditambahkan!", "success");
+                }
+            } catch (error) {
+                console.error("Error saving PO:", error);
+                showCustomAlert("Gagal menyimpan PO. Silakan coba lagi.", "error");
+            } finally {
+                hideGlobalLoading(); 
+            }
+        }
+
+        function prepareEditPO(poId) {
+            openPOModal(poId);
+        }
+
+        let poToDeleteId = null;
+        let poToDeleteNo = '';
+
+        function confirmDeletePO(poId, poNo) {
+            poToDeleteId = poId;
+            poToDeleteNo = poNo;
+            document.getElementById('dealToDeleteName').textContent = poNo;
+            document.getElementById('deleteModal').classList.remove('hidden');
+        }
+
+        async function deletePO() {
+            if (!poToDeleteId) return;
+
+            closeDeleteModal(); 
+            showGlobalLoading(); 
+
+            try {
+                await dealsCollection.doc(poToDeleteId).delete();
+                showCustomAlert(`PO "${poToDeleteNo}" berhasil dihapus!`, "success");
+            } catch (error) {
+                console.error("Error deleting PO:", error);
+                showCustomAlert("Gagal menghapus PO. Silakan coba lagi.", "error");
+            } finally {
+                hideGlobalLoading(); 
+            }
+        }
+
+        function openPODetailModal(poId) {
+            const po = pos.find(p => p.id === poId);
+            if (!po) {
+                showCustomAlert("Detail PO tidak ditemukan.", "error");
+                return;
+            }
+
+            document.getElementById('poDetailTitle').textContent = po.noPO || 'Detail PO';
+            document.getElementById('detailOrderConfirmation').textContent = po.orderConfirmation || '-';
+            document.getElementById('detailNoPO').textContent = po.noPO || '-';
+            document.getElementById('detailSupplierName').textContent = po.supplierName || '-';
+            
+            document.getElementById('detailSelectedProduct').textContent = po.selectedProduct ? po.selectedProduct.name : '-';
+
+            const detailItemsList = document.getElementById('detailItemsList');
+            detailItemsList.innerHTML = '';
+            if (po.items && Array.isArray(po.items) && po.items.length > 0) {
+                po.items.forEach(item => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = `${item.itemName || '-'} (Qty: ${item.quantity || 0})`;
+                    detailItemsList.appendChild(listItem);
+                });
+            } else {
+                const listItem = document.createElement('li');
+                listItem.textContent = '-';
+                detailItemsList.appendChild(listItem);
+            }
+
+            document.getElementById('detailAllocation').textContent = po.allocation || '-';
+            document.getElementById('detailInvoice').textContent = po.invoice || '-';
+            document.getElementById('detailTracking').textContent = po.tracking || '-';
+            document.getElementById('detailSeaForwarder').textContent = po.seaForwarder || '-';
+            document.getElementById('detailAirForwarder').textContent = po.airForwarder || '-';
+            document.getElementById('detailDisrc').textContent = po.disrc || '-';
+            
+            document.getElementById('detailPlanDelivery').textContent = po.planDelivery ? formatDate(po.planDelivery) : '-';
+            document.getElementById('detailETA').textContent = po.eta ? formatDate(po.eta) : '-';
+            document.getElementById('detailActualDelivery').textContent = po.actualDelivery ? formatDate(po.actualDelivery) : '-';
+
+            document.getElementById('detailCOO').textContent = po.coo || '-';
+            document.getElementById('detailHSCode').textContent = po.hsCode || '-';
+            document.getElementById('detailRevisiHS').textContent = po.revisiHS || '-';
+            document.getElementById('detailNote').textContent = po.note || '-';
+
+            document.getElementById('poDetailModal').classList.remove('hidden');
+        }
+
+        function closePODetailModal() {
+            const poDetailModal = document.getElementById('poDetailModal');
+            if (!poDetailModal) return;
+            poDetailModal.classList.add('hidden');
+        }
+
+        // ==================== FUNGSI SORTABLE ====================
+
+        function initSortable() {
+            const pipelineStage = document.getElementById('pos-stage');
+            if (!pipelineStage) return;
+            console.log("SortableJS is disabled.");
+        }
+
+        // ==================== FUNGSI PERMISSIONS ====================
+
+        function applyUserPermissions() {
+            try {
+                const isAdmin = currentUserRole === 'admin';
+                
+                console.log("Applying permissions for Role:", currentUserRole);
+                
+                const newPOBtn = document.getElementById('newPOBtn');
+                const exportExcelBtn = document.getElementById('exportExcelBtn');
+                const searchInput = document.getElementById('searchPOs');
+                const openFilterPanelBtn = document.getElementById('openFilterPanelBtn');
+                const backButton = document.getElementById('backButton');
+                const authButton = document.getElementById('authButton');
+
+                if (newPOBtn) newPOBtn.classList.remove('hidden');
+                if (exportExcelBtn) exportExcelBtn.classList.remove('hidden');
+                if (backButton) backButton.classList.remove('hidden');
+                if (authButton) authButton.classList.remove('hidden');
+
+                if (searchInput) searchInput.classList.remove('hidden');
+                if (openFilterPanelBtn) openFilterPanelBtn.classList.remove('hidden');
+                
+            } catch (error) {
+                console.error("Error in applyUserPermissions:", error);
+                showCustomAlert("Gagal menerapkan permissions", "error");
+            }
+        }
+
+        // ==================== FUNGSI EVENT LISTENERS ====================
+
+        function initEventListeners() {
+            console.log("Initializing event listeners...");
+            
+            try {
+                const poForm = document.getElementById('poForm');
+                if (poForm) {
+                    poForm.addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        savePO();
+                    });
+                }
+
+                const buttons = [
+                    { id: 'newPOBtn', func: openPOModal },
+                    { id: 'exportExcelBtn', func: exportToExcel },
+                    { id: 'backButton', func: goToIndex },
+                    { id: 'authButton', func: logout },
+                    { id: 'openFilterPanelBtn', func: openFilterPanel }
+                ];
+                
+                buttons.forEach(btn => {
+                    const element = document.getElementById(btn.id);
+                    if (element) {
+                        element.removeEventListener('click', btn.func); 
+                        element.addEventListener('click', btn.func);
+                        element.addEventListener('click', createRipple);
+                        console.log(`Event listener added for ${btn.id}`);
+                    }
+                });
+
+                const searchInput = document.getElementById('searchPOs');
+                if (searchInput) {
+                    searchInput.removeEventListener('keyup', filterPOs);
+                    searchInput.addEventListener('keyup', filterPOs);
+                }
+            } catch (error) {
+                console.error("Error initializing event listeners:", error);
+                showCustomAlert("Gagal memuat beberapa fungsi", "error");
+            }
+        }
+
+        function createRipple(event) {
+            const button = event.currentTarget;
+            const circle = document.createElement('span');
+            const diameter = Math.max(button.clientWidth, button.clientHeight);
+            const radius = diameter / 2;
+
+            circle.style.width = circle.style.height = `${diameter}px`;
+            circle.style.left = `${event.clientX - (button.getBoundingClientRect().left + radius)}px`;
+            circle.style.top = `${event.clientY - (button.getBoundingClientRect().top + radius)}px`;
+            circle.classList.add('ripple');
+
+            const ripple = button.getElementsByClassName('ripple')[0];
+
+            if (ripple) {
+                ripple.remove();
+            }
+
+            button.appendChild(circle);
+        }
+
+        // ==================== FUNGSI LAINNYA ====================
+
+        function filterPOs() {
+            try {
+                const searchTerm = document.getElementById('searchPOs').value.toLowerCase();
+                // Hapus variabel filter yang tidak lagi digunakan
+                // const statusFilter = document.getElementById('filterStatus').value;
+                // const allocationFilter = document.getElementById('filterAllocation').value;
+                // const yearFilter = document.getElementById('filterYear').value;
+
+                const supplierFilter = document.getElementById('filterSupplier').value;
+                const itemNameFilter = document.getElementById('filterItemName').value;
+                const noIDFilter = document.getElementById('filterNoID').value; 
+                const cooFilter = document.getElementById('filterCOO').value; 
+                const hsCodeFilter = document.getElementById('filterHSCode').value; 
+                
+                let basePOs = pos;
+
+                const filteredPOs = basePOs.filter(po => {
+                    const matchesSearch = 
+                        (po.noPO && po.noPO.toLowerCase().includes(searchTerm)) ||
+                        (po.supplierName && po.supplierName.toLowerCase().includes(searchTerm)) ||
+                        (po.items && Array.isArray(po.items) && po.items.some(item => item.itemName && item.itemName.toLowerCase().includes(searchTerm)));
+                    
+                    // Hapus kondisi filter yang tidak lagi digunakan
+                    // const matchesStatus = 
+                    //     statusFilter === 'all' || 
+                    //     (po.status && po.status === statusFilter);
+                    
+                    const matchesSupplier = 
+                        supplierFilter === 'all' || 
+                        (po.supplierName && po.supplierName === supplierFilter);
+
+                    const matchesItemName = 
+                        itemNameFilter === 'all' || 
+                        (po.items && Array.isArray(po.items) && po.items.some(item => item.itemName && item.itemName === itemNameFilter));
+
+                    // Hapus kondisi filter yang tidak lagi digunakan
+                    // const matchesAllocation = 
+                    //     allocationFilter === 'all' || 
+                    //     (po.allocation && po.allocation === allocationFilter);
+
+                    // const matchesYear = yearFilter === 'all' || 
+                    //                     (po.createdAt instanceof Date && po.createdAt.getFullYear().toString() === yearFilter);
+                    
+                    const matchesNoID = 
+                        noIDFilter === 'all' || 
+                        (po.selectedProduct && po.selectedProduct.name === noIDFilter);
+
+                    const matchesCOO = 
+                        cooFilter === 'all' || 
+                        (po.coo && po.coo === cooFilter);
+
+                    const matchesHSCode = 
+                        hsCodeFilter === 'all' || 
+                        (po.hsCode && po.hsCode === hsCodeFilter);
+
+                    // Sesuaikan return statement
+                    return matchesSearch && matchesSupplier && matchesItemName && matchesNoID && matchesCOO && matchesHSCode;
+                });
+                
+                renderFilteredPOs(filteredPOs);
+            } catch (error) {
+                console.error("Error filtering POs:", error);
+            }
+        }
+
+        function renderFilteredPOs(filteredPOs) {
+            const pipelineStage = document.getElementById('pos-stage');
+            if (!pipelineStage) return;
+            
+            pipelineStage.innerHTML = '';
+            
+            if (filteredPOs.length === 0) {
+                pipelineStage.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-search"></i>
+                        <p>Tidak ada PO yang sesuai dengan filter.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            filteredPOs.forEach((po, index) => {
+                const poCard = renderPO(po, index);
+                pipelineStage.appendChild(poCard);
+                setTimeout(() => {
+                    poCard.classList.add('show');
+                }, 50 * index);
+            });
+        }
+
+        function logout() {
+            if (unsubscribeFromPOs) {
+                unsubscribeFromPOs();
+                unsubscribeFromPOs = null;
+            }
             auth.signOut()
                 .then(() => {
+                    console.log("User logged out successfully");
+                    pos = [];
                     window.location.href = 'login.html';
                 })
                 .catch((error) => {
-                    console.error('Logout error:', error);
-                    alert('Gagal logout. Silakan coba lagi.');
+                    console.error("Error logging out:", error);
+                    showCustomAlert("Gagal logout. Silakan coba lagi.", "error");
                 });
+        }
+
+        function goToIndex() {
+            window.location.href = 'index.html';
+        }
+
+        function openFilterPanel() {
+            const filterPanel = document.getElementById('filterPanel');
+            if (!filterPanel) {
+                console.error("Elemen panel filter tidak ditemukan.");
+                showCustomAlert("Gagal membuka filter: Elemen tidak lengkap.", "error");
+                return;
+            }
+
+            // populateYearDropdown(); // Tidak lagi dipanggil
+            populateFilterDropdowns();
+
+            filterPanel.classList.remove('hidden');
+        }
+
+        function closeFilterPanel() {
+            const filterPanel = document.getElementById('filterPanel');
+            if (!filterPanel) {
+                console.error("Elemen filterPanelContent tidak ditemukan saat menutup modal.");
+                return;
+            }
+            filterPanel.classList.add('hidden');
+        }
+
+        function applyFiltersAndClosePanel() {
+            filterPOs();
+            closeFilterPanel();
+        }
+
+        function resetFilters() {
+            // Hapus reset untuk filter yang tidak lagi digunakan
+            // document.getElementById('filterStatus').value = 'all';
+            // document.getElementById('filterAllocation').value = 'all';
+            // document.getElementById('filterYear').value = 'all';
+
+            document.getElementById('filterSupplier').value = 'all';
+            document.getElementById('filterItemName').value = 'all';
+            document.getElementById('filterNoID').value = 'all'; 
+            document.getElementById('filterCOO').value = 'all'; 
+            document.getElementById('filterHSCode').value = 'all'; 
+            document.getElementById('searchPOs').value = '';
+            filterPOs();
+        }
+
+        function closeDeleteModal() {
+            const deleteModal = document.getElementById('deleteModal');
+            if (!deleteModal) return;
+            deleteModal.classList.add('hidden');
+        }
+
+        // ==================== FUNGSI EXPORT TO EXCEL ====================
+        function exportToExcel() {
+            showGlobalLoading();
+            try {
+                const data = [];
+                const headers = [
+                    "No. Urut", "Order Confirmation", "No. PO", "Nama Supplier", "No ID", 
+                    "Nama Barang & Quantity", "Allocation", "Invoice", "Tracking", "Sea Forwarder",
+                    "Air Forwarder", "DISRC", "Plan Delivery", "ETA", "Actual Delivery",
+                    "COO", "HS Code", "Revisi HS", "Note", "Status", "Dibuat Oleh", "Tanggal Dibuat"
+                ];
+                data.push(headers);
+
+                const currentPOs = pos.filter(po => {
+                    const searchTerm = document.getElementById('searchPOs').value.toLowerCase();
+                    // Hapus variabel filter yang tidak lagi digunakan
+                    // const statusFilter = document.getElementById('filterStatus').value;
+                    // const allocationFilter = document.getElementById('filterAllocation').value;
+                    // const yearFilter = document.getElementById('filterYear').value;
+
+                    const supplierFilter = document.getElementById('filterSupplier').value;
+                    const itemNameFilter = document.getElementById('filterItemName').value;
+                    const noIDFilter = document.getElementById('filterNoID').value; 
+                    const cooFilter = document.getElementById('filterCOO').value; 
+                    const hsCodeFilter = document.getElementById('filterHSCode').value; 
+                    
+                    const matchesSearch = 
+                        (po.noPO && po.noPO.toLowerCase().includes(searchTerm)) ||
+                        (po.supplierName && po.supplierName.toLowerCase().includes(searchTerm)) ||
+                        (po.items && Array.isArray(po.items) && po.items.some(item => item.itemName && item.itemName.toLowerCase().includes(searchTerm)));
+                    
+                    // Hapus kondisi filter yang tidak lagi digunakan
+                    // const matchesStatus = 
+                    //     statusFilter === 'all' || 
+                    //     (po.status && po.status === statusFilter);
+                    
+                    const matchesSupplier = 
+                        supplierFilter === 'all' || 
+                        (po.supplierName && po.supplierName === supplierFilter);
+
+                    const matchesItemName = 
+                        itemNameFilter === 'all' || 
+                        (po.items && Array.isArray(po.items) && po.items.some(item => item.itemName && item.itemName === itemNameFilter));
+
+                    // Hapus kondisi filter yang tidak lagi digunakan
+                    // const matchesAllocation = 
+                    //     allocationFilter === 'all' || 
+                    //     (po.allocation && po.allocation === allocationFilter);
+
+                    // const matchesYear = yearFilter === 'all' || 
+                    //                     (po.createdAt instanceof Date && po.createdAt.getFullYear().toString() === yearFilter);
+                    
+                    const matchesNoID = 
+                        noIDFilter === 'all' || 
+                        (po.selectedProduct && po.selectedProduct.name === noIDFilter);
+
+                    const matchesCOO = 
+                        cooFilter === 'all' || 
+                        (po.coo && po.coo === cooFilter);
+
+                    const matchesHSCode = 
+                        hsCodeFilter === 'all' || 
+                        (po.hsCode && po.hsCode === hsCodeFilter);
+
+                    // Sesuaikan return statement
+                    return matchesSearch && matchesSupplier && matchesItemName && matchesNoID && matchesCOO && matchesHSCode;
+                });
+
+                currentPOs.forEach((po, index) => {
+                    const itemsString = po.items && Array.isArray(po.items)
+                        ? po.items.map(item => `${item.itemName || ''} (Qty: ${item.quantity || 0})`).join('; ')
+                        : '';
+
+                    const row = [
+                        index + 1,
+                        po.orderConfirmation || '',
+                        po.noPO || '',
+                        po.supplierName || '',
+                        po.selectedProduct ? po.selectedProduct.name : '', 
+                        itemsString,
+                        po.allocation || '',
+                        po.invoice || '',
+                        po.tracking || '',
+                        po.seaForwarder || '',
+                        po.airForwarder || '',
+                        po.disrc || '',
+                        po.planDelivery ? formatDate(po.planDelivery) : '',
+                        po.eta ? formatDate(po.eta) : '',
+                        po.actualDelivery ? formatDate(po.actualDelivery) : '',
+                        po.coo || '',
+                        po.hsCode || '',
+                        po.revisiHS || '',
+                        po.note || '',
+                        po.status ? po.status.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : '',
+                        po.createdBy || '',
+                        po.createdAt ? formatDateTime(po.createdAt) : ''
+                    ];
+                    data.push(row);
+                });
+
+                const ws = XLSX.utils.aoa_to_sheet(data);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Purchase Orders");
+
+                const fileName = `Purchase_Orders_${new Date().toISOString().slice(0,10)}.xlsx`;
+                XLSX.writeFile(wb, fileName);
+                showCustomAlert("Data PO berhasil diekspor ke Excel!", "success");
+
+            } catch (error) {
+                console.error("Error exporting to Excel:", error);
+                showCustomAlert("Gagal mengekspor data ke Excel.", "error");
+            } finally {
+                hideGlobalLoading();
+            }
+        }
+
+        // ==================== INISIALISASI ====================
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initSortable();
+            setupSearchableField();
         });
     </script>
 </body>
