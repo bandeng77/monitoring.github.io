@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Monitoring Purchasing - redirect</title>
+    <title>Monitoring Purchasing - Dashboard</title>
 
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -33,7 +33,7 @@
             max-width: 960px;
             width: 100%;
             display: grid;
-            grid-template-columns: repeat(2, 1fr); /* Diubah menjadi 2 kolom */
+            grid-template-columns: repeat(2, 1fr);
             gap: 1.5rem;
         }
         .menu-card {
@@ -112,53 +112,33 @@
             role="button"
             tabindex="0"
             aria-pressed="false"
-            onclick="navigateTo('app.html')"
-            onkeypress="if(event.key==='Enter' || event.key===' ') navigateTo('app.html')"
+            onclick="navigateTo('/app/')"
+            onkeypress="if(event.key==='Enter' || event.key===' ') navigateTo('/app/')"
         >
             <i class="fas fa-box-open" aria-hidden="true"></i>
             <h3>PO Monitoring</h3>
         </div>
-        <div
-            class="menu-card"
-            role="button"
-            tabindex="0"
-            aria-pressed="false"
-            onclick="alert('Fitur ini belum tersedia!')"
-            onkeypress="if(event.key==='Enter' || event.key===' ') alert('Fitur ini belum tersedia!')"
-        >
+        <div class="menu-card" role="button" tabindex="0" onclick="alert('Fitur ini belum tersedia!')">
             <i class="fas fa-chart-line" aria-hidden="true"></i>
             <h3>Laporan Penjualan</h3>
         </div>
-        <div
-            class="menu-card"
-            role="button"
-            tabindex="0"
-            aria-pressed="false"
-            onclick="alert('Fitur ini belum tersedia!')"
-            onkeypress="if(event.key==='Enter' || event.key===' ') alert('Fitur ini belum tersedia!')"
-        >
+        <div class="menu-card" role="button" tabindex="0" onclick="alert('Fitur ini belum tersedia!')">
             <i class="fas fa-users" aria-hidden="true"></i>
             <h3>Manajemen Pengguna</h3>
         </div>
-        <div
-            class="menu-card"
-            role="button"
-            tabindex="0"
-            aria-pressed="false"
-            onclick="alert('Fitur ini belum tersedia!')"
-            onkeypress="if(event.key==='Enter' || event.key===' ') alert('Fitur ini belum tersedia!')"
-        >
+        <div class="menu-card" role="button" tabindex="0" onclick="alert('Fitur ini belum tersedia!')">
             <i class="fas fa-cogs" aria-hidden="true"></i>
             <h3>Pengaturan Sistem</h3>
         </div>
     </main>
 
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
     <script>
-        // Firebase config (samakan dengan konfigurasi di app.html)
+        // Firebase config (samakan dengan app & login)
         const firebaseConfig = {
             apiKey: "AIzaSyB9s6k2K75vrbe1lWgiu42SAXV_lySHHNU",
             authDomain: "monitoring-efk.firebaseapp.com",
@@ -168,33 +148,31 @@
             appId: "1:1083858508151:web:3d505dec79d715f9cd6972"
         };
 
-        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
 
-        // Cek status login saat halaman dimuat
+        // Cek status login
         auth.onAuthStateChanged((user) => {
             if (!user) {
-                // Jika belum login, redirect ke login.html
-                window.location.href = 'login.html';
+                // Redirect ke login jika belum login
+                window.location.href = "/login/";
             }
-            // Jika sudah login, tetap di halaman ini
         });
 
-        // Fungsi navigasi ke halaman lain
+        // Fungsi navigasi
         function navigateTo(url) {
             window.location.href = url;
         }
 
-        // Logout function
-        document.getElementById('logoutButton').addEventListener('click', () => {
+        // Logout
+        document.getElementById("logoutButton").addEventListener("click", () => {
             auth.signOut()
                 .then(() => {
-                    window.location.href = 'login.html';
+                    window.location.href = "/login/";
                 })
                 .catch((error) => {
-                    console.error('Logout error:', error);
-                    alert('Gagal logout. Silakan coba lagi.');
+                    console.error("Logout error:", error);
+                    alert("Gagal logout. Silakan coba lagi.");
                 });
         });
     </script>
