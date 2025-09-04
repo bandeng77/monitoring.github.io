@@ -793,7 +793,7 @@
     </div>
 
     <script>
-        // Konfigurasi Firebase
+        // Konfigurasi Firebase (tetap ada untuk otentikasi dan PO, tapi tidak untuk productsCollection)
         const firebaseConfig = {
               apiKey: "AIzaSyB9s6k2K75vrbe1lWgiu42SAXV_lySHHNU",
               authDomain: "monitoring-efk.firebaseapp.com",
@@ -809,7 +809,8 @@
         const auth = firebase.auth();
         const dealsCollection = db.collection('purchaseOrders');
         const usersCollection = db.collection('users');
-        const productsCollection = db.collection('products'); 
+        // productsCollection tidak lagi digunakan untuk data produk, hanya untuk contoh jika diperlukan
+        // const productsCollection = db.collection('products'); 
 
         let pos = [];
         const DEFAULT_STATUS = 'pending';
@@ -825,13 +826,35 @@
         let uniqueCOOs = new Set(); 
         let uniqueHSCodes = new Set(); 
 
-        // Variabel yang tidak lagi digunakan untuk filter, bisa dihapus atau diabaikan
-        // let uniqueAllocations = new Set();
-        // let uniqueYears = new Set();
-
         const ADMIN_EMAIL = 'maida@genetek.co.id';
 
-        let productData = []; 
+        // =================================================================
+        // DATA PRODUK SEKARANG ADA DI SINI (DALAM JAVASCRIPT)
+        // Anda bisa menambahkan atau mengubah data di sini.
+        // ID produk bisa berupa string unik apa saja, misalnya UUID atau ID sederhana.
+        let productData = [
+            { id: 'prod001', name: 'Laptop Gaming XYZ' },
+            { id: 'prod002', name: 'Monitor UltraWide 27' },
+            { id: 'prod003', name: 'Keyboard Mekanikal RGB' },
+            { id: 'prod004', name: 'Mouse Wireless Ergonomis' },
+            { id: 'prod005', name: 'Headset Gaming Pro' },
+            { id: 'prod006', name: 'SSD NVMe 1TB' },
+            { id: 'prod007', name: 'RAM DDR4 16GB' },
+            { id: 'prod008', name: 'Webcam Full HD' },
+            { id: 'prod009', name: 'Router Wi-Fi 6' },
+            { id: 'prod010', name: 'Printer Laser Multifungsi' },
+            { id: 'prod011', name: 'Speaker Bluetooth Portable' },
+            { id: 'prod012', name: 'Smartwatch Series 5' },
+            { id: 'prod013', name: 'Drone Mini HD' },
+            { id: 'prod014', name: 'Kamera Mirrorless A7' },
+            { id: 'prod015', name: 'Proyektor Mini' },
+            { id: 'prod016', name: 'Power Bank 20000mAh' },
+            { id: 'prod017', name: 'Flash Drive USB 128GB' },
+            { id: 'prod018', name: 'Hard Drive Eksternal 2TB' },
+            { id: 'prod019', name: 'Adaptor USB-C Multiport' },
+            { id: 'prod020', name: 'Kabel HDMI 2.1' }
+        ];
+        // =================================================================
 
         // ==================== FUNGSI UTAMA ====================
 
@@ -870,7 +893,7 @@
                     }
 
                     console.log("Current role:", currentUserRole);
-                    await fetchProductData(); 
+                    // fetchProductData() tidak lagi dipanggil karena data produk ada di JS
                     listenForPOs(); 
                     initEventListeners();
                     hideGlobalLoading();
@@ -882,16 +905,17 @@
             }
         });
 
-        async function fetchProductData() {
-            try {
-                const snapshot = await productsCollection.get();
-                productData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                console.log("Product data fetched:", productData);
-            } catch (error) {
-                console.error("Error fetching product data:", error);
-                showCustomAlert("Gagal memuat data produk.", "error");
-            }
-        }
+        // fetchProductData() tidak lagi diperlukan karena data produk ada di JS
+        // async function fetchProductData() {
+        //     try {
+        //         const snapshot = await productsCollection.get();
+        //         productData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        //         console.log("Product data fetched:", productData);
+        //     } catch (error) {
+        //         console.error("Error fetching product data:", error);
+        //         showCustomAlert("Gagal memuat data produk.", "error");
+        //     }
+        // }
 
         // ==================== FUNGSI UTILITAS ====================
 
@@ -975,24 +999,6 @@
 
         // ==================== FUNGSI PO ====================
 
-        // Fungsi ini tidak lagi diperlukan karena filter tahun dihapus
-        // function populateYearDropdown() {
-        //     const filterYearSelect = document.getElementById('filterYear');
-        //     if (!filterYearSelect) return;
-
-        //     const allYearsOption = filterYearSelect.querySelector('option[value="all"]');
-        //     filterYearSelect.innerHTML = '';
-        //     filterYearSelect.appendChild(allYearsOption);
-
-        //     const sortedYears = Array.from(uniqueYears).sort((a, b) => parseInt(b) - parseInt(a));
-        //     sortedYears.forEach(year => {
-        //         const option = document.createElement('option');
-        //         option.value = year;
-        //         option.textContent = year;
-        //         filterYearSelect.appendChild(option);
-        //     });
-        // }
-
         function listenForPOs() {
             console.log("Listening for POs from Firebase (onSnapshot)...");
             const pipelineStage = document.getElementById('pos-stage');
@@ -1006,7 +1012,7 @@
                 unsubscribeFromPOs();
             }
 
-            unsubscribeFromPOs = dealsCollection.orderBy("createdAt", "asc").onSnapshot(snapshot => {
+            dealsCollection.orderBy("createdAt", "asc").onSnapshot(snapshot => {
                 pos = [];
                 // Hanya clear Set untuk filter yang diinginkan
                 uniqueSuppliers.clear();
@@ -1033,15 +1039,8 @@
                     if (poData.selectedProduct && poData.selectedProduct.name) uniqueNoIDs.add(poData.selectedProduct.name); 
                     if (poData.coo) uniqueCOOs.add(poData.coo); 
                     if (poData.hsCode) uniqueHSCodes.add(poData.hsCode); 
-                    
-                    // Logika untuk uniqueYears dan uniqueAllocations dihapus
-                    // if (poData.allocation) uniqueAllocations.add(poData.allocation);
-                    // if (poData.createdAt instanceof Date) {
-                    //     uniqueYears.add(poData.createdAt.getFullYear().toString());
-                    // }
                 });
                 console.log("Total POs updated by onSnapshot:", pos.length);
-                // populateYearDropdown(); // Tidak lagi dipanggil
                 populateFilterDropdowns();
                 filterPOs();
                 if (loadingSpinner) {
@@ -1090,11 +1089,6 @@
             return poCard;
         }
 
-        function renderAllPOs() {
-            // This function is now effectively replaced by filterPOs() calling renderFilteredPOs()
-            // No direct call to renderAllPOs() is needed anymore.
-        }
-
         function populateDropdown(selectElementId, uniqueValues, selectedValue = 'all') {
             const selectElement = document.getElementById(selectElementId);
             if (!selectElement) {
@@ -1136,9 +1130,6 @@
             populateDropdown('filterNoID', uniqueNoIDs, document.getElementById('filterNoID').value); 
             populateDropdown('filterCOO', uniqueCOOs, document.getElementById('filterCOO').value); 
             populateDropdown('filterHSCode', uniqueHSCodes, document.getElementById('filterHSCode').value); 
-            // Filter allocation dan year tidak lagi dipanggil
-            // populateDropdown('filterAllocation', uniqueAllocations, document.getElementById('filterAllocation').value);
-            // populateDropdown('filterYear', uniqueYears, document.getElementById('filterYear').value);
         }
 
         function addItemField(initialItemName = '', initialQuantity = '') {
@@ -1195,6 +1186,7 @@
                         searchResultsDiv.appendChild(resultItem);
                     });
                 } else {
+                    // Opsi untuk menambahkan sebagai produk baru jika tidak ditemukan
                     const addAsNewItem = document.createElement('div');
                     addAsNewItem.className = 'p-2 cursor-pointer hover:bg-gray-100 text-blue-600';
                     addAsNewItem.innerHTML = `Tambahkan "<strong>${this.value}</strong>" sebagai produk baru`;
@@ -1323,23 +1315,21 @@
             let selectedProductId = document.getElementById('selectedProductId').value;
             const selectedProductName = document.getElementById('searchableField').value.trim();
 
+            // =================================================================
+            // LOGIKA PENAMBAHAN PRODUK BARU KE productData (ARRAY LOKAL)
             if (!selectedProductId && selectedProductName) {
                 const existingProduct = productData.find(p => p.name.toLowerCase() === selectedProductName.toLowerCase());
                 if (existingProduct) {
                     selectedProductId = existingProduct.id;
                 } else {
-                    try {
-                        const newProductRef = await productsCollection.add({ name: selectedProductName });
-                        selectedProductId = newProductRef.id;
-                        productData.push({ id: selectedProductId, name: selectedProductName });
-                        console.log("New product added:", { id: selectedProductId, name: selectedProductName });
-                    } catch (error) {
-                        console.error("Error adding new product:", error);
-                        showCustomAlert("Gagal menambahkan produk baru. PO akan disimpan tanpa ID produk.", "warning");
-                        selectedProductId = null; 
-                    }
+                    // Buat ID unik sederhana untuk produk baru (misalnya timestamp)
+                    selectedProductId = 'new_prod_' + Date.now(); 
+                    productData.push({ id: selectedProductId, name: selectedProductName });
+                    console.log("New product added to local productData:", { id: selectedProductId, name: selectedProductName });
+                    // Opsional: Anda bisa menambahkan notifikasi di sini bahwa produk baru ditambahkan secara lokal
                 }
             }
+            // =================================================================
 
 
             const itemInputs = document.querySelectorAll('#itemsList .item-name-input');
@@ -1599,11 +1589,6 @@
         function filterPOs() {
             try {
                 const searchTerm = document.getElementById('searchPOs').value.toLowerCase();
-                // Hapus variabel filter yang tidak lagi digunakan
-                // const statusFilter = document.getElementById('filterStatus').value;
-                // const allocationFilter = document.getElementById('filterAllocation').value;
-                // const yearFilter = document.getElementById('filterYear').value;
-
                 const supplierFilter = document.getElementById('filterSupplier').value;
                 const itemNameFilter = document.getElementById('filterItemName').value;
                 const noIDFilter = document.getElementById('filterNoID').value; 
@@ -1618,11 +1603,6 @@
                         (po.supplierName && po.supplierName.toLowerCase().includes(searchTerm)) ||
                         (po.items && Array.isArray(po.items) && po.items.some(item => item.itemName && item.itemName.toLowerCase().includes(searchTerm)));
                     
-                    // Hapus kondisi filter yang tidak lagi digunakan
-                    // const matchesStatus = 
-                    //     statusFilter === 'all' || 
-                    //     (po.status && po.status === statusFilter);
-                    
                     const matchesSupplier = 
                         supplierFilter === 'all' || 
                         (po.supplierName && po.supplierName === supplierFilter);
@@ -1630,14 +1610,6 @@
                     const matchesItemName = 
                         itemNameFilter === 'all' || 
                         (po.items && Array.isArray(po.items) && po.items.some(item => item.itemName && item.itemName === itemNameFilter));
-
-                    // Hapus kondisi filter yang tidak lagi digunakan
-                    // const matchesAllocation = 
-                    //     allocationFilter === 'all' || 
-                    //     (po.allocation && po.allocation === allocationFilter);
-
-                    // const matchesYear = yearFilter === 'all' || 
-                    //                     (po.createdAt instanceof Date && po.createdAt.getFullYear().toString() === yearFilter);
                     
                     const matchesNoID = 
                         noIDFilter === 'all' || 
@@ -1651,7 +1623,6 @@
                         hsCodeFilter === 'all' || 
                         (po.hsCode && po.hsCode === hsCodeFilter);
 
-                    // Sesuaikan return statement
                     return matchesSearch && matchesSupplier && matchesItemName && matchesNoID && matchesCOO && matchesHSCode;
                 });
                 
@@ -1715,7 +1686,6 @@
                 return;
             }
 
-            // populateYearDropdown(); // Tidak lagi dipanggil
             populateFilterDropdowns();
 
             filterPanel.classList.remove('hidden');
@@ -1736,11 +1706,6 @@
         }
 
         function resetFilters() {
-            // Hapus reset untuk filter yang tidak lagi digunakan
-            // document.getElementById('filterStatus').value = 'all';
-            // document.getElementById('filterAllocation').value = 'all';
-            // document.getElementById('filterYear').value = 'all';
-
             document.getElementById('filterSupplier').value = 'all';
             document.getElementById('filterItemName').value = 'all';
             document.getElementById('filterNoID').value = 'all'; 
@@ -1771,11 +1736,6 @@
 
                 const currentPOs = pos.filter(po => {
                     const searchTerm = document.getElementById('searchPOs').value.toLowerCase();
-                    // Hapus variabel filter yang tidak lagi digunakan
-                    // const statusFilter = document.getElementById('filterStatus').value;
-                    // const allocationFilter = document.getElementById('filterAllocation').value;
-                    // const yearFilter = document.getElementById('filterYear').value;
-
                     const supplierFilter = document.getElementById('filterSupplier').value;
                     const itemNameFilter = document.getElementById('filterItemName').value;
                     const noIDFilter = document.getElementById('filterNoID').value; 
@@ -1787,11 +1747,6 @@
                         (po.supplierName && po.supplierName.toLowerCase().includes(searchTerm)) ||
                         (po.items && Array.isArray(po.items) && po.items.some(item => item.itemName && item.itemName.toLowerCase().includes(searchTerm)));
                     
-                    // Hapus kondisi filter yang tidak lagi digunakan
-                    // const matchesStatus = 
-                    //     statusFilter === 'all' || 
-                    //     (po.status && po.status === statusFilter);
-                    
                     const matchesSupplier = 
                         supplierFilter === 'all' || 
                         (po.supplierName && po.supplierName === supplierFilter);
@@ -1799,14 +1754,6 @@
                     const matchesItemName = 
                         itemNameFilter === 'all' || 
                         (po.items && Array.isArray(po.items) && po.items.some(item => item.itemName && item.itemName === itemNameFilter));
-
-                    // Hapus kondisi filter yang tidak lagi digunakan
-                    // const matchesAllocation = 
-                    //     allocationFilter === 'all' || 
-                    //     (po.allocation && po.allocation === allocationFilter);
-
-                    // const matchesYear = yearFilter === 'all' || 
-                    //                     (po.createdAt instanceof Date && po.createdAt.getFullYear().toString() === yearFilter);
                     
                     const matchesNoID = 
                         noIDFilter === 'all' || 
@@ -1820,7 +1767,6 @@
                         hsCodeFilter === 'all' || 
                         (po.hsCode && po.hsCode === hsCodeFilter);
 
-                    // Sesuaikan return statement
                     return matchesSearch && matchesSupplier && matchesItemName && matchesNoID && matchesCOO && matchesHSCode;
                 });
 
