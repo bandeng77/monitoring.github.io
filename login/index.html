@@ -147,10 +147,10 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
 
-        // Jika user sudah login, langsung ke /app/
+        // Jika user sudah login, langsung ke /index/index.html
         auth.onAuthStateChanged((user) => {
             if (user) {
-                window.location.href = "/app/";
+                window.location.href = "/index/index.html";
             }
         });
 
@@ -163,7 +163,183 @@
 
             auth.signInWithEmailAndPassword(email, password)
                 .then(() => {
-                    window.location.href = "/app/";
+                    window.location.href = "/index/index.html";
+                })
+                .catch((error) => {
+                    console.error(error);
+                    errorMsg.textContent = "Login gagal: " + error.message;
+                    errorMsg.style.display = "block";
+                });
+        });
+    </script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Login - Supply Chain</title>
+
+    <!-- Tailwind CSS CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+
+    <!-- Font Awesome CDN -->
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+        crossorigin="anonymous"
+        referrerpolicy="no-referrer"
+    />
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+            margin: 0;
+        }
+        .login-card {
+            max-width: 400px;
+            width: 100%;
+            background-color: #ffffff;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+            padding: 2.5rem 2rem;
+            box-sizing: border-box;
+        }
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .login-header i {
+            font-size: 3.5rem;
+            color: #3b82f6;
+            margin-bottom: 0.5rem;
+        }
+        .login-header h1 {
+            font-size: 2.25rem;
+            font-weight: 800;
+            color: #1e293b;
+            margin: 0;
+        }
+        .login-header p {
+            color: #64748b;
+            margin-top: 0.25rem;
+            font-size: 1rem;
+        }
+        label {
+            font-weight: 600;
+            color: #334155;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+        }
+        input[type="email"]:focus,
+        input[type="password"]:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+            outline: none;
+        }
+        #errorMessage {
+            color: #dc2626;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+        button#loginBtn {
+            width: 100%;
+            background-color: #2563eb;
+            color: white;
+            padding: 0.75rem 1rem;
+            border-radius: 0.75rem;
+            font-weight: 700;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            border: none;
+            cursor: pointer;
+        }
+        button#loginBtn:hover:not(:disabled) {
+            background-color: #1e40af;
+        }
+        button#loginBtn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div class="login-header">
+            <i class="fas fa-box-open text-blue-600 ml-2"></i>
+            <h1>Supply Chain Application</h1>
+        </div>
+
+        <form id="loginForm" novalidate>
+            <label for="email">Email</label>
+            <input type="email" id="email" placeholder="Email dengan domain genetek.co.id" required />
+
+            <label for="password" class="mt-4">Password</label>
+            <input type="password" id="password" placeholder="••••••••" required />
+
+            <div id="errorMessage"></div>
+
+            <button type="submit" id="loginBtn" class="mt-6">
+                <i class="fas fa-sign-in-alt"></i> Masuk
+            </button>
+        </form>
+    </div>
+
+    <script>
+        // Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyB9s6k2K75vrbe1lWgiu42SAXV_lySHHNU",
+            authDomain: "monitoring-efk.firebaseapp.com",
+            projectId: "monitoring-efk",
+            storageBucket: "monitoring-efk.firebasestorage.app",
+            messagingSenderId: "1083858508151",
+            appId: "1:1083858508151:web:3d505dec79d715f9cd6972"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        // Jika user sudah login, langsung ke /index/index.html
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                window.location.href = "/index/index.html";
+            }
+        });
+
+        // Login form handler
+        document.getElementById("loginForm").addEventListener("submit", (e) => {
+            e.preventDefault();
+            const email = document.getElementById("email").value.trim();
+            const password = document.getElementById("password").value.trim();
+            const errorMsg = document.getElementById("errorMessage");
+
+            auth.signInWithEmailAndPassword(email, password)
+                .then(() => {
+                    window.location.href = "/index/index.html";
                 })
                 .catch((error) => {
                     console.error(error);
