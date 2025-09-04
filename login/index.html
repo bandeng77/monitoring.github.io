@@ -176,46 +176,63 @@
         const auth = firebase.auth();
 
         // Jika sudah login, langsung redirect ke index.html (halaman menu)
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                window.location.href = 'index.html';
-            }
-        });
+        <script>
+  // ==================== AUTH HANDLING ====================
+  auth.onAuthStateChanged(async (user) => {
+    if (authInitialized) return;
+    authInitialized = true;
 
-        const loginForm = document.getElementById('loginForm');
-        const loginBtn = document.getElementById('loginBtn');
-        const errorMessage = document.getElementById('errorMessage');
+    console.log("Auth state changed:", user ? user.email : "no user");
 
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
+    // Jika user belum login dan mencoba akses /app → redirect ke /login
+    if (!user && window.location.pathname.includes("/app/")) {
+      console.log("No user, redirecting to login");
+      window.location.href = "/login/";
+      return;
+    }
 
-            if (loginBtn.disabled) return;
+    // Jika user sudah login dan masih di /login → redirect ke /app
+    if (user && window.location.pathname.includes("/login/")) {
+      console.log("User already logged in, redirecting to app");
+      window.location.href = "/app/";
+      return;
+    }
 
-            const email = loginForm.email.value.trim();
-            const password = loginForm.password.value;
+    // Jika user login dan sedang di /app → cek role admin
+    if (user && window.location.pathname.includes("/app/")) {
+      try {
+        showGlobalLoading();
 
-            errorMessage.style.display = 'none';
-            errorMessage.textContent = '';
-            loginBtn.disabled = true;
-            loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
+        if (user.email === ADMIN_EMAIL) {
+          currentUserRole = "admin";
+          await usersCollection.doc(user.uid).set(
+            {
+              role: "admin",
+              email: user.email,
+            },
+            { merge: true }
+          );
+        } else {
+          console.log("Unauthorized user, logging out and redirecting to login.");
+          await auth.signOut();
+          window.location.href = "/login/";
+          return;
+        }
 
-            try {
-                await auth.signInWithEmailAndPassword(email, password);
-                // Redirect akan otomatis terjadi di onAuthStateChanged
-            } catch (error) {
-                let msg = "Email atau password salah";
-                if (error.code === 'auth/invalid-email') {
-                    msg = "Format email tidak valid";
-                } else if (error.code === 'auth/user-not-found') {
-                    msg = "Email tidak terdaftar";
-                } else if (error.code === 'auth/wrong-password') {
-                    msg = "Password salah";
-                }
-                errorMessage.textContent = msg;
-                errorMessage.style.display = 'block';
-                loginBtn.disabled = false;
-                loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Masuk';
-            }
+        console.log("Current role:", currentUserRole);
+        await fetchProductData();
+        listenForPOs();
+        initEventListeners();
+        hideGlobalLoading();
+      } catch (error) {
+        console.error("Error checking user role or loading data:", error);
+        showCustomAlert(
+          "Gagal memuat data pengguna atau aplikasi. Silakan refresh halaman.",
+          "error"
+        );
+        hideGlobalLoading();
+      }
+    }
         });
     </script>
 </body>
