@@ -39,11 +39,6 @@
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
             padding: 2.5rem 2rem;
             box-sizing: border-box;
-            transition: box-shadow 0.3s ease;
-        }
-        .login-card:hover,
-        .login-card:focus-within {
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
         }
         .login-header {
             text-align: center;
@@ -79,8 +74,6 @@
             border: 1px solid #d1d5db;
             border-radius: 0.75rem;
             font-size: 1rem;
-            transition: border-color 0.3s ease, box-shadow 0.3s ease;
-            box-sizing: border-box;
         }
         input[type="email"]:focus,
         input[type="password"]:focus {
@@ -108,13 +101,9 @@
             gap: 0.5rem;
             border: none;
             cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.2s ease;
         }
-        button#loginBtn:hover:not(:disabled),
-        button#loginBtn:focus:not(:disabled) {
+        button#loginBtn:hover:not(:disabled) {
             background-color: #1e40af;
-            transform: scale(1.05);
-            outline: none;
         }
         button#loginBtn:disabled {
             opacity: 0.7;
@@ -123,116 +112,64 @@
     </style>
 </head>
 <body>
-    <div class="login-card" role="main" aria-labelledby="loginTitle">
+    <div class="login-card">
         <div class="login-header">
             <i class="fas fa-box-open text-blue-600 ml-2"></i>
-            <h1 id="loginTitle">Supply Chain Application</h1>
+            <h1>Supply Chain Application</h1>
         </div>
 
         <form id="loginForm" novalidate>
             <label for="email">Email</label>
-            <input
-                type="email"
-                id="email"
-                name="email"
-                placeholder="Email dengan domain genetek.co.id"
-                required
-                autocomplete="username"
-                aria-describedby="errorMessage"
-            />
+            <input type="email" id="email" placeholder="Email dengan domain genetek.co.id" required />
 
             <label for="password" class="mt-4">Password</label>
-            <input
-                type="password"
-                id="password"
-                name="password"
-                placeholder="••••••••"
-                required
-                autocomplete="current-password"
-                aria-describedby="errorMessage"
-            />
+            <input type="password" id="password" placeholder="••••••••" required />
 
-            <div id="errorMessage" role="alert" aria-live="assertive"></div>
+            <div id="errorMessage"></div>
 
-            <button type="submit" id="loginBtn" aria-label="Masuk ke Sales Pipeline" class="mt-6">
+            <button type="submit" id="loginBtn" class="mt-6">
                 <i class="fas fa-sign-in-alt"></i> Masuk
             </button>
         </form>
     </div>
 
     <script>
-        // Firebase config (samakan dengan konfigurasi app.html dan index.html)
+        // Firebase config
         const firebaseConfig = {
-          apiKey: "AIzaSyB9s6k2K75vrbe1lWgiu42SAXV_lySHHNU",
-          authDomain: "monitoring-efk.firebaseapp.com",
-          projectId: "monitoring-efk",
-          storageBucket: "monitoring-efk.firebasestorage.app",
-          messagingSenderId: "1083858508151",
-          appId: "1:1083858508151:web:3d505dec79d715f9cd6972"
-};
+            apiKey: "AIzaSyB9s6k2K75vrbe1lWgiu42SAXV_lySHHNU",
+            authDomain: "monitoring-efk.firebaseapp.com",
+            projectId: "monitoring-efk",
+            storageBucket: "monitoring-efk.firebasestorage.app",
+            messagingSenderId: "1083858508151",
+            appId: "1:1083858508151:web:3d505dec79d715f9cd6972"
+        };
 
-        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
 
-        // Jika sudah login, langsung redirect ke index.html (halaman menu)
-        <script>
-  // ==================== AUTH HANDLING ====================
-  auth.onAuthStateChanged(async (user) => {
-    if (authInitialized) return;
-    authInitialized = true;
+        // Jika user sudah login, langsung ke /app/
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                window.location.href = "/app/";
+            }
+        });
 
-    console.log("Auth state changed:", user ? user.email : "no user");
+        // Login form handler
+        document.getElementById("loginForm").addEventListener("submit", (e) => {
+            e.preventDefault();
+            const email = document.getElementById("email").value.trim();
+            const password = document.getElementById("password").value.trim();
+            const errorMsg = document.getElementById("errorMessage");
 
-    // Jika user belum login dan mencoba akses /app → redirect ke /login
-    if (!user && window.location.pathname.includes("/app/")) {
-      console.log("No user, redirecting to login");
-      window.location.href = "/login/";
-      return;
-    }
-
-    // Jika user sudah login dan masih di /login → redirect ke /app
-    if (user && window.location.pathname.includes("/login/")) {
-      console.log("User already logged in, redirecting to app");
-      window.location.href = "/app/";
-      return;
-    }
-
-    // Jika user login dan sedang di /app → cek role admin
-    if (user && window.location.pathname.includes("/app/")) {
-      try {
-        showGlobalLoading();
-
-        if (user.email === ADMIN_EMAIL) {
-          currentUserRole = "admin";
-          await usersCollection.doc(user.uid).set(
-            {
-              role: "admin",
-              email: user.email,
-            },
-            { merge: true }
-          );
-        } else {
-          console.log("Unauthorized user, logging out and redirecting to login.");
-          await auth.signOut();
-          window.location.href = "/login/";
-          return;
-        }
-
-        console.log("Current role:", currentUserRole);
-        await fetchProductData();
-        listenForPOs();
-        initEventListeners();
-        hideGlobalLoading();
-      } catch (error) {
-        console.error("Error checking user role or loading data:", error);
-        showCustomAlert(
-          "Gagal memuat data pengguna atau aplikasi. Silakan refresh halaman.",
-          "error"
-        );
-        hideGlobalLoading();
-      }
-    }
+            auth.signInWithEmailAndPassword(email, password)
+                .then(() => {
+                    window.location.href = "/app/";
+                })
+                .catch((error) => {
+                    console.error(error);
+                    errorMsg.textContent = "Login gagal: " + error.message;
+                    errorMsg.style.display = "block";
+                });
         });
     </script>
 </body>
