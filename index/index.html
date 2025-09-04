@@ -112,8 +112,8 @@
             role="button"
             tabindex="0"
             aria-pressed="false"
-            onclick="navigateTo('/app/')"
-            onkeypress="if(event.key==='Enter' || event.key===' ') navigateTo('/app/')"
+            onclick="navigateTo('/app/index.html')" <!-- Diarahkan ke /app/index.html -->
+            onkeypress="if(event.key==='Enter' || event.key===' ') navigateTo('/app/index.html')" <!-- Diarahkan ke /app/index.html -->
         >
             <i class="fas fa-box-open" aria-hidden="true"></i>
             <h3>PO Monitoring</h3>
@@ -155,7 +155,7 @@
         auth.onAuthStateChanged((user) => {
             if (!user) {
                 // Redirect ke login jika belum login
-                window.location.href = "/login/";
+                window.location.href = "/login/index.html"; // Diarahkan ke /login/index.html
             }
         });
 
@@ -168,7 +168,7 @@
         document.getElementById("logoutButton").addEventListener("click", () => {
             auth.signOut()
                 .then(() => {
-                    window.location.href = "/login/";
+                    window.location.href = "/login/index.html"; // Diarahkan ke /login/index.html setelah logout
                 })
                 .catch((error) => {
                     console.error("Logout error:", error);
