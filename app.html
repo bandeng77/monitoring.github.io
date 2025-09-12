@@ -500,6 +500,9 @@
             top: 100%;
             left: 0;
             right: 0;
+            max-height: 200px; /* Batasi tinggi dropdown */
+            overflow-y: auto; /* Tambahkan scroll jika terlalu banyak item */
+            background-color: #fff; /* Pastikan background putih */
         }
 
         .autocomplete-items div {
@@ -535,13 +538,13 @@
                     </button>
                 </div>
             </div>
-            
+
             <!-- Buttons below title -->
             <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 mt-4">
                 <button id="newPOBtn" onclick="openPOModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
                     <i class="fas fa-plus-circle mr-2"></i> PO Baru
                 </button>
-                
+
                 <button id="exportExcelBtn" onclick="exportToExcel()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
                     <i class="fas fa-file-excel mr-2"></i> Export Excel
                 </button>
@@ -554,7 +557,7 @@
             <!-- Combined Filter Section -->
             <div class="mt-6 flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 items-center">
                 <input type="text" id="searchPOs" onkeyup="filterPOs()" placeholder="Cari PO berdasarkan nomor, supplier, barang..." class="w-full sm:w-1/2 p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
-                
+
                 <button id="openFilterPanelBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
                     <i class="fas fa-filter mr-2"></i> Filter
                 </button>
@@ -606,14 +609,7 @@
                             <!-- New: Nama Barang & Quantity fields -->
                             <div id="items-container">
                                 <label class="block text-gray-700 text-sm font-semibold mb-2">Nama Barang & Quantity</label>
-                                <div class="flex items-center mb-2 item-row">
-                                    <div class="relative flex-grow mr-2">
-                                        <input type="text" class="item-name w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="Cari Nama Barang...">
-                                        <div class="item-autocomplete-list autocomplete-items"></div>
-                                    </div>
-                                    <input type="number" class="item-quantity w-24 p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="Qty" min="1">
-                                    <button type="button" onclick="removeItemField(this)" class="ml-2 text-red-500 hover:text-red-700"><i class="fas fa-times-circle"></i></button>
-                                </div>
+                                <!-- Item rows will be added here by JavaScript -->
                             </div>
                             <button type="button" onclick="addItemField()" class="mt-2 bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
                                 <i class="fas fa-plus mr-1"></i> Tambah Barang
@@ -927,8 +923,8 @@
 
         // Hanya menyimpan Set untuk filter yang diinginkan
         let uniqueSuppliers = new Set();
-        let uniqueCOOs = new Set(); 
-        let uniqueHSCodes = new Set(); 
+        let uniqueCOOs = new Set();
+        let uniqueHSCodes = new Set();
         let uniqueStatuses = new Set(); // Tambahkan Set untuk status
 
         const ADMIN_EMAIL = 'maida@genetek.co.id';
@@ -938,15 +934,15 @@
         auth.onAuthStateChanged(async (user) => {
             if (authInitialized) return;
             authInitialized = true;
-            
+
             console.log("Auth state changed:", user ? user.email : "no user");
-            
+
             if (!user && window.location.pathname.includes('app.html')) {
                 console.log("No user, redirecting to login");
                 window.location.href = 'login.html';
                 return;
             }
-            
+
             if (user && window.location.pathname.includes('login.html')) {
                 console.log("User already logged in, redirecting to app");
                 window.location.href = 'app.html';
@@ -958,9 +954,9 @@
                     showGlobalLoading();
                     if (user.email === ADMIN_EMAIL) {
                         currentUserRole = 'admin';
-                        await usersCollection.doc(user.uid).set({ 
+                        await usersCollection.doc(user.uid).set({
                             role: 'admin',
-                            email: user.email 
+                            email: user.email
                         }, { merge: true });
                     } else {
                         console.log("Unauthorized user, logging out and redirecting to login.");
@@ -972,7 +968,7 @@
                     console.log("Current role:", currentUserRole);
                     await fetchNoIdData(); // Fetch No ID data
                     await fetchProductsData(); // Fetch Products data
-                    listenForPOs(); 
+                    listenForPOs();
                     initEventListeners();
                     hideGlobalLoading();
                 } catch (error) {
@@ -1046,7 +1042,7 @@
             try {
                 const date = timestamp instanceof Date ? timestamp : (timestamp && typeof timestamp.toDate === 'function' ? timestamp.toDate() : null);
                 if (!date) return '-';
-                
+
                 return date.toLocaleDateString('id-ID');
             } catch (e) {
                 console.error("Error formatting date:", e);
@@ -1112,8 +1108,8 @@
                 pos = [];
                 // Hanya clear Set untuk filter yang diinginkan
                 uniqueSuppliers.clear();
-                uniqueCOOs.clear(); 
-                uniqueHSCodes.clear(); 
+                uniqueCOOs.clear();
+                uniqueHSCodes.clear();
                 uniqueStatuses.clear(); // Clear uniqueStatuses
 
                 snapshot.forEach((doc) => {
@@ -1126,8 +1122,8 @@
                     pos.push({ id: doc.id, ...poData });
 
                     if (poData.supplierName) uniqueSuppliers.add(poData.supplierName);
-                    if (poData.coo) uniqueCOOs.add(poData.coo); 
-                    if (poData.hsCode) uniqueHSCodes.add(poData.hsCode); 
+                    if (poData.coo) uniqueCOOs.add(poData.coo);
+                    if (poData.hsCode) uniqueHSCodes.add(poData.hsCode);
                     if (poData.status) uniqueStatuses.add(poData.status); // Add status to uniqueStatuses
                 });
                 console.log("Total POs updated by onSnapshot:", pos.length);
@@ -1202,7 +1198,7 @@
                     </div>
                 </div>
             `;
-            
+
             return poCard;
         }
 
@@ -1243,12 +1239,119 @@
 
         function populateFilterDropdowns() {
             populateDropdown('filterSupplier', uniqueSuppliers, document.getElementById('filterSupplier').value);
-            populateDropdown('filterCOO', uniqueCOOs, document.getElementById('filterCOO').value); 
-            populateDropdown('filterHSCode', uniqueHSCodes, document.getElementById('filterHSCode').value); 
+            populateDropdown('filterCOO', uniqueCOOs, document.getElementById('filterCOO').value);
+            populateDropdown('filterHSCode', uniqueHSCodes, document.getElementById('filterHSCode').value);
             populateDropdown('filterStatus', uniqueStatuses, document.getElementById('filterStatus').value); // Populate status filter
         }
 
-        // Fungsi untuk menambah field Nama Barang & Quantity
+        // ==================== FUNGSI UNTUK FORM TAMBAHAN DENGAN SEARCH ====================
+
+        /**
+         * Fungsi autocomplete yang lebih generik.
+         * @param {HTMLInputElement} inp - Elemen input yang akan memiliki autocomplete.
+         * @param {Array<string>} arr - Array string dari nilai yang mungkin.
+         */
+        function autocomplete(inp, arr) {
+            let currentFocus;
+
+            inp.addEventListener("input", function(e) {
+                let a, b, i, val = this.value;
+                closeAllLists(this); // Tutup daftar autocomplete yang sudah ada untuk input ini
+                if (!val) { return false;}
+                currentFocus = -1;
+
+                // Buat DIV yang akan berisi item autocomplete
+                a = document.createElement("DIV");
+                a.setAttribute("id", this.id + "-autocomplete-list");
+                a.setAttribute("class", "autocomplete-items");
+                this.parentNode.appendChild(a);
+
+                // Untuk setiap item dalam array...
+                for (i = 0; i < arr.length; i++) {
+                    const itemValue = arr[i];
+                    // Periksa apakah itemValue mengandung teks input (case-insensitive)
+                    if (itemValue.toUpperCase().includes(val.toUpperCase())) {
+                        b = document.createElement("DIV");
+                        // Buat bagian yang cocok menjadi bold
+                        const startIdx = itemValue.toUpperCase().indexOf(val.toUpperCase());
+                        b.innerHTML = itemValue.substring(0, startIdx) + "<strong>" + itemValue.substring(startIdx, startIdx + val.length) + "</strong>" + itemValue.substring(startIdx + val.length);
+                        b.innerHTML += "<input type='hidden' value='" + itemValue + "'>"; // Simpan nilai lengkap di input tersembunyi
+
+                        // Ketika item diklik...
+                        b.addEventListener("click", function(e) {
+                            inp.value = this.getElementsByTagName("input")[0].value; // Isi input dengan nilai yang dipilih
+                            closeAllLists(inp); // Tutup daftar autocomplete
+                        });
+                        a.appendChild(b);
+                    }
+                }
+            });
+
+            inp.addEventListener("keydown", function(e) {
+                let x = this.parentNode.querySelector(".autocomplete-items");
+                if (x) x = x.getElementsByTagName("div");
+                if (e.keyCode == 40) { // Panah Bawah
+                    currentFocus++;
+                    addActive(x);
+                } else if (e.keyCode == 38) { // Panah Atas
+                    currentFocus--;
+                    addActive(x);
+                } else if (e.keyCode == 13) { // Enter
+                    e.preventDefault();
+                    if (currentFocus > -1) {
+                        if (x) x[currentFocus].click();
+                    }
+                }
+            });
+
+            function addActive(x) {
+                if (!x) return false;
+                removeActive(x);
+                if (currentFocus >= x.length) currentFocus = 0;
+                if (currentFocus < 0) currentFocus = (x.length - 1);
+                x[currentFocus].classList.add("autocomplete-active");
+            }
+
+            function removeActive(x) {
+                for (let i = 0; i < x.length; i++) {
+                    x[i].classList.remove("autocomplete-active");
+                }
+            }
+
+            function closeAllLists(elmnt) {
+                const items = document.querySelectorAll(".autocomplete-items");
+                items.forEach(item => {
+                    // Hanya tutup daftar yang bukan milik elemen input yang sedang aktif atau elemen input itu sendiri
+                    if (elmnt !== item && elmnt !== item.previousElementSibling) {
+                        if (item.parentNode) { // Pastikan parentNode ada sebelum mencoba menghapus
+                            item.parentNode.removeChild(item);
+                        }
+                    }
+                });
+            }
+
+            // Tutup daftar autocomplete saat mengklik di luar
+            document.addEventListener("click", function (e) {
+                closeAllLists(e.target);
+            });
+        }
+
+        // Setup autocomplete untuk input No ID
+        function setupNoIdSearch() {
+            const noIdInput = document.getElementById('noId');
+            if (noIdInput && noIdData.length > 0) {
+                autocomplete(noIdInput, noIdData.map(item => item.no_id));
+            }
+        }
+
+        // Setup autocomplete untuk input Nama Barang
+        function setupItemSearch(inputElement) {
+            if (inputElement && productsData.length > 0) {
+                autocomplete(inputElement, productsData.map(item => item.nama_barang));
+            }
+        }
+
+        // Fungsi untuk menambah field Nama Barang & Quantity baru
         function addItemField(itemName = '', itemQuantity = '') {
             const itemsContainer = document.getElementById('items-container');
             const itemRow = document.createElement('div');
@@ -1263,7 +1366,7 @@
             `;
             itemsContainer.appendChild(itemRow);
             const newItemInput = itemRow.querySelector('.item-name');
-            setupItemSearch(newItemInput);
+            setupItemSearch(newItemInput); // Aktifkan autocomplete untuk input nama barang yang baru
         }
 
         // Fungsi untuk menghapus field Nama Barang & Quantity
@@ -1271,128 +1374,25 @@
             button.closest('.item-row').remove();
         }
 
-        // ==================== FUNGSI UNTUK FORM TAMBAHAN DENGAN SEARCH ====================
-
-        function autocomplete(inp, arr, fieldName, displayField = null) {
-            /*the autocomplete function takes two arguments,
-            the text field element and an array of possible autocompleted values:*/
-            let currentFocus;
-            /*execute a function when someone writes in the text field:*/
-            inp.addEventListener("input", function(e) {
-                let a, b, i, val = this.value;
-                /*close any already open lists of autocompleted values*/
-                closeAllLists();
-                if (!val) { return false;}
-                currentFocus = -1;
-                /*create a DIV element that will contain the items (values):*/
-                a = document.createElement("DIV");
-                a.setAttribute("id", this.id + "-autocomplete-list");
-                a.setAttribute("class", "autocomplete-items");
-                /*append the DIV element as a child of the autocomplete container:*/
-                this.parentNode.appendChild(a);
-                /*for each item in the array...*/
-                for (i = 0; i < arr.length; i++) {
-                    const itemValue = displayField ? arr[i][displayField] : arr[i];
-                    /*check if the item starts with the same letters as the text field value:*/
-                    if (itemValue.toUpperCase().includes(val.toUpperCase())) {
-                        /*create a DIV element for each matching element:*/
-                        b = document.createElement("DIV");
-                        /*make the matching parts bold:*/
-                        b.innerHTML = "<strong>" + itemValue.substr(0, itemValue.toUpperCase().indexOf(val.toUpperCase())) + "</strong>";
-                        b.innerHTML += itemValue.substr(itemValue.toUpperCase().indexOf(val.toUpperCase()), val.length);
-                        b.innerHTML += "<strong>" + itemValue.substr(itemValue.toUpperCase().indexOf(val.toUpperCase()) + val.length) + "</strong>";
-                        /*insert a input field that will hold the current array item's value:*/
-                        b.innerHTML += "<input type='hidden' value='" + itemValue + "'>";
-                        /*execute a function when someone clicks on the item value (DIV element):*/
-                        b.addEventListener("click", function(e) {
-                            /*insert the value for the autocomplete text field:*/
-                            inp.value = this.getElementsByTagName("input")[0].value;
-                            /*close the list of autocompleted values,
-                            (and any other open lists)*/
-                            closeAllLists();
-                        });
-                        a.appendChild(b);
-                    }
-                }
-            });
-            /*execute a function presses a key on the keyboard:*/
-            inp.addEventListener("keydown", function(e) {
-                let x = document.getElementById(this.id + "-autocomplete-list");
-                if (x) x = x.getElementsByTagName("div");
-                if (e.keyCode == 40) {
-                    /*If the arrow DOWN key is pressed,
-                    increase the currentFocus variable:*/
-                    currentFocus++;
-                    /*and and make the current item more visible:*/
-                    addActive(x);
-                } else if (e.keyCode == 38) { //up
-                    /*If the arrow UP key is pressed,
-                    decrease the currentFocus variable:*/
-                    currentFocus--;
-                    /*and and make the current item more visible:*/
-                    addActive(x);
-                } else if (e.keyCode == 13) {
-                    /*If the ENTER key is pressed, prevent the form from being submitted,*/
-                    e.preventDefault();
-                    if (currentFocus > -1) {
-                        /*and simulate a click on the "active" item:*/
-                        if (x) x[currentFocus].click();
-                    }
-                }
-            });
-            function addActive(x) {
-                /*a function to classify an item as "active":*/
-                if (!x) return false;
-                /*start by removing the "active" class on all items:*/
-                removeActive(x);
-                if (currentFocus >= x.length) currentFocus = 0;
-                if (currentFocus < 0) currentFocus = (x.length - 1);
-                /*add class "autocomplete-active":*/
-                x[currentFocus].classList.add("autocomplete-active");
-            }
-            function removeActive(x) {
-                /*a function to remove the "active" class from all autocomplete items:*/
-                for (let i = 0; i < x.length; i++) {
-                    x[i].classList.remove("autocomplete-active");
-                }
-            }
-            function closeAllLists(elmnt) {
-                /*close all autocomplete lists in the document,
-                except the one passed as an argument:*/
-                let x = document.getElementsByClassName("autocomplete-items");
-                for (let i = 0; i < x.length; i++) {
-                    if (elmnt != x[i] && elmnt != inp) {
-                        x[i].parentNode.removeChild(x[i]);
-                    }
-                }
-            }
-            /*execute a function when someone clicks in the document:*/
-            document.addEventListener("click", function (e) {
-                closeAllLists(e.target);
-            });
-        }
-
-        function setupNoIdSearch(inputElement) {
-            autocomplete(inputElement, noIdData.map(item => item.no_id), 'noId');
-        }
-
-        function setupItemSearch(inputElement) {
-            autocomplete(inputElement, productsData.map(item => item.nama_barang), 'itemName');
-        }
-
-        function openPOModal(poId = null) {
+        // Membuka modal PO (untuk tambah atau edit)
+        async function openPOModal(poId = null) {
             const poModal = document.getElementById('poModal');
             const modalTitle = document.getElementById('modalTitle');
             const poForm = document.getElementById('poForm');
-            
+
             poForm.reset();
             document.getElementById('poId').value = '';
+            // Bersihkan kontainer item sebelum mengisi ulang
             document.getElementById('items-container').innerHTML = `
                 <label class="block text-gray-700 text-sm font-semibold mb-2">Nama Barang & Quantity</label>
-            `; // Clear previous items
+            `;
 
             // Set default status saat menambah PO baru
-            document.getElementById('status').value = DEFAULT_STATUS; // Default status
+            document.getElementById('status').value = DEFAULT_STATUS;
+
+            // Pastikan data JSON sudah di-fetch sebelum setup autocomplete
+            await fetchNoIdData();
+            await fetchProductsData();
 
             if (poId) {
                 modalTitle.textContent = 'Edit PO';
@@ -1408,16 +1408,16 @@
                     if (po.items && po.items.length > 0) {
                         po.items.forEach(item => addItemField(item.name, item.quantity));
                     } else {
-                        addItemField(); // Add at least one empty item field
+                        addItemField(); // Tambahkan setidaknya satu field item kosong jika tidak ada item
                     }
-                    
+
                     document.getElementById('allocation').value = po.allocation || '';
                     document.getElementById('invoice').value = po.invoice || '';
                     document.getElementById('tracking').value = po.tracking || '';
                     document.getElementById('seaForwarder').value = po.seaForwarder || '';
                     document.getElementById('airForwarder').value = po.airForwarder || '';
                     document.getElementById('disrc').value = po.disrc || '';
-                    
+
                     document.getElementById('planDelivery').value = po.planDelivery instanceof Date ? po.planDelivery.toISOString().split('T')[0] : '';
                     document.getElementById('eta').value = po.eta instanceof Date ? po.eta.toISOString().split('T')[0] : '';
                     document.getElementById('actualDelivery').value = po.actualDelivery instanceof Date ? po.actualDelivery.toISOString().split('T')[0] : '';
@@ -1430,11 +1430,11 @@
                 }
             } else {
                 modalTitle.textContent = 'Tambah PO Baru';
-                addItemField(); // Add one empty item field for new PO
+                addItemField(); // Tambahkan satu field item kosong untuk PO baru
             }
-            
+
             poModal.classList.remove('hidden');
-            setupNoIdSearch(document.getElementById('noId'));
+            setupNoIdSearch(); // Setup autocomplete untuk No ID
         }
 
         function closePOModal() {
@@ -1443,6 +1443,7 @@
             poModal.classList.add('hidden');
         }
 
+        // Menyimpan data PO ke Firestore
         async function savePO() {
             const poId = document.getElementById('poId').value;
             const noPO = document.getElementById('noPO').value;
@@ -1452,30 +1453,30 @@
                 return;
             }
 
-            closePOModal(); 
-            showGlobalLoading(); 
+            closePOModal();
+            showGlobalLoading();
 
             const orderConfirmation = document.getElementById('orderConfirmation').value;
             const supplierName = document.getElementById('supplierName').value;
-            const selectedNoId = document.getElementById('noId').value; // Get selected No ID
+            const selectedNoId = document.getElementById('noId').value; // Ambil nilai No ID
 
-            // Get items data
+            // Ambil data item (Nama Barang & Quantity)
             const itemsToSave = [];
             document.querySelectorAll('.item-row').forEach(row => {
                 const itemName = row.querySelector('.item-name').value;
                 const itemQuantity = row.querySelector('.item-quantity').value;
-                if (itemName && itemQuantity) {
+                if (itemName && itemQuantity && parseInt(itemQuantity) > 0) { // Hanya simpan jika nama dan quantity valid
                     itemsToSave.push({ name: itemName, quantity: parseInt(itemQuantity) });
                 }
             });
-            
+
             const allocation = document.getElementById('allocation').value;
             const invoice = document.getElementById('invoice').value;
             const tracking = document.getElementById('tracking').value;
             const seaForwarder = document.getElementById('seaForwarder').value;
             const airForwarder = document.getElementById('airForwarder').value;
             const disrc = document.getElementById('disrc').value;
-            
+
             const planDelivery = document.getElementById('planDelivery').value ? firebase.firestore.Timestamp.fromDate(new Date(document.getElementById('planDelivery').value)) : null;
             const eta = document.getElementById('eta').value ? firebase.firestore.Timestamp.fromDate(new Date(document.getElementById('eta').value)) : null;
             const actualDelivery = document.getElementById('actualDelivery').value ? firebase.firestore.Timestamp.fromDate(new Date(document.getElementById('actualDelivery').value)) : null;
@@ -1490,8 +1491,8 @@
                 orderConfirmation: orderConfirmation,
                 noPO: noPO,
                 supplierName: supplierName,
-                selectedNoId: selectedNoId, // Save selected No ID
-                items: itemsToSave, // Save items
+                selectedNoId: selectedNoId, // Simpan No ID
+                items: itemsToSave, // Simpan array items
                 allocation: allocation,
                 invoice: invoice,
                 tracking: tracking,
@@ -1523,7 +1524,7 @@
                 console.error("Error saving PO:", error);
                 showCustomAlert("Gagal menyimpan PO. Silakan coba lagi.", "error");
             } finally {
-                hideGlobalLoading(); 
+                hideGlobalLoading();
             }
         }
 
@@ -1544,8 +1545,8 @@
         async function deletePO() {
             if (!poToDeleteId) return;
 
-            closeDeleteModal(); 
-            showGlobalLoading(); 
+            closeDeleteModal();
+            showGlobalLoading();
 
             try {
                 await dealsCollection.doc(poToDeleteId).delete();
@@ -1554,7 +1555,7 @@
                 console.error("Error deleting PO:", error);
                 showCustomAlert("Gagal menghapus PO. Silakan coba lagi.", "error");
             } finally {
-                hideGlobalLoading(); 
+                hideGlobalLoading();
             }
         }
 
@@ -1574,6 +1575,7 @@
             }
         }
 
+        // Membuka modal detail PO
         function openPODetailModal(poId) {
             const po = pos.find(p => p.id === poId);
             if (!po) {
@@ -1585,9 +1587,9 @@
             document.getElementById('detailOrderConfirmation').textContent = po.orderConfirmation || '-';
             document.getElementById('detailNoPO').textContent = po.noPO || '-';
             document.getElementById('detailSupplierName').textContent = po.supplierName || '-';
-            document.getElementById('detailNoId').textContent = po.selectedNoId || '-'; // Display No ID
+            document.getElementById('detailNoId').textContent = po.selectedNoId || '-'; // Tampilkan No ID
 
-            // Display items
+            // Tampilkan daftar item
             const detailItemsList = document.getElementById('detailItemsList');
             detailItemsList.innerHTML = '';
             if (po.items && po.items.length > 0) {
@@ -1601,14 +1603,14 @@
                 listItem.textContent = '-';
                 detailItemsList.appendChild(listItem);
             }
-            
+
             document.getElementById('detailAllocation').textContent = po.allocation || '-';
             document.getElementById('detailInvoice').textContent = po.invoice || '-';
             document.getElementById('detailTracking').textContent = po.tracking || '-';
             document.getElementById('detailSeaForwarder').textContent = po.seaForwarder || '-';
             document.getElementById('detailAirForwarder').textContent = po.airForwarder || '-';
             document.getElementById('detailDisrc').textContent = po.disrc || '-';
-            
+
             document.getElementById('detailPlanDelivery').textContent = po.planDelivery ? formatDate(po.planDelivery) : '-';
             document.getElementById('detailETA').textContent = po.eta ? formatDate(po.eta) : '-';
             document.getElementById('detailActualDelivery').textContent = po.actualDelivery ? formatDate(po.actualDelivery) : '-';
@@ -1641,9 +1643,9 @@
         function applyUserPermissions() {
             try {
                 const isAdmin = currentUserRole === 'admin';
-                
+
                 console.log("Applying permissions for Role:", currentUserRole);
-                
+
                 const newPOBtn = document.getElementById('newPOBtn');
                 const exportExcelBtn = document.getElementById('exportExcelBtn');
                 const searchInput = document.getElementById('searchPOs');
@@ -1658,7 +1660,7 @@
 
                 if (searchInput) searchInput.classList.remove('hidden');
                 if (openFilterPanelBtn) openFilterPanelBtn.classList.remove('hidden');
-                
+
             } catch (error) {
                 console.error("Error in applyUserPermissions:", error);
                 showCustomAlert("Gagal menerapkan permissions", "error");
@@ -1669,7 +1671,7 @@
 
         function initEventListeners() {
             console.log("Initializing event listeners...");
-            
+
             try {
                 const poForm = document.getElementById('poForm');
                 if (poForm) {
@@ -1686,11 +1688,11 @@
                     { id: 'authButton', func: logout },
                     { id: 'openFilterPanelBtn', func: openFilterPanel }
                 ];
-                
+
                 buttons.forEach(btn => {
                     const element = document.getElementById(btn.id);
                     if (element) {
-                        element.removeEventListener('click', btn.func); 
+                        element.removeEventListener('click', btn.func);
                         element.addEventListener('click', btn.func);
                         element.addEventListener('click', createRipple);
                         console.log(`Event listener added for ${btn.id}`);
@@ -1734,38 +1736,38 @@
             try {
                 const searchTerm = document.getElementById('searchPOs').value.toLowerCase();
                 const supplierFilter = document.getElementById('filterSupplier').value;
-                const cooFilter = document.getElementById('filterCOO').value; 
-                const hsCodeFilter = document.getElementById('filterHSCode').value; 
+                const cooFilter = document.getElementById('filterCOO').value;
+                const hsCodeFilter = document.getElementById('filterHSCode').value;
                 const statusFilter = document.getElementById('filterStatus').value; // Ambil nilai filter status
-                
+
                 let basePOs = pos;
 
                 const filteredPOs = basePOs.filter(po => {
-                    const matchesSearch = 
+                    const matchesSearch =
                         (po.noPO && po.noPO.toLowerCase().includes(searchTerm)) ||
                         (po.supplierName && po.supplierName.toLowerCase().includes(searchTerm)) ||
                         (po.selectedNoId && po.selectedNoId.toLowerCase().includes(searchTerm)) || // Search by No ID
                         (po.items && po.items.some(item => item.name.toLowerCase().includes(searchTerm))); // Search by item name
-                    
-                    const matchesSupplier = 
-                        supplierFilter === 'all' || 
+
+                    const matchesSupplier =
+                        supplierFilter === 'all' ||
                         (po.supplierName && po.supplierName === supplierFilter);
 
-                    const matchesCOO = 
-                        cooFilter === 'all' || 
+                    const matchesCOO =
+                        cooFilter === 'all' ||
                         (po.coo && po.coo === cooFilter);
 
-                    const matchesHSCode = 
-                        hsCodeFilter === 'all' || 
+                    const matchesHSCode =
+                        hsCodeFilter === 'all' ||
                         (po.hsCode && po.hsCode === hsCodeFilter);
 
-                    const matchesStatus = 
-                        statusFilter === 'all' || 
+                    const matchesStatus =
+                        statusFilter === 'all' ||
                         (po.status && po.status === statusFilter); // Filter berdasarkan status
 
                     return matchesSearch && matchesSupplier && matchesCOO && matchesHSCode && matchesStatus;
                 });
-                
+
                 renderFilteredPOs(filteredPOs);
             } catch (error) {
                 console.error("Error filtering POs:", error);
@@ -1775,9 +1777,9 @@
         function renderFilteredPOs(filteredPOs) {
             const pipelineStage = document.getElementById('pos-stage');
             if (!pipelineStage) return;
-            
+
             pipelineStage.innerHTML = '';
-            
+
             if (filteredPOs.length === 0) {
                 pipelineStage.innerHTML = `
                     <div class="empty-state">
@@ -1787,7 +1789,7 @@
                 `;
                 return;
             }
-            
+
             filteredPOs.forEach((po, index) => {
                 const poCard = renderPO(po, index);
                 pipelineStage.appendChild(poCard);
@@ -1847,8 +1849,8 @@
 
         function resetFilters() {
             document.getElementById('filterSupplier').value = 'all';
-            document.getElementById('filterCOO').value = 'all'; 
-            document.getElementById('filterHSCode').value = 'all'; 
+            document.getElementById('filterCOO').value = 'all';
+            document.getElementById('filterHSCode').value = 'all';
             document.getElementById('filterStatus').value = 'all'; // Reset status filter
             document.getElementById('searchPOs').value = '';
             filterPOs();
@@ -1876,38 +1878,38 @@
                 const currentPOs = pos.filter(po => {
                     const searchTerm = document.getElementById('searchPOs').value.toLowerCase();
                     const supplierFilter = document.getElementById('filterSupplier').value;
-                    const cooFilter = document.getElementById('filterCOO').value; 
-                    const hsCodeFilter = document.getElementById('filterHSCode').value; 
+                    const cooFilter = document.getElementById('filterCOO').value;
+                    const hsCodeFilter = document.getElementById('filterHSCode').value;
                     const statusFilter = document.getElementById('filterStatus').value; // Ambil nilai filter status
-                    
-                    const matchesSearch = 
+
+                    const matchesSearch =
                         (po.noPO && po.noPO.toLowerCase().includes(searchTerm)) ||
                         (po.supplierName && po.supplierName.toLowerCase().includes(searchTerm)) ||
                         (po.selectedNoId && po.selectedNoId.toLowerCase().includes(searchTerm)) ||
                         (po.items && po.items.some(item => item.name.toLowerCase().includes(searchTerm)));
-                    
-                    const matchesSupplier = 
-                        supplierFilter === 'all' || 
+
+                    const matchesSupplier =
+                        supplierFilter === 'all' ||
                         (po.supplierName && po.supplierName === supplierFilter);
 
-                    const matchesCOO = 
-                        cooFilter === 'all' || 
+                    const matchesCOO =
+                        cooFilter === 'all' ||
                         (po.coo && po.coo === cooFilter);
 
-                    const matchesHSCode = 
-                        hsCodeFilter === 'all' || 
+                    const matchesHSCode =
+                        hsCodeFilter === 'all' ||
                         (po.hsCode && po.hsCode === hsCodeFilter);
 
-                    const matchesStatus = 
-                        statusFilter === 'all' || 
+                    const matchesStatus =
+                        statusFilter === 'all' ||
                         (po.status && po.status === statusFilter); // Filter berdasarkan status
 
                     return matchesSearch && matchesSupplier && matchesCOO && matchesHSCode && matchesStatus;
                 });
 
                 currentPOs.forEach((po, index) => {
-                    const itemsString = po.items && po.items.length > 0 
-                        ? po.items.map(item => `${item.name} (Qty: ${item.quantity})`).join(', ') 
+                    const itemsString = po.items && po.items.length > 0
+                        ? po.items.map(item => `${item.name} (Qty: ${item.quantity})`).join(', ')
                         : '';
 
                     const row = [
