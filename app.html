@@ -244,6 +244,9 @@
             margin-top: 1rem;
             padding-top: 0.75rem;
             border-top: 1px solid var(--bg-medium);
+            display: flex; /* Tambahkan ini untuk flexbox */
+            justify-content: space-between; /* Untuk menempatkan status di kiri dan aksi di kanan */
+            align-items: center; /* Untuk menyelaraskan vertikal */
         }
 
         /* Scrollbar */
@@ -369,6 +372,57 @@
             padding: 0.15rem 0.5rem;
             border-radius: 0.35rem;
             z-index: 10; /* Pastikan di atas konten lain */
+        }
+
+        /* Warna Status */
+        .status-on-order { background-color: #60a5fa; color: white; } /* Blue */
+        .status-waiting { background-color: #facc15; color: #333; } /* Yellow */
+        .status-picked-up { background-color: #34d399; color: white; } /* Green */
+        .status-on-delivery { background-color: #a78bfa; color: white; } /* Purple */
+        .status-delivered { background-color: #10b981; color: white; } /* Emerald Green */
+        .status-partial-delivered { background-color: #fbbf24; color: #333; } /* Amber */
+        .status-delayed { background-color: #ef4444; color: white; } /* Red */
+        .status-on-hold { background-color: #9ca3af; color: white; } /* Gray */
+
+        /* Styling untuk dropdown status di deal-card */
+        .status-dropdown {
+            appearance: none; /* Hapus tampilan default browser */
+            background-color: var(--bg-light);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            min-width: 100px; /* Agar tidak terlalu kecil */
+            max-width: 120px;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            position: relative;
+            padding-right: 1.5rem; /* Ruang untuk ikon panah */
+        }
+        .status-dropdown:hover {
+            background-color: var(--bg-medium);
+        }
+        .status-dropdown:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+        /* Custom arrow for dropdown */
+        .status-dropdown::after {
+            content: '\f078'; /* FontAwesome chevron-down icon */
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            color: var(--text-medium);
         }
 
         /* Media Queries untuk responsivitas */
@@ -571,6 +625,20 @@
                                 <label class="block text-gray-700 text-sm font-semibold mb-2" for="actualDelivery">Actual Delivery</label>
                                 <input type="date" id="actualDelivery" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
                             </div>
+                            <!-- Status Field -->
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="status">Status</label>
+                                <select id="status" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                                    <option value="On Order">On Order</option>
+                                    <option value="Waiting">Waiting</option>
+                                    <option value="Picked Up">Picked Up</option>
+                                    <option value="On Delivery">On Delivery</option>
+                                    <option value="Delivered">Delivered</option>
+                                    <option value="Partial Delivered">Partial Delivered</option>
+                                    <option value="Delayed">Delayed</option>
+                                    <option value="On Hold">On Hold</option>
+                                </select>
+                            </div>
                         </div>
                         <!-- Kolom 4 -->
                         <div>
@@ -590,8 +658,6 @@
                                 <label class="block text-gray-700 text-sm font-semibold mb-2" for="note">Note</label>
                                 <textarea id="note" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" rows="3" placeholder="Tambahkan catatan atau deskripsi tambahan..."></textarea>
                             </div>
-                            <!-- Status default disembunyikan dan diatur di JS -->
-                            <!-- <input type="hidden" id="status" value="pending"> -->
                         </div>
                     </div>
                     <div class="flex justify-end space-x-3 mt-6">
@@ -662,6 +728,11 @@
                     <div class="detail-item">
                         <p class="text-gray-700 font-semibold">Actual Delivery:</p>
                         <p id="detailActualDelivery" class="text-gray-900"></p>
+                    </div>
+                    <!-- Status Field -->
+                    <div class="detail-item">
+                        <p class="text-gray-700 font-semibold">Status:</p>
+                        <p id="detailStatus" class="text-gray-900"></p>
                     </div>
                     <div class="detail-item">
                         <p class="text-gray-700 font-semibold">COO:</p>
@@ -759,6 +830,21 @@
                             <!-- Options populated dynamically -->
                         </select>
                     </div>
+                    <!-- Filter: Status -->
+                    <div>
+                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterStatus">Status</label>
+                        <select id="filterStatus" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            <option value="all">Semua Status</option>
+                            <option value="On Order">On Order</option>
+                            <option value="Waiting">Waiting</option>
+                            <option value="Picked Up">Picked Up</option>
+                            <option value="On Delivery">On Delivery</option>
+                            <option value="Delivered">Delivered</option>
+                            <option value="Partial Delivered">Partial Delivered</option>
+                            <option value="Delayed">Delayed</option>
+                            <option value="On Hold">On Hold</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="flex justify-end space-x-3 mt-6">
                     <button type="button" onclick="resetFilters()" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
@@ -813,7 +899,7 @@
         const noIdCollection = db.collection('noIds'); // Koleksi Firebase untuk No ID baru
 
         let pos = [];
-        const DEFAULT_STATUS = 'pending';
+        const DEFAULT_STATUS = 'On Order'; // Diubah menjadi 'On Order'
         let currentUserRole = 'user';
         let sortableInstances = {};
         let authInitialized = false;
@@ -829,6 +915,7 @@
         let uniqueNoIDs = new Set(); 
         let uniqueCOOs = new Set(); 
         let uniqueHSCodes = new Set(); 
+        let uniqueStatuses = new Set(); // Tambahkan Set untuk status
 
         const ADMIN_EMAIL = 'maida@genetek.co.id';
 
@@ -1041,6 +1128,7 @@
                 uniqueNoIDs.clear(); 
                 uniqueCOOs.clear(); 
                 uniqueHSCodes.clear(); 
+                uniqueStatuses.clear(); // Clear uniqueStatuses
 
                 snapshot.forEach((doc) => {
                     const poData = doc.data();
@@ -1060,6 +1148,7 @@
                     if (poData.selectedNoId) uniqueNoIDs.add(poData.selectedNoId); // Menggunakan selectedNoId
                     if (poData.coo) uniqueCOOs.add(poData.coo); 
                     if (poData.hsCode) uniqueHSCodes.add(poData.hsCode); 
+                    if (poData.status) uniqueStatuses.add(poData.status); // Add status to uniqueStatuses
                 });
                 console.log("Total POs updated by onSnapshot:", pos.length);
                 populateFilterDropdowns();
@@ -1076,12 +1165,26 @@
             });
         }
 
-
         function renderPO(po, index) {
             const poCard = document.createElement('div');
             poCard.className = 'deal-card';
             poCard.dataset.id = po.id;
-            
+
+            // Fungsi helper untuk mendapatkan kelas CSS berdasarkan status
+            function getStatusClass(status) {
+                switch (status) {
+                    case 'On Order': return 'status-on-order';
+                    case 'Waiting': return 'status-waiting';
+                    case 'Picked Up': return 'status-picked-up';
+                    case 'On Delivery': return 'status-on-delivery';
+                    case 'Delivered': return 'status-delivered';
+                    case 'Partial Delivered': return 'status-partial-delivered';
+                    case 'Delayed': return 'status-delayed';
+                    case 'On Hold': return 'status-on-hold';
+                    default: return 'bg-gray-400 text-white'; // Default jika status tidak dikenal
+                }
+            }
+
             poCard.innerHTML = `
                 <span class="po-card-number">${index + 1}</span>
                 <div class="flex justify-between items-start">
@@ -1092,7 +1195,20 @@
                     <p><i class="fas fa-tag"></i> No ID: ${po.selectedNoId || '-'}</p> 
                     <p><i class="fas fa-calendar-alt"></i> Plan Delivery: ${po.planDelivery ? formatDate(po.planDelivery) : '-'}</p>
                 </div>
-                <div class="mt-2 flex justify-end items-center deal-footer">
+                <div class="mt-2 flex justify-between items-center deal-footer">
+                    <!-- Dropdown Status di pojok kanan bawah -->
+                    <div class="relative">
+                        <select onchange="updatePOStatus('${po.id}', this.value)" class="status-dropdown ${getStatusClass(po.status)}">
+                            <option value="On Order" ${po.status === 'On Order' ? 'selected' : ''}>On Order</option>
+                            <option value="Waiting" ${po.status === 'Waiting' ? 'selected' : ''}>Waiting</option>
+                            <option value="Picked Up" ${po.status === 'Picked Up' ? 'selected' : ''}>Picked Up</option>
+                            <option value="On Delivery" ${po.status === 'On Delivery' ? 'selected' : ''}>On Delivery</option>
+                            <option value="Delivered" ${po.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
+                            <option value="Partial Delivered" ${po.status === 'Partial Delivered' ? 'selected' : ''}>Partial Delivered</option>
+                            <option value="Delayed" ${po.status === 'Delayed' ? 'selected' : ''}>Delayed</option>
+                            <option value="On Hold" ${po.status === 'On Hold' ? 'selected' : ''}>On Hold</option>
+                        </select>
+                    </div>
                     <div class="flex space-x-1 deal-actions">
                         <button onclick="openPODetailModal('${po.id}')" class="text-blue-600 hover:text-blue-800" title="Lihat Detail">
                             <i class="fas fa-eye"></i>
@@ -1151,6 +1267,7 @@
             populateDropdown('filterNoID', uniqueNoIDs, document.getElementById('filterNoID').value); 
             populateDropdown('filterCOO', uniqueCOOs, document.getElementById('filterCOO').value); 
             populateDropdown('filterHSCode', uniqueHSCodes, document.getElementById('filterHSCode').value); 
+            populateDropdown('filterStatus', uniqueStatuses, document.getElementById('filterStatus').value); // Populate status filter
         }
 
         function addItemField(initialItemName = '', initialQuantity = '') {
@@ -1290,7 +1407,6 @@
             }
         }
 
-
         function openPOModal(poId = null) {
             const poModal = document.getElementById('poModal');
             const modalTitle = document.getElementById('modalTitle');
@@ -1304,6 +1420,9 @@
             document.getElementById('noIdSearchField').value = '';
             document.getElementById('selectedNoId').value = '';
             document.getElementById('noIdSearchResults').classList.add('hidden');
+
+            // Set default status saat menambah PO baru
+            document.getElementById('status').value = DEFAULT_STATUS; // Default status
 
             if (poId) {
                 modalTitle.textContent = 'Edit PO';
@@ -1343,6 +1462,7 @@
                     document.getElementById('hsCode').value = po.hsCode || '';
                     document.getElementById('revisiHS').value = po.revisiHS || '';
                     document.getElementById('note').value = po.note || '';
+                    document.getElementById('status').value = po.status || DEFAULT_STATUS; // Set status dari PO yang diedit
                 }
             } else {
                 modalTitle.textContent = 'Tambah PO Baru';
@@ -1428,6 +1548,7 @@
             const hsCode = document.getElementById('hsCode').value;
             const revisiHS = document.getElementById('revisiHS').value;
             const note = document.getElementById('note').value;
+            const status = document.getElementById('status').value; // Ambil nilai status dari form
 
             const poData = {
                 orderConfirmation: orderConfirmation,
@@ -1448,7 +1569,7 @@
                 hsCode: hsCode,
                 revisiHS: revisiHS,
                 note: note,
-                status: DEFAULT_STATUS,
+                status: status, // Simpan status
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
 
@@ -1501,6 +1622,22 @@
             }
         }
 
+        async function updatePOStatus(poId, newStatus) {
+            showGlobalLoading();
+            try {
+                await dealsCollection.doc(poId).update({
+                    status: newStatus,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                showCustomAlert(`Status PO berhasil diperbarui menjadi "${newStatus}"!`, "success");
+            } catch (error) {
+                console.error("Error updating PO status:", error);
+                showCustomAlert("Gagal memperbarui status PO. Silakan coba lagi.", "error");
+            } finally {
+                hideGlobalLoading();
+            }
+        }
+
         function openPODetailModal(poId) {
             const po = pos.find(p => p.id === poId);
             if (!po) {
@@ -1539,6 +1676,7 @@
             document.getElementById('detailPlanDelivery').textContent = po.planDelivery ? formatDate(po.planDelivery) : '-';
             document.getElementById('detailETA').textContent = po.eta ? formatDate(po.eta) : '-';
             document.getElementById('detailActualDelivery').textContent = po.actualDelivery ? formatDate(po.actualDelivery) : '-';
+            document.getElementById('detailStatus').textContent = po.status || '-'; // Tampilkan status di detail modal
 
             document.getElementById('detailCOO').textContent = po.coo || '-';
             document.getElementById('detailHSCode').textContent = po.hsCode || '-';
@@ -1664,6 +1802,7 @@
                 const noIDFilter = document.getElementById('filterNoID').value; 
                 const cooFilter = document.getElementById('filterCOO').value; 
                 const hsCodeFilter = document.getElementById('filterHSCode').value; 
+                const statusFilter = document.getElementById('filterStatus').value; // Ambil nilai filter status
                 
                 let basePOs = pos;
 
@@ -1693,7 +1832,11 @@
                         hsCodeFilter === 'all' || 
                         (po.hsCode && po.hsCode === hsCodeFilter);
 
-                    return matchesSearch && matchesSupplier && matchesItemName && matchesNoID && matchesCOO && matchesHSCode;
+                    const matchesStatus = 
+                        statusFilter === 'all' || 
+                        (po.status && po.status === statusFilter); // Filter berdasarkan status
+
+                    return matchesSearch && matchesSupplier && matchesItemName && matchesNoID && matchesCOO && matchesHSCode && matchesStatus;
                 });
                 
                 renderFilteredPOs(filteredPOs);
@@ -1781,6 +1924,7 @@
             document.getElementById('filterNoID').value = 'all'; 
             document.getElementById('filterCOO').value = 'all'; 
             document.getElementById('filterHSCode').value = 'all'; 
+            document.getElementById('filterStatus').value = 'all'; // Reset status filter
             document.getElementById('searchPOs').value = '';
             filterPOs();
         }
@@ -1811,6 +1955,7 @@
                     const noIDFilter = document.getElementById('filterNoID').value; 
                     const cooFilter = document.getElementById('filterCOO').value; 
                     const hsCodeFilter = document.getElementById('filterHSCode').value; 
+                    const statusFilter = document.getElementById('filterStatus').value; // Ambil nilai filter status
                     
                     const matchesSearch = 
                         (po.noPO && po.noPO.toLowerCase().includes(searchTerm)) ||
@@ -1837,7 +1982,11 @@
                         hsCodeFilter === 'all' || 
                         (po.hsCode && po.hsCode === hsCodeFilter);
 
-                    return matchesSearch && matchesSupplier && matchesItemName && matchesNoID && matchesCOO && matchesHSCode;
+                    const matchesStatus = 
+                        statusFilter === 'all' || 
+                        (po.status && po.status === statusFilter); // Filter berdasarkan status
+
+                    return matchesSearch && matchesSupplier && matchesItemName && matchesNoID && matchesCOO && matchesHSCode && matchesStatus;
                 });
 
                 currentPOs.forEach((po, index) => {
