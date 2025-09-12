@@ -487,7 +487,39 @@
             #poModalContent h2 {
                 font-size: 1.5rem;
             }
-        </style>
+        }
+
+        /* Styling for search dropdown */
+        .autocomplete-items {
+            position: absolute;
+            border: 1px solid #d4d4d4;
+            border-bottom: none;
+            border-top: none;
+            z-index: 99;
+            /*position the autocomplete items to be the same width as the container:*/
+            top: 100%;
+            left: 0;
+            right: 0;
+        }
+
+        .autocomplete-items div {
+            padding: 10px;
+            cursor: pointer;
+            background-color: #fff;
+            border-bottom: 1px solid #d4d4d4;
+        }
+
+        .autocomplete-items div:hover {
+            /*when hovering an item:*/
+            background-color: #e9e9e9;
+        }
+
+        .autocomplete-active {
+            /*when navigating through the items using the arrow keys:*/
+            background-color: DodgerBlue !important;
+            color: #ffffff;
+        }
+    </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
     <div class="max-w-7xl mx-auto px-4 py-8">
@@ -565,24 +597,27 @@
                                 <label class="block text-gray-700 text-sm font-semibold mb-2" for="supplierName">Nama Supplier</label>
                                 <input type="text" id="supplierName" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
                             </div>
-                            <!-- No ID Field with Search -->
-                            <div class="mb-4 relative"> 
-                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="noIdSearchField">No ID</label>
-                                <input type="text" id="noIdSearchField" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="Cari No ID...">
-                                <div id="noIdSearchResults" class="absolute z-10 bg-white border border-gray-300 rounded-lg shadow-lg mt-1 w-full max-h-48 overflow-y-auto hidden">
-                                    <!-- Hasil pencarian No ID akan ditampilkan di sini -->
-                                </div>
-                                <input type="hidden" id="selectedNoId">
+                            <!-- New: No ID field with search -->
+                            <div class="mb-4 relative">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="noId">No ID</label>
+                                <input type="text" id="noId" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="Cari No ID...">
+                                <div id="noId-autocomplete-list" class="autocomplete-items"></div>
                             </div>
-                            <div class="mb-4">
+                            <!-- New: Nama Barang & Quantity fields -->
+                            <div id="items-container">
                                 <label class="block text-gray-700 text-sm font-semibold mb-2">Nama Barang & Quantity</label>
-                                <div id="itemsList" class="space-y-3 mb-3">
-                                    <!-- Item barang akan ditambahkan di sini secara dinamis oleh JS -->
+                                <div class="flex items-center mb-2 item-row">
+                                    <div class="relative flex-grow mr-2">
+                                        <input type="text" class="item-name w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="Cari Nama Barang...">
+                                        <div class="item-autocomplete-list autocomplete-items"></div>
+                                    </div>
+                                    <input type="number" class="item-quantity w-24 p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="Qty" min="1">
+                                    <button type="button" onclick="removeItemField(this)" class="ml-2 text-red-500 hover:text-red-700"><i class="fas fa-times-circle"></i></button>
                                 </div>
-                                <button type="button" onclick="addItemField()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-1.5 rounded-lg text-xs flex items-center transition duration-200 ease-in-out transform hover:scale-105">
-                                    <i class="fas fa-plus mr-1"></i> Tambah Barang
-                                </button>
                             </div>
+                            <button type="button" onclick="addItemField()" class="mt-2 bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
+                                <i class="fas fa-plus mr-1"></i> Tambah Barang
+                            </button>
                         </div>
                         <!-- Kolom 2 -->
                         <div>
@@ -690,8 +725,12 @@
                         <p id="detailSupplierName" class="text-gray-900"></p>
                     </div>
                     <div class="detail-item">
-                        <p class="text-gray-700 font-semibold">No ID:</p> <!-- Changed from Produk Terpilih -->
-                        <p id="detailSelectedNoId" class="text-gray-900"></p>
+                        <p class="text-gray-700 font-semibold">No ID:</p>
+                        <p id="detailNoId" class="text-gray-900"></p>
+                    </div>
+                    <div class="detail-item col-span-full">
+                        <p class="text-gray-700 font-semibold">Nama Barang & Quantity:</p>
+                        <ul id="detailItemsList" class="list-disc list-inside text-gray-900"></ul>
                     </div>
                     <div class="detail-item">
                         <p class="text-gray-700 font-semibold">Allocation:</p>
@@ -746,11 +785,6 @@
                         <p class="text-gray-700 font-semibold">Revisi HS:</p>
                         <p id="detailRevisiHS" class="text-gray-900"></p>
                     </div>
-                    <!-- Status dan Tanggal Dibuat dihapus dari sini -->
-                    <div class="detail-item col-span-full"> <!-- Mengambil lebar penuh -->
-                        <p class="text-gray-700 font-semibold">Nama Barang & Quantity:</p>
-                        <ul id="detailItemsList" class="list-disc list-inside text-gray-900"></ul>
-                    </div>
                     <div class="detail-item col-span-full">
                         <p class="text-gray-700 font-semibold">Note:</p>
                         <p id="detailNote" class="text-gray-900"></p>
@@ -795,22 +829,6 @@
                         <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterSupplier">Supplier</label>
                         <select id="filterSupplier" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
                             <option value="all">Semua Supplier</option>
-                            <!-- Opsi akan diisi secara dinamis oleh JavaScript -->
-                        </select>
-                    </div>
-                    <!-- Filter: No ID -->
-                    <div>
-                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterNoID">No ID</label>
-                        <select id="filterNoID" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
-                            <option value="all">Semua No ID</option>
-                            <!-- Options populated dynamically -->
-                        </select>
-                    </div>
-                    <!-- Filter: Nama Barang -->
-                    <div>
-                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterItemName">Nama Barang</label>
-                        <select id="filterItemName" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
-                            <option value="all">Semua Barang</option>
                             <!-- Opsi akan diisi secara dinamis oleh JavaScript -->
                         </select>
                     </div>
@@ -895,8 +913,6 @@
         const auth = firebase.auth();
         const dealsCollection = db.collection('purchaseOrders');
         const usersCollection = db.collection('users');
-        const productsCollection = db.collection('products'); // Koleksi Firebase untuk produk baru
-        const noIdCollection = db.collection('noIds'); // Koleksi Firebase untuk No ID baru
 
         let pos = [];
         const DEFAULT_STATUS = 'On Order'; // Diubah menjadi 'On Order'
@@ -905,14 +921,12 @@
         let authInitialized = false;
         let unsubscribeFromPOs = null;
 
-        // Data produk dan No ID akan dimuat dari JSON eksternal atau Firebase
+        // Data untuk search No ID dan Nama Barang
         let noIdData = [];
-        let productData = [];
+        let productsData = [];
 
         // Hanya menyimpan Set untuk filter yang diinginkan
         let uniqueSuppliers = new Set();
-        let uniqueItemNames = new Set();
-        let uniqueNoIDs = new Set(); 
         let uniqueCOOs = new Set(); 
         let uniqueHSCodes = new Set(); 
         let uniqueStatuses = new Set(); // Tambahkan Set untuk status
@@ -956,8 +970,8 @@
                     }
 
                     console.log("Current role:", currentUserRole);
-                    await fetchNoIdData(); // Ambil data No ID
-                    await fetchProductData(); // Ambil data produk
+                    await fetchNoIdData(); // Fetch No ID data
+                    await fetchProductsData(); // Fetch Products data
                     listenForPOs(); 
                     initEventListeners();
                     hideGlobalLoading();
@@ -969,80 +983,32 @@
             }
         });
 
-        // Fungsi untuk mengambil data No ID dari JSON eksternal atau Firebase
+        // Fungsi untuk mengambil data No ID dari JSON eksternal
         async function fetchNoIdData() {
             try {
-                // Coba ambil dari Firebase terlebih dahulu
-                const snapshot = await noIdCollection.get();
-                if (!snapshot.empty) {
-                    noIdData = snapshot.docs.map(doc => doc.data().name);
-                    console.log("No ID data fetched from Firebase:", noIdData.length);
-                } else {
-                    // Jika kosong di Firebase, ambil dari JSON eksternal
-                    const response = await fetch('https://raw.githubusercontent.com/bandeng77/monitoring.github.io/main/noid.json');
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    const jsonContent = await response.json();
-                    // Pastikan jsonContent adalah array string
-                    if (Array.isArray(jsonContent) && jsonContent.every(item => typeof item === 'string')) {
-                        noIdData = jsonContent;
-                        console.log("No ID data fetched from external JSON:", noIdData.length);
-                        // Opsional: Simpan data ini ke Firebase untuk penggunaan selanjutnya
-                        for (const name of noIdData) {
-                            // Cek apakah sudah ada di Firebase sebelum menambahkan
-                            const existingDoc = await noIdCollection.where('name', '==', name).get();
-                            if (existingDoc.empty) {
-                                await noIdCollection.add({ name: name });
-                            }
-                        }
-                        console.log("No ID data synced to Firebase.");
-                    } else {
-                        console.error("External noid.json is not a valid array of strings.");
-                        noIdData = []; // Set to empty array to prevent further errors
-                    }
+                const response = await fetch('https://raw.githubusercontent.com/bandeng77/monitoring.github.io/main/noid.json');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
+                noIdData = await response.json();
+                console.log("No ID data loaded:", noIdData);
             } catch (error) {
                 console.error("Error fetching No ID data:", error);
                 showCustomAlert("Gagal memuat data No ID.", "error");
             }
         }
 
-        // Fungsi untuk mengambil data produk dari JSON eksternal atau Firebase
-        async function fetchProductData() {
+        // Fungsi untuk mengambil data produk dari JSON eksternal
+        async function fetchProductsData() {
             try {
-                // Coba ambil dari Firebase terlebih dahulu
-                const snapshot = await productsCollection.get();
-                if (!snapshot.empty) {
-                    productData = snapshot.docs.map(doc => doc.data().name);
-                    console.log("Product data fetched from Firebase:", productData.length);
-                } else {
-                    // Jika kosong di Firebase, ambil dari JSON eksternal
-                    const response = await fetch('https://raw.githubusercontent.com/bandeng77/monitoring.github.io/main/products.json');
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    const jsonContent = await response.json();
-                    // Pastikan jsonContent adalah array string
-                    if (Array.isArray(jsonContent) && jsonContent.every(item => typeof item === 'string')) {
-                        productData = jsonContent;
-                        console.log("Product data fetched from external JSON:", productData.length);
-                        // Opsional: Simpan data ini ke Firebase untuk penggunaan selanjutnya
-                        for (const name of productData) {
-                            // Cek apakah sudah ada di Firebase sebelum menambahkan
-                            const existingDoc = await productsCollection.where('name', '==', name).get();
-                            if (existingDoc.empty) {
-                                await productsCollection.add({ name: name });
-                            }
-                        }
-                        console.log("Product data synced to Firebase.");
-                    } else {
-                        console.error("External products.json is not a valid array of strings.");
-                        productData = []; // Set to empty array to prevent further errors
-                    }
+                const response = await fetch('https://raw.githubusercontent.com/bandeng77/monitoring.github.io/main/products.json');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
+                productsData = await response.json();
+                console.log("Products data loaded:", productsData);
             } catch (error) {
-                console.error("Error fetching product data:", error);
+                console.error("Error fetching products data:", error);
                 showCustomAlert("Gagal memuat data produk.", "error");
             }
         }
@@ -1146,8 +1112,6 @@
                 pos = [];
                 // Hanya clear Set untuk filter yang diinginkan
                 uniqueSuppliers.clear();
-                uniqueItemNames.clear();
-                uniqueNoIDs.clear(); 
                 uniqueCOOs.clear(); 
                 uniqueHSCodes.clear(); 
                 uniqueStatuses.clear(); // Clear uniqueStatuses
@@ -1162,12 +1126,6 @@
                     pos.push({ id: doc.id, ...poData });
 
                     if (poData.supplierName) uniqueSuppliers.add(poData.supplierName);
-                    if (poData.items && Array.isArray(poData.items)) {
-                        poData.items.forEach(item => {
-                            if (item.itemName) uniqueItemNames.add(item.itemName);
-                        });
-                    }
-                    if (poData.selectedNoId) uniqueNoIDs.add(poData.selectedNoId); // Menggunakan selectedNoId
                     if (poData.coo) uniqueCOOs.add(poData.coo); 
                     if (poData.hsCode) uniqueHSCodes.add(poData.hsCode); 
                     if (poData.status) uniqueStatuses.add(poData.status); // Add status to uniqueStatuses
@@ -1214,7 +1172,7 @@
                 </div>
                 <div class="mt-1 text-sm text-gray-600 deal-details">
                     <p><i class="fas fa-building"></i> Supplier: ${po.supplierName || '-'}</p>
-                    <p><i class="fas fa-tag"></i> No ID: ${po.selectedNoId || '-'}</p> 
+                    <p><i class="fas fa-id-card"></i> No ID: ${po.selectedNoId || '-'}</p>
                     <p><i class="fas fa-calendar-alt"></i> Plan Delivery: ${po.planDelivery ? formatDate(po.planDelivery) : '-'}</p>
                 </div>
                 <div class="mt-2 flex justify-between items-center deal-footer">
@@ -1285,150 +1243,141 @@
 
         function populateFilterDropdowns() {
             populateDropdown('filterSupplier', uniqueSuppliers, document.getElementById('filterSupplier').value);
-            populateDropdown('filterItemName', uniqueItemNames, document.getElementById('filterItemName').value);
-            populateDropdown('filterNoID', uniqueNoIDs, document.getElementById('filterNoID').value); 
             populateDropdown('filterCOO', uniqueCOOs, document.getElementById('filterCOO').value); 
             populateDropdown('filterHSCode', uniqueHSCodes, document.getElementById('filterHSCode').value); 
             populateDropdown('filterStatus', uniqueStatuses, document.getElementById('filterStatus').value); // Populate status filter
         }
 
-        function addItemField(initialItemName = '', initialQuantity = '') {
-            const itemsListDiv = document.getElementById('itemsList');
-            const newItemDiv = document.createElement('div');
-            newItemDiv.className = 'flex items-center space-x-2 mb-2 item-row'; // Tambahkan kelas item-row
-
-            newItemDiv.innerHTML = `
-                <div class="relative flex-grow">
-                    <input type="text" class="item-name-input w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="Nama Barang" value="${initialItemName}">
-                    <div class="item-search-results absolute z-10 bg-white border border-gray-300 rounded-lg shadow-lg mt-1 w-full max-h-48 overflow-y-auto hidden">
-                        <!-- Hasil pencarian barang akan ditampilkan di sini -->
-                    </div>
+        // Fungsi untuk menambah field Nama Barang & Quantity
+        function addItemField(itemName = '', itemQuantity = '') {
+            const itemsContainer = document.getElementById('items-container');
+            const itemRow = document.createElement('div');
+            itemRow.className = 'flex items-center mb-2 item-row';
+            itemRow.innerHTML = `
+                <div class="relative flex-grow mr-2">
+                    <input type="text" class="item-name w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="Cari Nama Barang..." value="${itemName}">
+                    <div class="item-autocomplete-list autocomplete-items"></div>
                 </div>
-                <input type="number" class="item-quantity-input w-1/5 p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="Qty" min="1" value="${initialQuantity}">
-                <button type="button" onclick="removeItemField(this)" class="text-red-500 hover:text-red-700 p-1">
-                    <i class="fas fa-times"></i>
-                </button>
+                <input type="number" class="item-quantity w-24 p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="Qty" min="1" value="${itemQuantity}">
+                <button type="button" onclick="removeItemField(this)" class="ml-2 text-red-500 hover:text-red-700"><i class="fas fa-times-circle"></i></button>
             `;
-            itemsListDiv.appendChild(newItemDiv);
-            setupItemSearch(newItemDiv); // Panggil setupItemSearch untuk input nama barang yang baru
+            itemsContainer.appendChild(itemRow);
+            const newItemInput = itemRow.querySelector('.item-name');
+            setupItemSearch(newItemInput);
         }
 
-        function removeItemField(buttonElement) {
-            buttonElement.closest('.item-row').remove(); // Gunakan kelas item-row
+        // Fungsi untuk menghapus field Nama Barang & Quantity
+        function removeItemField(button) {
+            button.closest('.item-row').remove();
         }
 
         // ==================== FUNGSI UNTUK FORM TAMBAHAN DENGAN SEARCH ====================
 
-        function setupNoIdSearch() {
-            const noIdSearchField = document.getElementById('noIdSearchField');
-            const noIdSearchResultsDiv = document.getElementById('noIdSearchResults');
-            const selectedNoIdInput = document.getElementById('selectedNoId');
-
-            if (!noIdSearchField || !noIdSearchResultsDiv || !selectedNoIdInput) return;
-
-            noIdSearchField.addEventListener('input', function() {
-                const searchTerm = this.value.toLowerCase();
-                noIdSearchResultsDiv.innerHTML = '';
-
-                if (searchTerm.length < 2) {
-                    noIdSearchResultsDiv.classList.add('hidden');
-                    return;
-                }
-
-                const filteredNoIds = noIdData.filter(name => 
-                    name.toLowerCase().includes(searchTerm)
-                );
-
-                if (filteredNoIds.length > 0) {
-                    filteredNoIds.forEach(name => {
-                        const resultItem = document.createElement('div');
-                        resultItem.className = 'p-2 cursor-pointer hover:bg-gray-100 border-b border-gray-200 last:border-b-0';
-                        resultItem.textContent = name;
-                        resultItem.dataset.noIdName = name;
-                        resultItem.addEventListener('click', function() {
-                            selectNoId(this.dataset.noIdName);
+        function autocomplete(inp, arr, fieldName, displayField = null) {
+            /*the autocomplete function takes two arguments,
+            the text field element and an array of possible autocompleted values:*/
+            let currentFocus;
+            /*execute a function when someone writes in the text field:*/
+            inp.addEventListener("input", function(e) {
+                let a, b, i, val = this.value;
+                /*close any already open lists of autocompleted values*/
+                closeAllLists();
+                if (!val) { return false;}
+                currentFocus = -1;
+                /*create a DIV element that will contain the items (values):*/
+                a = document.createElement("DIV");
+                a.setAttribute("id", this.id + "-autocomplete-list");
+                a.setAttribute("class", "autocomplete-items");
+                /*append the DIV element as a child of the autocomplete container:*/
+                this.parentNode.appendChild(a);
+                /*for each item in the array...*/
+                for (i = 0; i < arr.length; i++) {
+                    const itemValue = displayField ? arr[i][displayField] : arr[i];
+                    /*check if the item starts with the same letters as the text field value:*/
+                    if (itemValue.toUpperCase().includes(val.toUpperCase())) {
+                        /*create a DIV element for each matching element:*/
+                        b = document.createElement("DIV");
+                        /*make the matching parts bold:*/
+                        b.innerHTML = "<strong>" + itemValue.substr(0, itemValue.toUpperCase().indexOf(val.toUpperCase())) + "</strong>";
+                        b.innerHTML += itemValue.substr(itemValue.toUpperCase().indexOf(val.toUpperCase()), val.length);
+                        b.innerHTML += "<strong>" + itemValue.substr(itemValue.toUpperCase().indexOf(val.toUpperCase()) + val.length) + "</strong>";
+                        /*insert a input field that will hold the current array item's value:*/
+                        b.innerHTML += "<input type='hidden' value='" + itemValue + "'>";
+                        /*execute a function when someone clicks on the item value (DIV element):*/
+                        b.addEventListener("click", function(e) {
+                            /*insert the value for the autocomplete text field:*/
+                            inp.value = this.getElementsByTagName("input")[0].value;
+                            /*close the list of autocompleted values,
+                            (and any other open lists)*/
+                            closeAllLists();
                         });
-                        noIdSearchResultsDiv.appendChild(resultItem);
-                    });
-                } else {
-                    // Jika tidak ada hasil, tawarkan untuk menambahkan sebagai No ID baru
-                    const addAsNewItem = document.createElement('div');
-                    addAsNewItem.className = 'p-2 cursor-pointer hover:bg-gray-100 text-blue-600';
-                    addAsNewItem.innerHTML = `Tambahkan "<strong>${this.value}</strong>" sebagai No ID baru`;
-                    addAsNewItem.addEventListener('click', function() {
-                        selectNoId(noIdSearchField.value.trim()); // Gunakan nilai input saat ini
-                    });
-                    noIdSearchResultsDiv.appendChild(addAsNewItem);
-                }
-                noIdSearchResultsDiv.classList.remove('hidden');
-            });
-
-            document.addEventListener('click', function(event) {
-                if (!noIdSearchField.contains(event.target) && !noIdSearchResultsDiv.contains(event.target)) {
-                    noIdSearchResultsDiv.classList.add('hidden');
+                        a.appendChild(b);
+                    }
                 }
             });
-
-            function selectNoId(name) {
-                noIdSearchField.value = name;
-                selectedNoIdInput.value = name;
-                noIdSearchResultsDiv.classList.add('hidden');
+            /*execute a function presses a key on the keyboard:*/
+            inp.addEventListener("keydown", function(e) {
+                let x = document.getElementById(this.id + "-autocomplete-list");
+                if (x) x = x.getElementsByTagName("div");
+                if (e.keyCode == 40) {
+                    /*If the arrow DOWN key is pressed,
+                    increase the currentFocus variable:*/
+                    currentFocus++;
+                    /*and and make the current item more visible:*/
+                    addActive(x);
+                } else if (e.keyCode == 38) { //up
+                    /*If the arrow UP key is pressed,
+                    decrease the currentFocus variable:*/
+                    currentFocus--;
+                    /*and and make the current item more visible:*/
+                    addActive(x);
+                } else if (e.keyCode == 13) {
+                    /*If the ENTER key is pressed, prevent the form from being submitted,*/
+                    e.preventDefault();
+                    if (currentFocus > -1) {
+                        /*and simulate a click on the "active" item:*/
+                        if (x) x[currentFocus].click();
+                    }
+                }
+            });
+            function addActive(x) {
+                /*a function to classify an item as "active":*/
+                if (!x) return false;
+                /*start by removing the "active" class on all items:*/
+                removeActive(x);
+                if (currentFocus >= x.length) currentFocus = 0;
+                if (currentFocus < 0) currentFocus = (x.length - 1);
+                /*add class "autocomplete-active":*/
+                x[currentFocus].classList.add("autocomplete-active");
             }
+            function removeActive(x) {
+                /*a function to remove the "active" class from all autocomplete items:*/
+                for (let i = 0; i < x.length; i++) {
+                    x[i].classList.remove("autocomplete-active");
+                }
+            }
+            function closeAllLists(elmnt) {
+                /*close all autocomplete lists in the document,
+                except the one passed as an argument:*/
+                let x = document.getElementsByClassName("autocomplete-items");
+                for (let i = 0; i < x.length; i++) {
+                    if (elmnt != x[i] && elmnt != inp) {
+                        x[i].parentNode.removeChild(x[i]);
+                    }
+                }
+            }
+            /*execute a function when someone clicks in the document:*/
+            document.addEventListener("click", function (e) {
+                closeAllLists(e.target);
+            });
         }
 
-        function setupItemSearch(itemRowElement) {
-            const itemNameInput = itemRowElement.querySelector('.item-name-input');
-            const itemSearchResultsDiv = itemRowElement.querySelector('.item-search-results');
+        function setupNoIdSearch(inputElement) {
+            autocomplete(inputElement, noIdData.map(item => item.no_id), 'noId');
+        }
 
-            if (!itemNameInput || !itemSearchResultsDiv) return;
-
-            itemNameInput.addEventListener('input', function() {
-                const searchTerm = this.value.toLowerCase();
-                itemSearchResultsDiv.innerHTML = '';
-
-                if (searchTerm.length < 2) {
-                    itemSearchResultsDiv.classList.add('hidden');
-                    return;
-                }
-
-                const filteredProducts = productData.filter(name => 
-                    name.toLowerCase().includes(searchTerm)
-                );
-
-                if (filteredProducts.length > 0) {
-                    filteredProducts.forEach(name => {
-                        const resultItem = document.createElement('div');
-                        resultItem.className = 'p-2 cursor-pointer hover:bg-gray-100 border-b border-gray-200 last:border-b-0';
-                        resultItem.textContent = name;
-                        resultItem.dataset.itemName = name;
-                        resultItem.addEventListener('click', function() {
-                            selectItemName(itemNameInput, itemSearchResultsDiv, this.dataset.itemName);
-                        });
-                        itemSearchResultsDiv.appendChild(resultItem);
-                    });
-                } else {
-                    // Jika tidak ada hasil, tawarkan untuk menambahkan sebagai barang baru
-                    const addAsNewItem = document.createElement('div');
-                    addAsNewItem.className = 'p-2 cursor-pointer hover:bg-gray-100 text-blue-600';
-                    addAsNewItem.innerHTML = `Tambahkan "<strong>${this.value}</strong>" sebagai barang baru`;
-                    addAsNewItem.addEventListener('click', function() {
-                        selectItemName(itemNameInput, itemSearchResultsDiv, itemNameInput.value.trim()); // Gunakan nilai input saat ini
-                    });
-                    itemSearchResultsDiv.appendChild(addAsNewItem);
-                }
-                itemSearchResultsDiv.classList.remove('hidden');
-            });
-
-            document.addEventListener('click', function(event) {
-                if (!itemNameInput.contains(event.target) && !itemSearchResultsDiv.contains(event.target)) {
-                    itemSearchResultsDiv.classList.add('hidden');
-                }
-            });
-
-            function selectItemName(inputElement, resultsDiv, name) {
-                inputElement.value = name;
-                resultsDiv.classList.add('hidden');
-            }
+        function setupItemSearch(inputElement) {
+            autocomplete(inputElement, productsData.map(item => item.nama_barang), 'itemName');
         }
 
         function openPOModal(poId = null) {
@@ -1437,13 +1386,10 @@
             const poForm = document.getElementById('poForm');
             
             poForm.reset();
-            document.getElementById('itemsList').innerHTML = '';
             document.getElementById('poId').value = '';
-
-            // Reset No ID search field
-            document.getElementById('noIdSearchField').value = '';
-            document.getElementById('selectedNoId').value = '';
-            document.getElementById('noIdSearchResults').classList.add('hidden');
+            document.getElementById('items-container').innerHTML = `
+                <label class="block text-gray-700 text-sm font-semibold mb-2">Nama Barang & Quantity</label>
+            `; // Clear previous items
 
             // Set default status saat menambah PO baru
             document.getElementById('status').value = DEFAULT_STATUS; // Default status
@@ -1456,21 +1402,15 @@
                     document.getElementById('orderConfirmation').value = po.orderConfirmation || '';
                     document.getElementById('noPO').value = po.noPO || '';
                     document.getElementById('supplierName').value = po.supplierName || '';
-                    
-                    // Set No ID field
-                    if (po.selectedNoId) {
-                        document.getElementById('noIdSearchField').value = po.selectedNoId;
-                        document.getElementById('selectedNoId').value = po.selectedNoId;
-                    }
+                    document.getElementById('noId').value = po.selectedNoId || ''; // Set No ID
 
-                    if (po.items && Array.isArray(po.items) && po.items.length > 0) {
-                        po.items.forEach(item => {
-                            addItemField(item.itemName, item.quantity);
-                        });
+                    // Populate items
+                    if (po.items && po.items.length > 0) {
+                        po.items.forEach(item => addItemField(item.name, item.quantity));
                     } else {
-                        addItemField();
+                        addItemField(); // Add at least one empty item field
                     }
-
+                    
                     document.getElementById('allocation').value = po.allocation || '';
                     document.getElementById('invoice').value = po.invoice || '';
                     document.getElementById('tracking').value = po.tracking || '';
@@ -1490,10 +1430,11 @@
                 }
             } else {
                 modalTitle.textContent = 'Tambah PO Baru';
-                addItemField(); // Tambahkan satu baris item kosong secara default
+                addItemField(); // Add one empty item field for new PO
             }
             
             poModal.classList.remove('hidden');
+            setupNoIdSearch(document.getElementById('noId'));
         }
 
         function closePOModal() {
@@ -1516,47 +1457,18 @@
 
             const orderConfirmation = document.getElementById('orderConfirmation').value;
             const supplierName = document.getElementById('supplierName').value;
-            
-            const selectedNoId = document.getElementById('noIdSearchField').value.trim();
+            const selectedNoId = document.getElementById('noId').value; // Get selected No ID
 
-            // Logika untuk menyimpan No ID baru ke Firebase jika belum ada
-            if (selectedNoId && !noIdData.includes(selectedNoId)) {
-                try {
-                    await noIdCollection.add({ name: selectedNoId });
-                    noIdData.push(selectedNoId); // Tambahkan ke data lokal agar langsung tersedia
-                    console.log(`New No ID "${selectedNoId}" added to Firebase.`);
-                } catch (error) {
-                    console.error("Error adding new No ID to Firebase:", error);
-                    showCustomAlert("Gagal menambahkan No ID baru.", "error");
-                    hideGlobalLoading();
-                    return;
-                }
-            }
-
-            const itemInputs = document.querySelectorAll('#itemsList .item-name-input');
-            const quantityInputs = document.querySelectorAll('#itemsList .item-quantity-input');
+            // Get items data
             const itemsToSave = [];
-            for (let i = 0; i < itemInputs.length; i++) {
-                const itemName = itemInputs[i].value.trim();
-                const quantity = parseInt(quantityInputs[i].value) || 0;
-                if (itemName) {
-                    itemsToSave.push({ itemName, quantity });
-                    // Logika untuk menyimpan nama barang baru ke Firebase jika belum ada
-                    if (!productData.includes(itemName)) {
-                        try {
-                            await productsCollection.add({ name: itemName });
-                            productData.push(itemName); // Tambahkan ke data lokal
-                            console.log(`New product "${itemName}" added to Firebase.`);
-                        } catch (error) {
-                            console.error("Error adding new product to Firebase:", error);
-                            showCustomAlert("Gagal menambahkan produk baru.", "error");
-                            hideGlobalLoading();
-                            return;
-                        }
-                    }
+            document.querySelectorAll('.item-row').forEach(row => {
+                const itemName = row.querySelector('.item-name').value;
+                const itemQuantity = row.querySelector('.item-quantity').value;
+                if (itemName && itemQuantity) {
+                    itemsToSave.push({ name: itemName, quantity: parseInt(itemQuantity) });
                 }
-            }
-
+            });
+            
             const allocation = document.getElementById('allocation').value;
             const invoice = document.getElementById('invoice').value;
             const tracking = document.getElementById('tracking').value;
@@ -1578,8 +1490,8 @@
                 orderConfirmation: orderConfirmation,
                 noPO: noPO,
                 supplierName: supplierName,
-                selectedNoId: selectedNoId, // Menggunakan selectedNoId
-                items: itemsToSave,
+                selectedNoId: selectedNoId, // Save selected No ID
+                items: itemsToSave, // Save items
                 allocation: allocation,
                 invoice: invoice,
                 tracking: tracking,
@@ -1673,15 +1585,15 @@
             document.getElementById('detailOrderConfirmation').textContent = po.orderConfirmation || '-';
             document.getElementById('detailNoPO').textContent = po.noPO || '-';
             document.getElementById('detailSupplierName').textContent = po.supplierName || '-';
-            
-            document.getElementById('detailSelectedNoId').textContent = po.selectedNoId || '-'; // Menggunakan selectedNoId
+            document.getElementById('detailNoId').textContent = po.selectedNoId || '-'; // Display No ID
 
+            // Display items
             const detailItemsList = document.getElementById('detailItemsList');
             detailItemsList.innerHTML = '';
-            if (po.items && Array.isArray(po.items) && po.items.length > 0) {
+            if (po.items && po.items.length > 0) {
                 po.items.forEach(item => {
                     const listItem = document.createElement('li');
-                    listItem.textContent = `${item.itemName || '-'} (Qty: ${item.quantity || 0})`;
+                    listItem.textContent = `${item.name} (Qty: ${item.quantity})`;
                     detailItemsList.appendChild(listItem);
                 });
             } else {
@@ -1689,7 +1601,7 @@
                 listItem.textContent = '-';
                 detailItemsList.appendChild(listItem);
             }
-
+            
             document.getElementById('detailAllocation').textContent = po.allocation || '-';
             document.getElementById('detailInvoice').textContent = po.invoice || '-';
             document.getElementById('detailTracking').textContent = po.tracking || '-';
@@ -1822,8 +1734,6 @@
             try {
                 const searchTerm = document.getElementById('searchPOs').value.toLowerCase();
                 const supplierFilter = document.getElementById('filterSupplier').value;
-                const itemNameFilter = document.getElementById('filterItemName').value;
-                const noIDFilter = document.getElementById('filterNoID').value; 
                 const cooFilter = document.getElementById('filterCOO').value; 
                 const hsCodeFilter = document.getElementById('filterHSCode').value; 
                 const statusFilter = document.getElementById('filterStatus').value; // Ambil nilai filter status
@@ -1834,19 +1744,12 @@
                     const matchesSearch = 
                         (po.noPO && po.noPO.toLowerCase().includes(searchTerm)) ||
                         (po.supplierName && po.supplierName.toLowerCase().includes(searchTerm)) ||
-                        (po.items && Array.isArray(po.items) && po.items.some(item => item.itemName && item.itemName.toLowerCase().includes(searchTerm)));
+                        (po.selectedNoId && po.selectedNoId.toLowerCase().includes(searchTerm)) || // Search by No ID
+                        (po.items && po.items.some(item => item.name.toLowerCase().includes(searchTerm))); // Search by item name
                     
                     const matchesSupplier = 
                         supplierFilter === 'all' || 
                         (po.supplierName && po.supplierName === supplierFilter);
-
-                    const matchesItemName = 
-                        itemNameFilter === 'all' || 
-                        (po.items && Array.isArray(po.items) && po.items.some(item => item.itemName && item.itemName === itemNameFilter));
-                    
-                    const matchesNoID = 
-                        noIDFilter === 'all' || 
-                        (po.selectedNoId && po.selectedNoId === noIDFilter); // Menggunakan selectedNoId
 
                     const matchesCOO = 
                         cooFilter === 'all' || 
@@ -1860,7 +1763,7 @@
                         statusFilter === 'all' || 
                         (po.status && po.status === statusFilter); // Filter berdasarkan status
 
-                    return matchesSearch && matchesSupplier && matchesItemName && matchesNoID && matchesCOO && matchesHSCode && matchesStatus;
+                    return matchesSearch && matchesSupplier && matchesCOO && matchesHSCode && matchesStatus;
                 });
                 
                 renderFilteredPOs(filteredPOs);
@@ -1944,8 +1847,6 @@
 
         function resetFilters() {
             document.getElementById('filterSupplier').value = 'all';
-            document.getElementById('filterItemName').value = 'all';
-            document.getElementById('filterNoID').value = 'all'; 
             document.getElementById('filterCOO').value = 'all'; 
             document.getElementById('filterHSCode').value = 'all'; 
             document.getElementById('filterStatus').value = 'all'; // Reset status filter
@@ -1965,8 +1866,8 @@
             try {
                 const data = [];
                 const headers = [
-                    "No. Urut", "Order Confirmation", "No. PO", "Nama Supplier", "No ID", 
-                    "Nama Barang & Quantity", "Allocation", "Invoice", "Tracking", "Sea Forwarder",
+                    "No. Urut", "Order Confirmation", "No. PO", "Nama Supplier", "No ID", "Nama Barang & Quantity",
+                    "Allocation", "Invoice", "Tracking", "Sea Forwarder",
                     "Air Forwarder", "DISRC", "Plan Delivery", "ETA", "Actual Delivery",
                     "COO", "HS Code", "Revisi HS", "Note", "Status", "Dibuat Oleh", "Tanggal Dibuat"
                 ];
@@ -1975,8 +1876,6 @@
                 const currentPOs = pos.filter(po => {
                     const searchTerm = document.getElementById('searchPOs').value.toLowerCase();
                     const supplierFilter = document.getElementById('filterSupplier').value;
-                    const itemNameFilter = document.getElementById('filterItemName').value;
-                    const noIDFilter = document.getElementById('filterNoID').value; 
                     const cooFilter = document.getElementById('filterCOO').value; 
                     const hsCodeFilter = document.getElementById('filterHSCode').value; 
                     const statusFilter = document.getElementById('filterStatus').value; // Ambil nilai filter status
@@ -1984,19 +1883,12 @@
                     const matchesSearch = 
                         (po.noPO && po.noPO.toLowerCase().includes(searchTerm)) ||
                         (po.supplierName && po.supplierName.toLowerCase().includes(searchTerm)) ||
-                        (po.items && Array.isArray(po.items) && po.items.some(item => item.itemName && item.itemName.toLowerCase().includes(searchTerm)));
+                        (po.selectedNoId && po.selectedNoId.toLowerCase().includes(searchTerm)) ||
+                        (po.items && po.items.some(item => item.name.toLowerCase().includes(searchTerm)));
                     
                     const matchesSupplier = 
                         supplierFilter === 'all' || 
                         (po.supplierName && po.supplierName === supplierFilter);
-
-                    const matchesItemName = 
-                        itemNameFilter === 'all' || 
-                        (po.items && Array.isArray(po.items) && po.items.some(item => item.itemName && item.itemName === itemNameFilter));
-                    
-                    const matchesNoID = 
-                        noIDFilter === 'all' || 
-                        (po.selectedNoId && po.selectedNoId === noIDFilter);
 
                     const matchesCOO = 
                         cooFilter === 'all' || 
@@ -2010,12 +1902,12 @@
                         statusFilter === 'all' || 
                         (po.status && po.status === statusFilter); // Filter berdasarkan status
 
-                    return matchesSearch && matchesSupplier && matchesItemName && matchesNoID && matchesCOO && matchesHSCode && matchesStatus;
+                    return matchesSearch && matchesSupplier && matchesCOO && matchesHSCode && matchesStatus;
                 });
 
                 currentPOs.forEach((po, index) => {
-                    const itemsString = po.items && Array.isArray(po.items)
-                        ? po.items.map(item => `${item.itemName || ''} (Qty: ${item.quantity || 0})`).join('; ')
+                    const itemsString = po.items && po.items.length > 0 
+                        ? po.items.map(item => `${item.name} (Qty: ${item.quantity})`).join(', ') 
                         : '';
 
                     const row = [
@@ -2023,8 +1915,8 @@
                         po.orderConfirmation || '',
                         po.noPO || '',
                         po.supplierName || '',
-                        po.selectedNoId || '', // Menggunakan selectedNoId
-                        itemsString,
+                        po.selectedNoId || '', // Export No ID
+                        itemsString, // Export items
                         po.allocation || '',
                         po.invoice || '',
                         po.tracking || '',
@@ -2065,8 +1957,6 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             initSortable();
-            setupNoIdSearch(); // Panggil setup untuk No ID
-            // Tidak perlu memanggil setupItemSearch di sini, karena dipanggil di addItemField
         });
     </script>
 </body>
