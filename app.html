@@ -911,7 +911,7 @@
         const usersCollection = db.collection('users');
 
         let pos = [];
-        const DEFAULT_STATUS = 'On Order'; // Diubah menjadi 'On Order'
+        const DEFAULT_STATUS = 'On Order';
         let currentUserRole = 'user';
         let sortableInstances = {};
         let authInitialized = false;
@@ -925,7 +925,7 @@
         let uniqueSuppliers = new Set();
         let uniqueCOOs = new Set();
         let uniqueHSCodes = new Set();
-        let uniqueStatuses = new Set(); // Tambahkan Set untuk status
+        let uniqueStatuses = new Set();
 
         const ADMIN_EMAIL = 'maida@genetek.co.id';
 
@@ -966,8 +966,9 @@
                     }
 
                     console.log("Current role:", currentUserRole);
-                    await fetchNoIdData(); // Fetch No ID data
-                    await fetchProductsData(); // Fetch Products data
+                    // Pastikan data di-fetch sebelum inisialisasi lainnya
+                    await fetchNoIdData();
+                    await fetchProductsData();
                     listenForPOs();
                     initEventListeners();
                     hideGlobalLoading();
@@ -987,10 +988,11 @@
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 noIdData = await response.json();
-                console.log("No ID data loaded:", noIdData);
+                console.log("No ID data loaded:", noIdData.length, "items");
             } catch (error) {
                 console.error("Error fetching No ID data:", error);
-                showCustomAlert("Gagal memuat data No ID.", "error");
+                showCustomAlert("Gagal memuat data No ID. Fitur autocomplete No ID mungkin tidak berfungsi.", "error");
+                noIdData = []; // Pastikan array kosong jika gagal
             }
         }
 
@@ -1002,10 +1004,11 @@
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 productsData = await response.json();
-                console.log("Products data loaded:", productsData);
+                console.log("Products data loaded:", productsData.length, "items");
             } catch (error) {
                 console.error("Error fetching products data:", error);
-                showCustomAlert("Gagal memuat data produk.", "error");
+                showCustomAlert("Gagal memuat data produk. Fitur autocomplete Nama Barang mungkin tidak berfungsi.", "error");
+                productsData = []; // Pastikan array kosong jika gagal
             }
         }
 
@@ -1069,15 +1072,11 @@
             }
 
             modal.classList.remove('hidden');
-            // Tidak perlu menambahkan kelas enter-active jika tidak ada transisi
         }
 
         function closeSuccessAlertModal() {
             const modal = document.getElementById('successAlertModal');
-            const modalContent = document.getElementById('successAlertModalContent');
-            if (!modalContent || !modal) return;
-
-            // Langsung sembunyikan modal tanpa transisi
+            if (!modal) return;
             modal.classList.add('hidden');
         }
 
@@ -1106,11 +1105,10 @@
 
             dealsCollection.orderBy("createdAt", "asc").onSnapshot(snapshot => {
                 pos = [];
-                // Hanya clear Set untuk filter yang diinginkan
                 uniqueSuppliers.clear();
                 uniqueCOOs.clear();
                 uniqueHSCodes.clear();
-                uniqueStatuses.clear(); // Clear uniqueStatuses
+                uniqueStatuses.clear();
 
                 snapshot.forEach((doc) => {
                     const poData = doc.data();
@@ -1124,7 +1122,7 @@
                     if (poData.supplierName) uniqueSuppliers.add(poData.supplierName);
                     if (poData.coo) uniqueCOOs.add(poData.coo);
                     if (poData.hsCode) uniqueHSCodes.add(poData.hsCode);
-                    if (poData.status) uniqueStatuses.add(poData.status); // Add status to uniqueStatuses
+                    if (poData.status) uniqueStatuses.add(poData.status);
                 });
                 console.log("Total POs updated by onSnapshot:", pos.length);
                 populateFilterDropdowns();
@@ -1146,7 +1144,6 @@
             poCard.className = 'deal-card';
             poCard.dataset.id = po.id;
 
-            // Fungsi helper untuk mendapatkan kelas CSS berdasarkan status
             function getStatusClass(status) {
                 switch (status) {
                     case 'On Order': return 'status-on-order';
@@ -1157,7 +1154,7 @@
                     case 'Partial Delivered': return 'status-partial-delivered';
                     case 'Delayed': return 'status-delayed';
                     case 'On Hold': return 'status-on-hold';
-                    default: return 'bg-gray-400 text-white'; // Default jika status tidak dikenal
+                    default: return 'bg-gray-400 text-white';
                 }
             }
 
@@ -1172,7 +1169,6 @@
                     <p><i class="fas fa-calendar-alt"></i> Plan Delivery: ${po.planDelivery ? formatDate(po.planDelivery) : '-'}</p>
                 </div>
                 <div class="mt-2 flex justify-between items-center deal-footer">
-                    <!-- Dropdown Status di pojok kanan bawah -->
                     <div class="relative">
                         <select onchange="updatePOStatus('${po.id}', this.value)" class="status-dropdown ${getStatusClass(po.status)}">
                             <option value="On Order" ${po.status === 'On Order' ? 'selected' : ''}>On Order</option>
@@ -1241,7 +1237,7 @@
             populateDropdown('filterSupplier', uniqueSuppliers, document.getElementById('filterSupplier').value);
             populateDropdown('filterCOO', uniqueCOOs, document.getElementById('filterCOO').value);
             populateDropdown('filterHSCode', uniqueHSCodes, document.getElementById('filterHSCode').value);
-            populateDropdown('filterStatus', uniqueStatuses, document.getElementById('filterStatus').value); // Populate status filter
+            populateDropdown('filterStatus', uniqueStatuses, document.getElementById('filterStatus').value);
         }
 
         // ==================== FUNGSI UNTUK FORM TAMBAHAN DENGAN SEARCH ====================
@@ -1256,31 +1252,26 @@
 
             inp.addEventListener("input", function(e) {
                 let a, b, i, val = this.value;
-                closeAllLists(this); // Tutup daftar autocomplete yang sudah ada untuk input ini
+                closeAllLists(this);
                 if (!val) { return false;}
                 currentFocus = -1;
 
-                // Buat DIV yang akan berisi item autocomplete
                 a = document.createElement("DIV");
                 a.setAttribute("id", this.id + "-autocomplete-list");
                 a.setAttribute("class", "autocomplete-items");
                 this.parentNode.appendChild(a);
 
-                // Untuk setiap item dalam array...
                 for (i = 0; i < arr.length; i++) {
                     const itemValue = arr[i];
-                    // Periksa apakah itemValue mengandung teks input (case-insensitive)
                     if (itemValue.toUpperCase().includes(val.toUpperCase())) {
                         b = document.createElement("DIV");
-                        // Buat bagian yang cocok menjadi bold
                         const startIdx = itemValue.toUpperCase().indexOf(val.toUpperCase());
                         b.innerHTML = itemValue.substring(0, startIdx) + "<strong>" + itemValue.substring(startIdx, startIdx + val.length) + "</strong>" + itemValue.substring(startIdx + val.length);
-                        b.innerHTML += "<input type='hidden' value='" + itemValue + "'>"; // Simpan nilai lengkap di input tersembunyi
+                        b.innerHTML += "<input type='hidden' value='" + itemValue + "'>";
 
-                        // Ketika item diklik...
                         b.addEventListener("click", function(e) {
-                            inp.value = this.getElementsByTagName("input")[0].value; // Isi input dengan nilai yang dipilih
-                            closeAllLists(inp); // Tutup daftar autocomplete
+                            inp.value = this.getElementsByTagName("input")[0].value;
+                            closeAllLists(inp);
                         });
                         a.appendChild(b);
                     }
@@ -1321,16 +1312,14 @@
             function closeAllLists(elmnt) {
                 const items = document.querySelectorAll(".autocomplete-items");
                 items.forEach(item => {
-                    // Hanya tutup daftar yang bukan milik elemen input yang sedang aktif atau elemen input itu sendiri
-                    if (elmnt !== item && elmnt !== item.previousElementSibling) {
-                        if (item.parentNode) { // Pastikan parentNode ada sebelum mencoba menghapus
-                            item.parentNode.removeChild(item);
-                        }
+                    // Perbaikan: Pastikan hanya daftar autocomplete yang terkait dengan input yang sedang aktif yang ditutup
+                    // atau daftar yang tidak terkait dengan input manapun (misalnya, jika input sudah dihapus)
+                    if (elmnt !== item && elmnt !== item.previousElementSibling && item.parentNode) {
+                        item.parentNode.removeChild(item);
                     }
                 });
             }
 
-            // Tutup daftar autocomplete saat mengklik di luar
             document.addEventListener("click", function (e) {
                 closeAllLists(e.target);
             });
@@ -1341,6 +1330,8 @@
             const noIdInput = document.getElementById('noId');
             if (noIdInput && noIdData.length > 0) {
                 autocomplete(noIdInput, noIdData.map(item => item.no_id));
+            } else if (noIdInput) {
+                console.warn("No ID data not available or empty. Autocomplete for No ID disabled.");
             }
         }
 
@@ -1348,6 +1339,8 @@
         function setupItemSearch(inputElement) {
             if (inputElement && productsData.length > 0) {
                 autocomplete(inputElement, productsData.map(item => item.nama_barang));
+            } else if (inputElement) {
+                console.warn("Products data not available or empty. Autocomplete for item name disabled.");
             }
         }
 
@@ -1366,7 +1359,7 @@
             `;
             itemsContainer.appendChild(itemRow);
             const newItemInput = itemRow.querySelector('.item-name');
-            setupItemSearch(newItemInput); // Aktifkan autocomplete untuk input nama barang yang baru
+            setupItemSearch(newItemInput);
         }
 
         // Fungsi untuk menghapus field Nama Barang & Quantity
@@ -1382,17 +1375,20 @@
 
             poForm.reset();
             document.getElementById('poId').value = '';
-            // Bersihkan kontainer item sebelum mengisi ulang
             document.getElementById('items-container').innerHTML = `
                 <label class="block text-gray-700 text-sm font-semibold mb-2">Nama Barang & Quantity</label>
             `;
 
-            // Set default status saat menambah PO baru
             document.getElementById('status').value = DEFAULT_STATUS;
 
             // Pastikan data JSON sudah di-fetch sebelum setup autocomplete
-            await fetchNoIdData();
-            await fetchProductsData();
+            // Ini sudah dipanggil di auth.onAuthStateChanged, tapi memanggilnya lagi di sini
+            // memastikan data terbaru jika ada perubahan atau jika modal dibuka sebelum fetch selesai.
+            // Namun, karena sudah await di auth.onAuthStateChanged, ini mungkin tidak perlu lagi di sini
+            // kecuali Anda ingin me-refresh data setiap kali modal dibuka.
+            // Untuk performa, lebih baik hanya memanggilnya sekali di awal.
+            // await fetchNoIdData();
+            // await fetchProductsData();
 
             if (poId) {
                 modalTitle.textContent = 'Edit PO';
@@ -1402,13 +1398,12 @@
                     document.getElementById('orderConfirmation').value = po.orderConfirmation || '';
                     document.getElementById('noPO').value = po.noPO || '';
                     document.getElementById('supplierName').value = po.supplierName || '';
-                    document.getElementById('noId').value = po.selectedNoId || ''; // Set No ID
+                    document.getElementById('noId').value = po.selectedNoId || '';
 
-                    // Populate items
                     if (po.items && po.items.length > 0) {
                         po.items.forEach(item => addItemField(item.name, item.quantity));
                     } else {
-                        addItemField(); // Tambahkan setidaknya satu field item kosong jika tidak ada item
+                        addItemField();
                     }
 
                     document.getElementById('allocation').value = po.allocation || '';
@@ -1426,21 +1421,25 @@
                     document.getElementById('hsCode').value = po.hsCode || '';
                     document.getElementById('revisiHS').value = po.revisiHS || '';
                     document.getElementById('note').value = po.note || '';
-                    document.getElementById('status').value = po.status || DEFAULT_STATUS; // Set status dari PO yang diedit
+                    document.getElementById('status').value = po.status || DEFAULT_STATUS;
                 }
             } else {
                 modalTitle.textContent = 'Tambah PO Baru';
-                addItemField(); // Tambahkan satu field item kosong untuk PO baru
+                addItemField();
             }
 
             poModal.classList.remove('hidden');
-            setupNoIdSearch(); // Setup autocomplete untuk No ID
+            setupNoIdSearch(); // Inisialisasi autocomplete untuk No ID
         }
 
         function closePOModal() {
             const poModal = document.getElementById('poModal');
             if (!poModal) return;
             poModal.classList.add('hidden');
+            // Tutup semua daftar autocomplete yang mungkin terbuka saat modal ditutup
+            document.querySelectorAll(".autocomplete-items").forEach(item => {
+                if (item.parentNode) item.parentNode.removeChild(item);
+            });
         }
 
         // Menyimpan data PO ke Firestore
@@ -1458,14 +1457,13 @@
 
             const orderConfirmation = document.getElementById('orderConfirmation').value;
             const supplierName = document.getElementById('supplierName').value;
-            const selectedNoId = document.getElementById('noId').value; // Ambil nilai No ID
+            const selectedNoId = document.getElementById('noId').value;
 
-            // Ambil data item (Nama Barang & Quantity)
             const itemsToSave = [];
             document.querySelectorAll('.item-row').forEach(row => {
                 const itemName = row.querySelector('.item-name').value;
                 const itemQuantity = row.querySelector('.item-quantity').value;
-                if (itemName && itemQuantity && parseInt(itemQuantity) > 0) { // Hanya simpan jika nama dan quantity valid
+                if (itemName && itemQuantity && parseInt(itemQuantity) > 0) {
                     itemsToSave.push({ name: itemName, quantity: parseInt(itemQuantity) });
                 }
             });
@@ -1485,14 +1483,14 @@
             const hsCode = document.getElementById('hsCode').value;
             const revisiHS = document.getElementById('revisiHS').value;
             const note = document.getElementById('note').value;
-            const status = document.getElementById('status').value; // Ambil nilai status dari form
+            const status = document.getElementById('status').value;
 
             const poData = {
                 orderConfirmation: orderConfirmation,
                 noPO: noPO,
                 supplierName: supplierName,
-                selectedNoId: selectedNoId, // Simpan No ID
-                items: itemsToSave, // Simpan array items
+                selectedNoId: selectedNoId,
+                items: itemsToSave,
                 allocation: allocation,
                 invoice: invoice,
                 tracking: tracking,
@@ -1506,7 +1504,7 @@
                 hsCode: hsCode,
                 revisiHS: revisiHS,
                 note: note,
-                status: status, // Simpan status
+                status: status,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
 
@@ -1587,9 +1585,8 @@
             document.getElementById('detailOrderConfirmation').textContent = po.orderConfirmation || '-';
             document.getElementById('detailNoPO').textContent = po.noPO || '-';
             document.getElementById('detailSupplierName').textContent = po.supplierName || '-';
-            document.getElementById('detailNoId').textContent = po.selectedNoId || '-'; // Tampilkan No ID
+            document.getElementById('detailNoId').textContent = po.selectedNoId || '-';
 
-            // Tampilkan daftar item
             const detailItemsList = document.getElementById('detailItemsList');
             detailItemsList.innerHTML = '';
             if (po.items && po.items.length > 0) {
@@ -1614,7 +1611,7 @@
             document.getElementById('detailPlanDelivery').textContent = po.planDelivery ? formatDate(po.planDelivery) : '-';
             document.getElementById('detailETA').textContent = po.eta ? formatDate(po.eta) : '-';
             document.getElementById('detailActualDelivery').textContent = po.actualDelivery ? formatDate(po.actualDelivery) : '-';
-            document.getElementById('detailStatus').textContent = po.status || '-'; // Tampilkan status di detail modal
+            document.getElementById('detailStatus').textContent = po.status || '-';
 
             document.getElementById('detailCOO').textContent = po.coo || '-';
             document.getElementById('detailHSCode').textContent = po.hsCode || '-';
@@ -1738,7 +1735,7 @@
                 const supplierFilter = document.getElementById('filterSupplier').value;
                 const cooFilter = document.getElementById('filterCOO').value;
                 const hsCodeFilter = document.getElementById('filterHSCode').value;
-                const statusFilter = document.getElementById('filterStatus').value; // Ambil nilai filter status
+                const statusFilter = document.getElementById('filterStatus').value;
 
                 let basePOs = pos;
 
@@ -1746,8 +1743,8 @@
                     const matchesSearch =
                         (po.noPO && po.noPO.toLowerCase().includes(searchTerm)) ||
                         (po.supplierName && po.supplierName.toLowerCase().includes(searchTerm)) ||
-                        (po.selectedNoId && po.selectedNoId.toLowerCase().includes(searchTerm)) || // Search by No ID
-                        (po.items && po.items.some(item => item.name.toLowerCase().includes(searchTerm))); // Search by item name
+                        (po.selectedNoId && po.selectedNoId.toLowerCase().includes(searchTerm)) ||
+                        (po.items && po.items.some(item => item.name.toLowerCase().includes(searchTerm)));
 
                     const matchesSupplier =
                         supplierFilter === 'all' ||
@@ -1763,7 +1760,7 @@
 
                     const matchesStatus =
                         statusFilter === 'all' ||
-                        (po.status && po.status === statusFilter); // Filter berdasarkan status
+                        (po.status && po.status === statusFilter);
 
                     return matchesSearch && matchesSupplier && matchesCOO && matchesHSCode && matchesStatus;
                 });
@@ -1851,7 +1848,7 @@
             document.getElementById('filterSupplier').value = 'all';
             document.getElementById('filterCOO').value = 'all';
             document.getElementById('filterHSCode').value = 'all';
-            document.getElementById('filterStatus').value = 'all'; // Reset status filter
+            document.getElementById('filterStatus').value = 'all';
             document.getElementById('searchPOs').value = '';
             filterPOs();
         }
@@ -1880,7 +1877,7 @@
                     const supplierFilter = document.getElementById('filterSupplier').value;
                     const cooFilter = document.getElementById('filterCOO').value;
                     const hsCodeFilter = document.getElementById('filterHSCode').value;
-                    const statusFilter = document.getElementById('filterStatus').value; // Ambil nilai filter status
+                    const statusFilter = document.getElementById('filterStatus').value;
 
                     const matchesSearch =
                         (po.noPO && po.noPO.toLowerCase().includes(searchTerm)) ||
@@ -1902,7 +1899,7 @@
 
                     const matchesStatus =
                         statusFilter === 'all' ||
-                        (po.status && po.status === statusFilter); // Filter berdasarkan status
+                        (po.status && po.status === statusFilter);
 
                     return matchesSearch && matchesSupplier && matchesCOO && matchesHSCode && matchesStatus;
                 });
@@ -1917,8 +1914,8 @@
                         po.orderConfirmation || '',
                         po.noPO || '',
                         po.supplierName || '',
-                        po.selectedNoId || '', // Export No ID
-                        itemsString, // Export items
+                        po.selectedNoId || '',
+                        itemsString,
                         po.allocation || '',
                         po.invoice || '',
                         po.tracking || '',
