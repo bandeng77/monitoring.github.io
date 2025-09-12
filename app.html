@@ -918,9 +918,9 @@
     let authInitialized = false;
     let unsubscribeFromPOs = null;
 
-    // Data untuk search No ID dan Nama Barang
-    let noIdData = []; // Akan berisi array string dari no_id
-    let productsData = []; // Akan berisi array string dari nama_barang
+    // Data untuk search No ID dan Nama Barang (akan berisi array string)
+    let noIdData = [];
+    let productsData = [];
 
     // Hanya menyimpan Set untuk filter yang diinginkan
     let uniqueSuppliers = new Set();
@@ -984,7 +984,7 @@
         }
     });
 
-    // Fungsi untuk mengambil data No ID dari JSON eksternal
+    // Fungsi untuk mengambil data No ID dari JSON eksternal (array string langsung)
     async function fetchNoIdData() {
         try {
             const response = await fetch('https://raw.githubusercontent.com/bandeng77/monitoring.github.io/main/noid.json');
@@ -992,7 +992,7 @@
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             const rawData = await response.json();
-            noIdData = rawData.map(item => item.no_id); // Ambil hanya nilai no_id
+            noIdData = rawData; // Langsung assign karena sudah berupa array string
             console.log("No ID data loaded:", noIdData.length, "items");
         } catch (error) {
             console.error("Error fetching No ID data:", error);
@@ -1001,7 +1001,7 @@
         }
     }
 
-    // Fungsi untuk mengambil data produk dari JSON eksternal
+    // Fungsi untuk mengambil data produk dari JSON eksternal (array string langsung)
     async function fetchProductsData() {
         try {
             const response = await fetch('https://raw.githubusercontent.com/bandeng77/monitoring.github.io/main/products.json');
@@ -1009,7 +1009,7 @@
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             const rawData = await response.json();
-            productsData = rawData.map(item => item.nama_barang); // Ambil hanya nilai nama_barang
+            productsData = rawData; // Langsung assign karena sudah berupa array string
             console.log("Products data loaded:", productsData.length, "items");
         } catch (error) {
             console.error("Error fetching products data:", error);
@@ -1246,22 +1246,21 @@
         populateDropdown('filterStatus', uniqueStatuses, document.getElementById('filterStatus').value);
     }
 
-    // ==================== FUNGSI UNTUK FORM TAMBAHAN DENGAN SEARCH ====================
+    // ==================== FUNGSI UNTUK FORM TAMBAHAN DENGAN SEARCH (Autocomplete Generik) ====================
 
     /**
-     * Fungsi autocomplete yang lebih generik, mendukung hidden input untuk menyimpan nilai yang dipilih.
+     * Fungsi autocomplete generik yang mendukung hidden input untuk menyimpan nilai yang dipilih.
      * @param {HTMLInputElement} searchInput - Elemen input teks yang digunakan untuk pencarian.
      * @param {HTMLInputElement} hiddenInput - Elemen input hidden untuk menyimpan nilai yang dipilih.
      * @param {HTMLDivElement} suggestionsDiv - Elemen div untuk menampilkan saran.
      * @param {Array<string>} dataList - Array string dari nilai yang mungkin.
-     * @param {Set<string>} uniqueDataSet - Set untuk menambahkan nilai baru yang diketik pengguna.
      */
-    function setupSearchWithSuggestions(searchInput, hiddenInput, suggestionsDiv, dataList, uniqueDataSet) {
+    function setupSearchWithSuggestions(searchInput, hiddenInput, suggestionsDiv, dataList) {
         let currentFocus = -1;
 
         const handleInput = () => {
             const val = searchInput.value;
-            closeAllSuggestionLists(suggestionsDiv);
+            closeAllSuggestionLists(suggestionsDiv); // Tutup semua saran, kecuali yang ini
             if (!val) {
                 hiddenInput.value = ''; // Clear hidden input if search input is empty
                 return false;
@@ -1269,7 +1268,7 @@
             currentFocus = -1;
 
             const filteredSuggestions = dataList
-                .filter(item => item && item.toLowerCase().includes(val.toLowerCase())) // Perbaikan di sini
+                .filter(item => item && item.toLowerCase().includes(val.toLowerCase()))
                 .sort();
 
             if (filteredSuggestions.length > 0) {
@@ -1280,14 +1279,10 @@
                     b.innerHTML += "<input type='hidden' value='" + item + "'>";
 
                     b.addEventListener("click", function(e) {
-                        e.stopPropagation();
+                        e.stopPropagation(); // Mencegah event blur pada input
                         searchInput.value = this.getElementsByTagName("input")[0].value;
                         hiddenInput.value = searchInput.value; // Update hidden input
                         closeAllSuggestionLists(suggestionsDiv);
-                        // Add to unique set if it's a new value
-                        if (!uniqueDataSet.has(searchInput.value)) {
-                            uniqueDataSet.add(searchInput.value);
-                        }
                     });
                     suggestionsDiv.appendChild(b);
                 });
@@ -1295,7 +1290,7 @@
             } else {
                 suggestionsDiv.classList.add('hidden');
             }
-            // If no suggestions, the typed value is considered the selected value
+            // Jika tidak ada saran, nilai yang diketik dianggap sebagai nilai yang dipilih
             hiddenInput.value = val;
         };
 
@@ -1312,38 +1307,34 @@
                 if (currentFocus > -1) {
                     if (x && x[currentFocus]) x[currentFocus].click();
                 } else {
-                    // If Enter is pressed and no suggestion is selected, use the typed value
+                    // Jika Enter ditekan dan tidak ada saran yang dipilih, gunakan nilai yang diketik
                     hiddenInput.value = searchInput.value;
                     closeAllSuggestionLists(suggestionsDiv);
-                    if (!uniqueDataSet.has(searchInput.value)) {
-                        uniqueDataSet.add(searchInput.value);
-                    }
                 }
             }
         };
 
         const handleBlur = () => {
-            // Ensure the hidden input always reflects the search input's value on blur
-            // This handles cases where user types a new value and clicks away
+            // Pastikan hidden input selalu mencerminkan nilai input pencarian saat blur
             hiddenInput.value = searchInput.value;
-            if (searchInput.value && !uniqueDataSet.has(searchInput.value)) {
-                uniqueDataSet.add(searchInput.value);
-            }
-            setTimeout(() => closeAllSuggestionLists(suggestionsDiv), 100); // Delay to allow click event on suggestion
+            // Delay untuk memungkinkan event click pada saran terjadi
+            setTimeout(() => closeAllSuggestionLists(suggestionsDiv), 100);
         };
 
         const handleFocus = () => {
-            // Re-trigger input event on focus if there's text, to show suggestions again
+            // Picu ulang event input saat fokus jika ada teks, untuk menampilkan saran lagi
             if (searchInput.value.length > 0) {
                 handleInput();
             }
         };
 
+        // Hapus event listener sebelumnya untuk mencegah duplikasi
         searchInput.removeEventListener('input', handleInput);
         searchInput.removeEventListener('keydown', handleKeydown);
         searchInput.removeEventListener('blur', handleBlur);
         searchInput.removeEventListener('focus', handleFocus);
 
+        // Tambahkan event listener
         searchInput.addEventListener('input', handleInput);
         searchInput.addEventListener('keydown', handleKeydown);
         searchInput.addEventListener('blur', handleBlur);
@@ -1373,11 +1364,12 @@
             });
         }
 
-        // Global click listener to close all suggestion lists if clicked outside
-        document.removeEventListener("click", handleDocumentClick); // Remove previous listener
+        // Global click listener untuk menutup semua daftar saran jika diklik di luar
+        document.removeEventListener("click", handleDocumentClick); // Hapus listener sebelumnya
         document.addEventListener("click", handleDocumentClick);
 
         function handleDocumentClick(e) {
+            // Pastikan klik tidak terjadi di dalam input pencarian atau div saran
             if (!searchInput.contains(e.target) && !suggestionsDiv.contains(e.target)) {
                 closeAllSuggestionLists();
             }
@@ -1391,7 +1383,7 @@
         noIdSuggestionsDiv = document.getElementById('noIdSuggestions');
 
         if (noIdSearchInput && selectedNoIdHiddenInput && noIdSuggestionsDiv && noIdData.length > 0) {
-            setupSearchWithSuggestions(noIdSearchInput, selectedNoIdHiddenInput, noIdSuggestionsDiv, noIdData, new Set(noIdData)); // Use a new Set for No ID
+            setupSearchWithSuggestions(noIdSearchInput, selectedNoIdHiddenInput, noIdSuggestionsDiv, noIdData);
         } else if (noIdSearchInput) {
             console.warn("No ID data not available or empty. Autocomplete for No ID disabled.");
         }
@@ -1400,7 +1392,7 @@
     // Setup autocomplete untuk input Nama Barang
     function setupItemSearch(inputElement, hiddenInputElement, suggestionsDivElement) {
         if (inputElement && hiddenInputElement && suggestionsDivElement && productsData.length > 0) {
-            setupSearchWithSuggestions(inputElement, hiddenInputElement, suggestionsDivElement, productsData, new Set(productsData)); // Use a new Set for Products
+            setupSearchWithSuggestions(inputElement, hiddenInputElement, suggestionsDivElement, productsData);
         } else if (inputElement) {
             console.warn("Products data not available or empty. Autocomplete for item name disabled.");
         }
@@ -1475,7 +1467,7 @@
                 if (po.items && po.items.length > 0) {
                     po.items.forEach(item => addItemField(item.name, item.quantity));
                 } else {
-                    addItemField();
+                    addItemField(); // Tambahkan satu field kosong jika tidak ada item
                 }
 
                 document.getElementById('allocation').value = po.allocation || '';
@@ -1497,7 +1489,7 @@
             }
         } else {
             modalTitle.textContent = 'Tambah PO Baru';
-            addItemField();
+            addItemField(); // Tambahkan satu field kosong untuk PO baru
         }
 
         poModal.classList.remove('hidden');
@@ -1819,7 +1811,7 @@
                     (po.noPO && po.noPO.toLowerCase().includes(searchTerm)) ||
                     (po.supplierName && po.supplierName.toLowerCase().includes(searchTerm)) ||
                     (po.selectedNoId && po.selectedNoId.toLowerCase().includes(searchTerm)) ||
-                    (po.items && po.items.some(item => item.name && item.name.toLowerCase().includes(searchTerm))); // Perbaikan di sini juga
+                    (po.items && po.items.some(item => item.name && item.name.toLowerCase().includes(searchTerm)));
 
                 const matchesSupplier =
                     supplierFilter === 'all' ||
