@@ -817,7 +817,7 @@
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-xl sm:text-2xl font-bold text-gray-900 flex items-center"><i class="fas fa-filter mr-3 text-gray-500"></i> Filter POs</h2>
                     <button onclick="closeFilterPanel()" class="text-gray-500 hover:text-gray-700 transition duration-200">
-                        <i class="fas fa-times text-xl"></i>
+                        <i class="fas fa-times-xl"></i>
                     </button>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -918,6 +918,9 @@
     let authInitialized = false;
     let unsubscribeFromPOs = null;
 
+    // Deklarasi variabel elemen DOM di scope global agar tidak dideklarasikan ulang
+    let noIdSearchInput, selectedNoIdHiddenInput, noIdSuggestionsDiv;
+
     // Data untuk search No ID dan Nama Barang (akan berisi array string)
     let noIdData = [];
     let productsData = [];
@@ -929,9 +932,6 @@
     let uniqueStatuses = new Set();
 
     const ADMIN_EMAIL = 'maida@genetek.co.id';
-
-    // Deklarasi variabel elemen DOM di scope global agar tidak dideklarasikan ulang
-    let noIdSearchInput, selectedNoIdHiddenInput, noIdSuggestionsDiv;
 
     // ==================== FUNGSI UTAMA ====================
 
@@ -1271,7 +1271,9 @@
 
         const processInput = () => {
             const val = searchInput.value.trim();
-            closeAllSuggestionLists(suggestionsDiv);
+            suggestionsDiv.innerHTML = ''; // Clear previous suggestions
+            suggestionsDiv.classList.add('hidden'); // Hide by default
+
             if (!val) {
                 hiddenInput.value = ''; // Clear hidden input if search input is empty
                 return false;
@@ -1286,16 +1288,16 @@
             if (filteredSuggestions.length > 0) {
                 filteredSuggestions.forEach(item => {
                     const b = document.createElement("DIV");
+                    b.classList.add("autocomplete-item"); // Tambahkan kelas untuk styling
                     const startIdx = item.toLowerCase().indexOf(val.toLowerCase());
                     // Highlight bagian yang cocok
                     b.innerHTML = item.substring(0, startIdx) + "<strong>" + item.substring(startIdx, startIdx + val.length) + "</strong>" + item.substring(startIdx + val.length);
-                    b.innerHTML += "<input type='hidden' value='" + item + "'>";
 
                     b.addEventListener("click", function(e) {
                         e.stopPropagation(); // Mencegah event blur pada input
-                        searchInput.value = this.getElementsByTagName("input")[0].value;
-                        hiddenInput.value = searchInput.value; // Update hidden input
-                        closeAllSuggestionLists(suggestionsDiv);
+                        searchInput.value = item; // Set input teks dengan nilai yang dipilih
+                        hiddenInput.value = item; // Update hidden input
+                        suggestionsDiv.classList.add('hidden'); // Hide suggestions
                     });
                     suggestionsDiv.appendChild(b);
                 });
@@ -1303,15 +1305,13 @@
             } else {
                 suggestionsDiv.classList.add('hidden');
             }
-            // Jika tidak ada saran, nilai yang diketik dianggap sebagai nilai yang dipilih
-            hiddenInput.value = val;
         };
 
         // Gunakan debounce untuk handleInput
         const debouncedProcessInput = debounce(processInput, 300); // Tunda 300ms
 
         const handleKeydown = (e) => {
-            let x = suggestionsDiv.getElementsByTagName("div");
+            let x = suggestionsDiv.getElementsByClassName("autocomplete-item");
             if (e.keyCode == 40) { // Panah Bawah
                 currentFocus++;
                 addActive(x);
@@ -1325,16 +1325,23 @@
                 } else {
                     // Jika Enter ditekan dan tidak ada saran yang dipilih, gunakan nilai yang diketik
                     hiddenInput.value = searchInput.value;
-                    closeAllSuggestionLists(suggestionsDiv);
+                    suggestionsDiv.classList.add('hidden');
                 }
             }
         };
 
         const handleBlur = () => {
             // Pastikan hidden input selalu mencerminkan nilai input pencarian saat blur
-            hiddenInput.value = searchInput.value;
-            // Delay untuk memungkinkan event click pada saran terjadi
-            setTimeout(() => closeAllSuggestionLists(suggestionsDiv), 100);
+            // Beri sedikit delay agar event click pada saran bisa tereksekusi
+            setTimeout(() => {
+                const currentInputValue = searchInput.value.trim();
+                if (currentInputValue !== '') {
+                    hiddenInput.value = currentInputValue; // Pastikan nilai terakhir di input teks disimpan
+                } else {
+                    hiddenInput.value = ''; // Kosongkan jika input teks kosong
+                }
+                suggestionsDiv.classList.add('hidden');
+            }, 100);
         };
 
         const handleFocus = () => {
@@ -1345,13 +1352,13 @@
         };
 
         // Hapus event listener sebelumnya untuk mencegah duplikasi
-        searchInput.removeEventListener('input', debouncedProcessInput); // Hapus debounced version
+        searchInput.removeEventListener('input', debouncedProcessInput);
         searchInput.removeEventListener('keydown', handleKeydown);
         searchInput.removeEventListener('blur', handleBlur);
         searchInput.removeEventListener('focus', handleFocus);
 
         // Tambahkan event listener
-        searchInput.addEventListener('input', debouncedProcessInput); // Gunakan debounced version
+        searchInput.addEventListener('input', debouncedProcessInput);
         searchInput.addEventListener('keydown', handleKeydown);
         searchInput.addEventListener('blur', handleBlur);
         searchInput.addEventListener('focus', handleFocus);
@@ -1370,28 +1377,32 @@
                 x[i].classList.remove("autocomplete-active");
             }
         }
-
-        function closeAllSuggestionLists(exceptThisOne = null) {
-            const items = document.querySelectorAll(".suggestions-list");
-            items.forEach(item => {
-                if (item !== exceptThisOne) {
-                    item.classList.add('hidden');
-                    item.innerHTML = ''; // Clear content
-                }
-            });
-        }
-
-        // Global click listener untuk menutup semua daftar saran jika diklik di luar
-        document.removeEventListener("click", handleDocumentClick); // Hapus listener sebelumnya
-        document.addEventListener("click", handleDocumentClick);
-
-        function handleDocumentClick(e) {
-            // Pastikan klik tidak terjadi di dalam input pencarian atau div saran
-            if (!searchInput.contains(e.target) && !suggestionsDiv.contains(e.target)) {
-                closeAllSuggestionLists();
-            }
-        }
     }
+
+    // NEW: Fungsi global untuk menutup semua daftar saran autocomplete
+    function closeAllAutocompleteSuggestions() {
+        document.querySelectorAll(".suggestions-list").forEach(item => {
+            item.classList.add('hidden');
+            item.innerHTML = ''; // Clear content
+        });
+    }
+
+    // NEW: Event listener global untuk menutup saran saat klik di luar
+    document.addEventListener("click", function(e) {
+        // Cek apakah target klik bukan bagian dari autocomplete
+        let isAutocompleteClick = false;
+        let target = e.target;
+        while (target && target !== document.body) {
+            if (target.classList.contains('autocomplete-items') || target.classList.contains('item-name-search') || target.id === 'noIdSearch') {
+                isAutocompleteClick = true;
+                break;
+            }
+            target = target.parentNode;
+        }
+        if (!isAutocompleteClick) {
+            closeAllAutocompleteSuggestions();
+        }
+    });
 
     // Setup autocomplete untuk input No ID
     function setupNoIdSearch() {
@@ -1406,12 +1417,12 @@
         }
     }
 
-    // Setup autocomplete untuk input Nama Barang
+    // Setup autocomplete untuk input Nama Barang (per baris item)
     function setupItemSearch(inputElement, hiddenInputElement, suggestionsDivElement) {
         if (inputElement && hiddenInputElement && suggestionsDivElement && productsData.length > 0) {
             setupSearchWithSuggestions(inputElement, hiddenInputElement, suggestionsDivElement, productsData);
         } else if (inputElement) {
-            console.warn("Products data not available or empty. Autocomplete for item name disabled.");
+            console.warn("Products data not available or empty. Autocomplete for item name disabled for this input.");
         }
     }
 
@@ -1427,7 +1438,7 @@
             <div class="relative flex-grow mr-2">
                 <input type="text" id="${uniqueId}-search" class="item-name-search w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="Cari atau ketik Nama Barang..." value="${itemName}">
                 <input type="hidden" id="${uniqueId}-hidden" class="item-name-hidden" value="${itemName}">
-                <div id="${uniqueId}-suggestions" class="suggestions-list autocomplete-items"></div>
+                <div id="${uniqueId}-suggestions" class="autocomplete-items suggestions-list"></div>
             </div>
             <input type="number" class="item-quantity w-24 p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="Qty" min="1" value="${itemQuantity}">
             <button type="button" onclick="removeItemField(this)" class="ml-2 text-red-500 hover:text-red-700"><i class="fas fa-times-circle"></i></button>
@@ -1467,6 +1478,8 @@
             noIdSuggestionsDiv.innerHTML = '';
         }
 
+        // NEW: Tutup semua saran autocomplete yang mungkin terbuka
+        closeAllAutocompleteSuggestions();
 
         if (poId) {
             modalTitle.textContent = 'Edit PO';
@@ -1511,6 +1524,7 @@
 
         poModal.classList.remove('hidden');
         setupNoIdSearch(); // Inisialisasi autocomplete untuk No ID
+        // setupItemSearch akan dipanggil secara otomatis oleh addItemField
     }
 
     function closePOModal() {
@@ -1518,12 +1532,7 @@
         if (!poModal) return;
         poModal.classList.add('hidden');
         // Tutup semua daftar autocomplete yang mungkin terbuka saat modal ditutup
-        document.querySelectorAll(".suggestions-list").forEach(item => {
-            if (item.parentNode) {
-                item.classList.add('hidden');
-                item.innerHTML = '';
-            }
-        });
+        closeAllAutocompleteSuggestions();
     }
 
     // Menyimpan data PO ke Firestore
@@ -1543,12 +1552,27 @@
         const supplierName = document.getElementById('supplierName').value;
         const selectedNoId = document.getElementById('selectedNoId').value; // Ambil dari hidden input
 
+        // NEW: Tambahkan No ID baru ke noIdData jika belum ada
+        if (selectedNoId && !noIdData.includes(selectedNoId)) {
+            noIdData.push(selectedNoId);
+            // Opsional: Jika Anda ingin persistensi, Anda perlu mekanisme untuk menyimpan kembali ke noid.json
+            // Ini biasanya membutuhkan backend atau Firebase Functions.
+            console.log(`New No ID "${selectedNoId}" added to local list.`);
+        }
+
         const itemsToSave = [];
         document.querySelectorAll('.item-row').forEach(row => {
             const itemName = row.querySelector('.item-name-hidden').value; // Ambil dari hidden input
             const itemQuantity = row.querySelector('.item-quantity').value;
             if (itemName && itemQuantity && parseInt(itemQuantity) > 0) {
                 itemsToSave.push({ name: itemName, quantity: parseInt(itemQuantity) });
+
+                // NEW: Tambahkan Nama Barang baru ke productsData jika belum ada
+                if (itemName && !productsData.includes(itemName)) {
+                    productsData.push(itemName);
+                    // Opsional: Jika Anda ingin persistensi, Anda perlu mekanisme untuk menyimpan kembali ke products.json
+                    console.log(`New product "${itemName}" added to local list.`);
+                }
             }
         });
 
