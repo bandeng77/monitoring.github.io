@@ -1248,6 +1248,16 @@
 
     // ==================== FUNGSI UNTUK FORM TAMBAHAN DENGAN SEARCH (Autocomplete Generik) ====================
 
+    // Fungsi debounce untuk menunda eksekusi fungsi
+    function debounce(func, delay) {
+        let timeout;
+        return function(...args) {
+            const context = this;
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(context, args), delay);
+        };
+    }
+
     /**
      * Fungsi autocomplete generik yang mendukung hidden input untuk menyimpan nilai yang dipilih.
      * @param {HTMLInputElement} searchInput - Elemen input teks yang digunakan untuk pencarian.
@@ -1256,11 +1266,12 @@
      * @param {Array<string>} dataList - Array string dari nilai yang mungkin.
      */
     function setupSearchWithSuggestions(searchInput, hiddenInput, suggestionsDiv, dataList) {
+        const MAX_SUGGESTIONS = 20; // Batasi jumlah saran yang ditampilkan
         let currentFocus = -1;
 
-        const handleInput = () => {
-            const val = searchInput.value;
-            closeAllSuggestionLists(suggestionsDiv); // Tutup semua saran, kecuali yang ini
+        const processInput = () => {
+            const val = searchInput.value.trim();
+            closeAllSuggestionLists(suggestionsDiv);
             if (!val) {
                 hiddenInput.value = ''; // Clear hidden input if search input is empty
                 return false;
@@ -1269,12 +1280,14 @@
 
             const filteredSuggestions = dataList
                 .filter(item => item && item.toLowerCase().includes(val.toLowerCase()))
-                .sort();
+                .sort()
+                .slice(0, MAX_SUGGESTIONS); // Batasi jumlah saran
 
             if (filteredSuggestions.length > 0) {
                 filteredSuggestions.forEach(item => {
                     const b = document.createElement("DIV");
                     const startIdx = item.toLowerCase().indexOf(val.toLowerCase());
+                    // Highlight bagian yang cocok
                     b.innerHTML = item.substring(0, startIdx) + "<strong>" + item.substring(startIdx, startIdx + val.length) + "</strong>" + item.substring(startIdx + val.length);
                     b.innerHTML += "<input type='hidden' value='" + item + "'>";
 
@@ -1293,6 +1306,9 @@
             // Jika tidak ada saran, nilai yang diketik dianggap sebagai nilai yang dipilih
             hiddenInput.value = val;
         };
+
+        // Gunakan debounce untuk handleInput
+        const debouncedProcessInput = debounce(processInput, 300); // Tunda 300ms
 
         const handleKeydown = (e) => {
             let x = suggestionsDiv.getElementsByTagName("div");
@@ -1324,28 +1340,29 @@
         const handleFocus = () => {
             // Picu ulang event input saat fokus jika ada teks, untuk menampilkan saran lagi
             if (searchInput.value.length > 0) {
-                handleInput();
+                processInput(); // Panggil langsung tanpa debounce saat fokus
             }
         };
 
         // Hapus event listener sebelumnya untuk mencegah duplikasi
-        searchInput.removeEventListener('input', handleInput);
+        searchInput.removeEventListener('input', debouncedProcessInput); // Hapus debounced version
         searchInput.removeEventListener('keydown', handleKeydown);
         searchInput.removeEventListener('blur', handleBlur);
         searchInput.removeEventListener('focus', handleFocus);
 
         // Tambahkan event listener
-        searchInput.addEventListener('input', handleInput);
+        searchInput.addEventListener('input', debouncedProcessInput); // Gunakan debounced version
         searchInput.addEventListener('keydown', handleKeydown);
         searchInput.addEventListener('blur', handleBlur);
         searchInput.addEventListener('focus', handleFocus);
 
         function addActive(x) {
-            if (!x) return false;
+            if (!x || x.length === 0) return false;
             removeActive(x);
-            if (currentFocus >= x.length) currentFocus = 0;
-            if (currentFocus < 0) currentFocus = (x.length - 1);
+            currentFocus = (currentFocus + x.length) % x.length; // Wrap around
             x[currentFocus].classList.add("autocomplete-active");
+            // Scroll to active element if it's out of view
+            x[currentFocus].scrollIntoView({ block: "nearest", inline: "nearest" });
         }
 
         function removeActive(x) {
