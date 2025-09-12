@@ -983,13 +983,24 @@
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
-                    noIdData = await response.json();
-                    console.log("No ID data fetched from external JSON:", noIdData.length);
-                    // Opsional: Simpan data ini ke Firebase untuk penggunaan selanjutnya
-                    for (const name of noIdData) {
-                        await noIdCollection.add({ name: name });
+                    const jsonContent = await response.json();
+                    // Pastikan jsonContent adalah array string
+                    if (Array.isArray(jsonContent) && jsonContent.every(item => typeof item === 'string')) {
+                        noIdData = jsonContent;
+                        console.log("No ID data fetched from external JSON:", noIdData.length);
+                        // Opsional: Simpan data ini ke Firebase untuk penggunaan selanjutnya
+                        for (const name of noIdData) {
+                            // Cek apakah sudah ada di Firebase sebelum menambahkan
+                            const existingDoc = await noIdCollection.where('name', '==', name).get();
+                            if (existingDoc.empty) {
+                                await noIdCollection.add({ name: name });
+                            }
+                        }
+                        console.log("No ID data synced to Firebase.");
+                    } else {
+                        console.error("External noid.json is not a valid array of strings.");
+                        noIdData = []; // Set to empty array to prevent further errors
                     }
-                    console.log("No ID data saved to Firebase.");
                 }
             } catch (error) {
                 console.error("Error fetching No ID data:", error);
@@ -1011,13 +1022,24 @@
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
-                    productData = await response.json();
-                    console.log("Product data fetched from external JSON:", productData.length);
-                    // Opsional: Simpan data ini ke Firebase untuk penggunaan selanjutnya
-                    for (const name of productData) {
-                        await productsCollection.add({ name: name });
+                    const jsonContent = await response.json();
+                    // Pastikan jsonContent adalah array string
+                    if (Array.isArray(jsonContent) && jsonContent.every(item => typeof item === 'string')) {
+                        productData = jsonContent;
+                        console.log("Product data fetched from external JSON:", productData.length);
+                        // Opsional: Simpan data ini ke Firebase untuk penggunaan selanjutnya
+                        for (const name of productData) {
+                            // Cek apakah sudah ada di Firebase sebelum menambahkan
+                            const existingDoc = await productsCollection.where('name', '==', name).get();
+                            if (existingDoc.empty) {
+                                await productsCollection.add({ name: name });
+                            }
+                        }
+                        console.log("Product data synced to Firebase.");
+                    } else {
+                        console.error("External products.json is not a valid array of strings.");
+                        productData = []; // Set to empty array to prevent further errors
                     }
-                    console.log("Product data saved to Firebase.");
                 }
             } catch (error) {
                 console.error("Error fetching product data:", error);
@@ -1329,11 +1351,12 @@
                         noIdSearchResultsDiv.appendChild(resultItem);
                     });
                 } else {
+                    // Jika tidak ada hasil, tawarkan untuk menambahkan sebagai No ID baru
                     const addAsNewItem = document.createElement('div');
                     addAsNewItem.className = 'p-2 cursor-pointer hover:bg-gray-100 text-blue-600';
                     addAsNewItem.innerHTML = `Tambahkan "<strong>${this.value}</strong>" sebagai No ID baru`;
                     addAsNewItem.addEventListener('click', function() {
-                        selectNoId(noIdSearchField.value.trim());
+                        selectNoId(noIdSearchField.value.trim()); // Gunakan nilai input saat ini
                     });
                     noIdSearchResultsDiv.appendChild(addAsNewItem);
                 }
@@ -1384,11 +1407,12 @@
                         itemSearchResultsDiv.appendChild(resultItem);
                     });
                 } else {
+                    // Jika tidak ada hasil, tawarkan untuk menambahkan sebagai barang baru
                     const addAsNewItem = document.createElement('div');
                     addAsNewItem.className = 'p-2 cursor-pointer hover:bg-gray-100 text-blue-600';
                     addAsNewItem.innerHTML = `Tambahkan "<strong>${this.value}</strong>" sebagai barang baru`;
                     addAsNewItem.addEventListener('click', function() {
-                        selectItemName(itemNameInput, itemSearchResultsDiv, itemNameInput.value.trim());
+                        selectItemName(itemNameInput, itemSearchResultsDiv, itemNameInput.value.trim()); // Gunakan nilai input saat ini
                     });
                     itemSearchResultsDiv.appendChild(addAsNewItem);
                 }
