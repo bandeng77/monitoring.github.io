@@ -314,14 +314,14 @@
                 grid-template-columns: repeat(3, 1fr); /* 3 kolom */
             }
         }
-        #poDetailModalContent .detail-item p:first-child {
-            color: var(--text-light);
-            font-size: 0.75rem;
-        }
-        #poDetailModalContent .detail-item p {
-            color: var(--text-dark);
-            font-size: 0.9rem;
+        #poDetailModalContent .detail-item p { /* Gabungkan kedua aturan ini */
+            color: var(--text-dark); /* Warna teks utama */
+            font-size: 0.9rem; /* Ukuran font yang diinginkan */
             font-weight: 500;
+        }
+        #poDetailModalContent .detail-item p:first-child {
+            color: var(--text-light); /* Pertahankan warna teks yang lebih terang untuk label */
+            font-weight: 600; /* Jadikan label sedikit lebih tebal */
         }
 
         /* Loading Spinner */
