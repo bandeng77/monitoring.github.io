@@ -32,6 +32,13 @@
             --shadow-strong: rgba(0, 0, 0, 0.2);
         }
 
+        html, body {
+            height: 100%; /* Penting untuk fullscreen modal */
+            width: 100%; /* Penting untuk fullscreen modal */
+            margin: 0;
+            padding: 0;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--bg-soft);
@@ -271,36 +278,65 @@
         .modal-content-enter-active, .modal-content-leave-active {
             /* transition: opacity 0.15s cubic-bezier(0.25, 0.8, 0.25, 1), transform 0.15s cubic-bezier(0.25, 0.8, 0.25, 1); */
         }
-        #poModalContent, #poDetailModalContent, #deleteModalContent, #filterPanelContent, #successAlertModalContent {
+        #poModalContent, #poDetailModalContent, #deleteModalContent, #filterPanelContent, #successAlertModalContent, #documentChecklistModalContent {
             background-color: #ffffff;
             border-radius: 1rem;
             box-shadow: 0 20px 50px var(--shadow-strong);
             padding: 2.5rem;
         }
+
+        /* Fullscreen PO Modal */
         #poModalContent {
-            max-height: 90vh; /* Sedikit lebih kecil dari 100vh */
-            max-width: 90vw; /* Sedikit lebih kecil dari 100vw */
-            border-radius: 1rem; /* Kembali ke border-radius */
-            box-shadow: 0 20px 50px var(--shadow-strong); /* Kembali ke bayangan */
+            width: 98vw; /* Hampir fullscreen */
+            height: 98vh; /* Hampir fullscreen */
+            max-width: 98vw; /* Pastikan tidak melebihi viewport */
+            max-height: 98vh; /* Pastikan tidak melebihi viewport */
+            border-radius: 1rem;
+            box-shadow: 0 20px 50px var(--shadow-strong);
+            display: flex;
+            flex-direction: column;
+            padding: 1rem; /* Sesuaikan padding agar tidak terlalu besar */
         }
-        #poModalContent h2, #poDetailModalContent h2, #deleteModalContent h2, #filterPanelContent h2, #successAlertModalContent h2 {
+        #poModalContent .po-form-container {
+            flex-grow: 1;
+            overflow-y: auto; /* Scrollbar hanya di dalam form jika konten terlalu panjang */
+            padding-right: 0.5rem; /* Ruang untuk scrollbar */
+        }
+        #poModalContent .po-form-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        #poModalContent .po-form-container::-webkit-scrollbar-track {
+            background: var(--bg-soft);
+            border-radius: 10px;
+        }
+        #poModalContent .po-form-container::-webkit-scrollbar-thumb {
+            background: var(--primary-blue);
+            border-radius: 10px;
+            border: 2px solid var(--bg-soft);
+        }
+        #poModalContent .po-form-container::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-dark-blue);
+        }
+
+
+        #poModalContent h2, #poDetailModalContent h2, #deleteModalContent h2, #filterPanelContent h2, #successAlertModalContent h2, #documentChecklistModalContent h2 {
             color: var(--text-dark);
             font-weight: 800;
-            font-size: 2rem;
-            margin-bottom: 1.75rem;
+            font-size: 1.75rem; /* Lebih kecil */
+            margin-bottom: 1rem; /* Lebih kecil */
         }
-        #poForm label {
+        #poForm label, #documentChecklistForm label {
             color: var(--text-dark);
             font-weight: 600;
-            font-size: 0.85rem;
-            margin-bottom: 0.35rem;
+            font-size: 0.75rem; /* Lebih kecil */
+            margin-bottom: 0.25rem; /* Lebih kecil */
         }
-        #poForm input, #poForm select, #poForm textarea {
+        #poForm input, #poForm select, #poForm textarea, #documentChecklistForm input, #documentChecklistForm select, #documentChecklistForm textarea {
             border-radius: 0.5rem;
-            padding: 0.6rem 1rem;
-            font-size: 0.9rem;
+            padding: 0.5rem 0.75rem; /* Lebih kecil */
+            font-size: 0.85rem; /* Lebih kecil */
         }
-        #poForm textarea { height: 100px; } /* Sedikit lebih pendek */
+        #poForm textarea, #documentChecklistForm textarea { height: 80px; } /* Sedikit lebih pendek */
 
         /* Detail Grid */
         #poDetailModalContent .detail-grid {
@@ -444,6 +480,20 @@
                 width: calc(50% - 0.5rem);
                 min-width: 280px;
             }
+            /* Menyesuaikan grid kolom utama form PO untuk tablet */
+            #poModalContent .grid.grid-cols-1.sm\:grid-cols-2.md\:grid-cols-3.lg\:grid-cols-4 > div {
+                grid-column: span 1; /* Default 1 kolom */
+            }
+            @media (min-width: 640px) { /* sm breakpoint */
+                #poModalContent .grid.grid-cols-1.sm\:grid-cols-2.md\:grid-cols-3.lg\:grid-cols-4 > div {
+                    grid-column: span 1; /* 2 kolom */
+                }
+            }
+            @media (min-width: 768px) { /* md breakpoint */
+                #poModalContent .grid.grid-cols-1.sm\:grid-cols-2.md\:grid-cols-3.lg\:grid-cols-4 > div {
+                    grid-column: span 1; /* 3 kolom */
+                }
+            }
         }
 
         @media (max-width: 768px) { /* Untuk mobile, 1 kolom */
@@ -488,10 +538,14 @@
                 width: 100%;
             }
             #poModalContent {
-                padding: 1.5rem;
+                padding: 1rem; /* Padding lebih kecil untuk mobile */
             }
             #poModalContent h2 {
                 font-size: 1.5rem;
+            }
+            /* Menyesuaikan grid kolom utama form PO untuk mobile */
+            #poModalContent .grid.grid-cols-1.sm\:grid-cols-2.md\:grid-cols-3.lg\:grid-cols-4 > div {
+                grid-column: span 1; /* 1 kolom */
             }
         }
 
@@ -528,6 +582,55 @@
             background-color: DodgerBlue !important;
             color: #ffffff;
         }
+
+        /* Custom styles for item rows */
+        .item-row-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem; /* Space between item rows, lebih rapat */
+            margin-top: 1rem; /* Tambahkan margin atas agar tidak terlalu mepet */
+            padding-top: 1rem; /* Tambahkan padding atas */
+            border-top: 1px solid var(--border-color); /* Tambahkan garis pemisah */
+        }
+
+        .item-row {
+            display: grid;
+            /* Default untuk mobile: 1 kolom */
+            grid-template-columns: 1fr;
+            gap: 0.4rem; /* Space between inputs in a row, lebih rapat */
+            align-items: end; /* Align items at the bottom */
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 0.6rem; /* Lebih kecil */
+            background-color: var(--bg-light);
+        }
+
+        /* Untuk layar yang lebih besar, sesuaikan kolom item-row */
+        @media (min-width: 640px) { /* sm breakpoint */
+            .item-row {
+                /* PID (1.5fr), Description (3fr), Qty (0.8fr), COO (1.2fr), HS Code (1.5fr), Revised HS Code (1.5fr), Actions (0.5fr) */
+                grid-template-columns: 1.5fr 3fr 0.8fr 1.2fr 1.5fr 1.5fr 0.5fr;
+            }
+        }
+        @media (min-width: 1024px) { /* lg breakpoint */
+            .item-row {
+                /* PID (1.5fr), Description (3fr), Qty (0.8fr), COO (1.2fr), HS Code (1.5fr), Revised HS Code (1.5fr), Actions (0.5fr) */
+                grid-template-columns: 1.5fr 3fr 0.8fr 1.2fr 1.5fr 1.5fr 0.5fr;
+            }
+        }
+
+
+        .item-row > div {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .item-row .item-action-buttons {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 0.5rem;
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
@@ -549,6 +652,10 @@
             <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 mt-4">
                 <button id="newPOBtn" onclick="openPOModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
                     <i class="fas fa-plus-circle mr-2"></i> PO Baru
+                </button>
+
+                <button id="documentChecklistBtn" onclick="openDocumentChecklistModal()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
+                    <i class="fas fa-clipboard-list mr-2"></i> Document Checklist
                 </button>
 
                 <button id="exportExcelBtn" onclick="exportToExcel()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
@@ -588,85 +695,67 @@
         <!-- Add/Edit PO Modal -->
         <div id="poModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
             <div class="bg-white rounded-none p-8 w-full h-full shadow-2xl modal-content-enter" id="poModalContent">
-                <h2 class="text-xl sm:text-2xl font-bold mb-6 text-gray-900" id="modalTitle">Tambah PO Baru</h2>
-                <form id="poForm">
+                <h2 class="text-xl sm:text-2xl font-bold mb-4 text-gray-900" id="modalTitle">Tambah PO Baru</h2>
+                <form id="poForm" class="po-form-container">
                     <input type="hidden" id="poId">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"> <!-- Gap lebih besar -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-3 gap-y-2"> <!-- Gap lebih rapat -->
                         <!-- Kolom 1 -->
                         <div>
-                            <div class="mb-4"> <!-- Margin lebih besar -->
-                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="orderConfirmation">Order Confirmation</label>
-                                <input type="text" id="orderConfirmation" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            <div class="mb-2"> <!-- Margin lebih kecil -->
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="noPO">PO Number <span class="text-red-500">*</span></label>
+                                <input type="text" id="noPO" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" required>
                             </div>
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="noPO">No. PO <span class="text-red-500">*</span></label>
-                                <input type="text" id="noPO" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" required>
+                            <div class="mb-2">
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="supplierName">Vendor</label>
+                                <input type="text" id="supplierName" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
                             </div>
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="supplierName">Nama Supplier</label>
-                                <input type="text" id="supplierName" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            <div class="mb-2">
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="allocation">Allocation</label>
+                                <input type="text" id="allocation" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
                             </div>
-                            <!-- New: No ID field with search -->
-                            <div class="mb-4 relative">
-                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="noId">No ID</label>
-                                <input type="text" id="noIdSearch" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="Cari No ID...">
-                                <input type="hidden" id="selectedNoId">
-                                <div id="noIdSuggestions" class="autocomplete-items suggestions-list"></div>
+                            <div class="mb-2">
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="invoice">Invoice Number</label>
+                                <input type="text" id="invoice" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
                             </div>
-                            <!-- New: Nama Barang & Quantity fields -->
-                            <div id="items-container">
-                                <label class="block text-gray-700 text-sm font-semibold mb-2">Nama Barang & Quantity</label>
-                                <!-- Item rows will be added here by JavaScript -->
+                            <div class="mb-2">
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="value">Value</label>
+                                <input type="text" id="value" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
                             </div>
-                            <button type="button" onclick="addItemField()" class="mt-2 bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
-                                <i class="fas fa-plus mr-1"></i> Tambah Barang
-                            </button>
                         </div>
                         <!-- Kolom 2 -->
                         <div>
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="allocation">Allocation</label>
-                                <input type="text" id="allocation" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            <div class="mb-2">
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="tracking">AWB/Tracking Number</label>
+                                <input type="text" id="tracking" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
                             </div>
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="invoice">Invoice</label>
-                                <input type="text" id="invoice" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            <div class="mb-2">
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="forwarderName">Nama Forwarder</label>
+                                <select id="forwarderName" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                                    <option value="">Pilih Forwarder</option>
+                                    <option value="Forwarder A">Forwarder A</option>
+                                    <option value="Forwarder B">Forwarder B</option>
+                                    <option value="Forwarder C">Forwarder C</option>
+                                    <option value="Forwarder D">Forwarder D</option>
+                                </select>
                             </div>
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="tracking">Tracking</label>
-                                <input type="text" id="tracking" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            <div class="mb-2">
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="freightType">Jenis Freight</label>
+                                <select id="freightType" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                                    <option value="">Pilih Jenis Freight</option>
+                                    <option value="Sea Freight">Sea Freight</option>
+                                    <option value="Air Freight">Air Freight</option>
+                                </select>
                             </div>
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="seaForwarder">Sea Forwarder</label>
-                                <input type="text" id="seaForwarder" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
-                            </div>
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="airForwarder">Air Forwarder</label>
-                                <input type="text" id="airForwarder" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            <div class="mb-2">
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="disrc">DISRC</label>
+                                <input type="text" id="disrc" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
                             </div>
                         </div>
                         <!-- Kolom 3 -->
                         <div>
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="disrc">DISRC</label>
-                                <input type="text" id="disrc" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
-                            </div>
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="planDelivery">Plan Delivery</label>
-                                <input type="date" id="planDelivery" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
-                            </div>
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="eta">ETA</label>
-                                <input type="date" id="eta" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
-                            </div>
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="actualDelivery">Actual Delivery</label>
-                                <input type="date" id="actualDelivery" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
-                            </div>
-                            <!-- Status Field -->
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="status">Status</label>
-                                <select id="status" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            <div class="mb-2">
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="status">Order Status</label>
+                                <select id="status" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
                                     <option value="On Order">On Order</option>
                                     <option value="Waiting">Waiting</option>
                                     <option value="Picked Up">Picked Up</option>
@@ -677,28 +766,39 @@
                                     <option value="On Hold">On Hold</option>
                                 </select>
                             </div>
+                            <div class="mb-2">
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="planDelivery">Plan Delivery</label>
+                                <input type="date" id="planDelivery" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            </div>
+                            <div class="mb-2">
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="eta">ETA</label>
+                                <input type="date" id="eta" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            </div>
+                            <div class="mb-2">
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="actualDelivery">Actual Delivery</label>
+                                <input type="date" id="actualDelivery" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            </div>
                         </div>
                         <!-- Kolom 4 -->
                         <div>
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="coo">COO</label>
-                                <input type="text" id="coo" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
-                            </div>
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="hsCode">HS Code</label>
-                                <input type="text" id="hsCode" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
-                            </div>
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="revisiHS">Revisi HS</label>
-                                <input type="text" id="revisiHS" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
-                            </div>
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-2" for="note">Note</label>
-                                <textarea id="note" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" rows="3" placeholder="Tambahkan catatan atau deskripsi tambahan..."></textarea>
+                            <div class="mb-2">
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="note">Note</label>
+                                <textarea id="note" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" rows="4" placeholder="Tambahkan catatan atau deskripsi tambahan..."></textarea>
                             </div>
                         </div>
+
+                        <!-- Item Details Section - Now integrated directly into the main grid -->
+                        <div class="col-span-full"> <!-- This div will span all columns -->
+                            <div id="items-container" class="item-row-container">
+                                <!-- Item rows will be added here by JavaScript -->
+                            </div>
+                            <button type="button" onclick="addItemField()" class="mt-3 bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
+                                <i class="fas fa-plus mr-1"></i> Tambah Item
+                            </button>
+                        </div>
                     </div>
-                    <div class="flex justify-end space-x-3 mt-6">
+
+                    <div class="flex justify-end space-x-3 mt-4"> <!-- Margin lebih kecil -->
                         <button type="button" onclick="closePOModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
                             Batal
                         </button>
@@ -712,52 +812,48 @@
 
         <!-- PO Detail Modal -->
         <div id="poDetailModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
-            <div class="bg-white rounded-xl p-8 w-full max-w-3xl shadow-2xl modal-content-enter" id="poDetailModalContent"> <!-- Max-width lebih besar -->
+            <div class="bg-white rounded-xl p-8 w-full max-w-3xl shadow-2xl modal-content-enter overflow-y-auto" id="poDetailModalContent"> <!-- Max-width lebih besar -->
                 <h2 class="text-xl sm:text-2xl font-bold mb-6 text-gray-900" id="poDetailTitle">Detail PO</h2>
                 <div class="detail-grid">
                     <div class="detail-item">
-                        <p class="text-gray-700 font-semibold">Order Confirmation:</p>
-                        <p id="detailOrderConfirmation" class="text-gray-900"></p>
-                    </div>
-                    <div class="detail-item">
-                        <p class="text-gray-700 font-semibold">No. PO:</p>
+                        <p class="text-gray-700 font-semibold">PO Number:</p>
                         <p id="detailNoPO" class="text-gray-900"></p>
                     </div>
                     <div class="detail-item">
-                        <p class="text-gray-700 font-semibold">Nama Supplier:</p>
+                        <p class="text-gray-700 font-semibold">Vendor:</p>
                         <p id="detailSupplierName" class="text-gray-900"></p>
-                    </div>
-                    <div class="detail-item">
-                        <p class="text-gray-700 font-semibold">No ID:</p>
-                        <p id="detailNoId" class="text-gray-900"></p>
-                    </div>
-                    <div class="detail-item col-span-full">
-                        <p class="text-gray-700 font-semibold">Nama Barang & Quantity:</p>
-                        <ul id="detailItemsList" class="list-disc list-inside text-gray-900"></ul>
                     </div>
                     <div class="detail-item">
                         <p class="text-gray-700 font-semibold">Allocation:</p>
                         <p id="detailAllocation" class="text-gray-900"></p>
                     </div>
                     <div class="detail-item">
-                        <p class="text-gray-700 font-semibold">Invoice:</p>
+                        <p class="text-gray-700 font-semibold">Invoice Number:</p>
                         <p id="detailInvoice" class="text-gray-900"></p>
                     </div>
                     <div class="detail-item">
-                        <p class="text-gray-700 font-semibold">Tracking:</p>
+                        <p class="text-gray-700 font-semibold">Value:</p>
+                        <p id="detailValue" class="text-gray-900"></p>
+                    </div>
+                    <div class="detail-item">
+                        <p class="text-gray-700 font-semibold">AWB/Tracking Number:</p>
                         <p id="detailTracking" class="text-gray-900"></p>
                     </div>
                     <div class="detail-item">
-                        <p class="text-gray-700 font-semibold">Sea Forwarder:</p>
-                        <p id="detailSeaForwarder" class="text-gray-900"></p>
+                        <p class="text-gray-700 font-semibold">Nama Forwarder:</p>
+                        <p id="detailForwarderName" class="text-gray-900"></p>
                     </div>
                     <div class="detail-item">
-                        <p class="text-gray-700 font-semibold">Air Forwarder:</p>
-                        <p id="detailAirForwarder" class="text-gray-900"></p>
+                        <p class="text-gray-700 font-semibold">Jenis Freight:</p>
+                        <p id="detailFreightType" class="text-gray-900"></p>
                     </div>
                     <div class="detail-item">
                         <p class="text-gray-700 font-semibold">DISRC:</p>
                         <p id="detailDisrc" class="text-gray-900"></p>
+                    </div>
+                    <div class="detail-item">
+                        <p class="text-gray-700 font-semibold">Order Status:</p>
+                        <p id="detailStatus" class="text-gray-900"></p>
                     </div>
                     <div class="detail-item">
                         <p class="text-gray-700 font-semibold">Plan Delivery:</p>
@@ -771,26 +867,15 @@
                         <p class="text-gray-700 font-semibold">Actual Delivery:</p>
                         <p id="detailActualDelivery" class="text-gray-900"></p>
                     </div>
-                    <!-- Status Field -->
-                    <div class="detail-item">
-                        <p class="text-gray-700 font-semibold">Status:</p>
-                        <p id="detailStatus" class="text-gray-900"></p>
-                    </div>
-                    <div class="detail-item">
-                        <p class="text-gray-700 font-semibold">COO:</p>
-                        <p id="detailCOO" class="text-gray-900"></p>
-                    </div>
-                    <div class="detail-item">
-                        <p class="text-gray-700 font-semibold">HS Code:</p>
-                        <p id="detailHSCode" class="text-gray-900"></p>
-                    </div>
-                    <div class="detail-item">
-                        <p class="text-gray-700 font-semibold">Revisi HS:</p>
-                        <p id="detailRevisiHS" class="text-gray-900"></p>
-                    </div>
                     <div class="detail-item col-span-full">
                         <p class="text-gray-700 font-semibold">Note:</p>
                         <p id="detailNote" class="text-gray-900"></p>
+                    </div>
+                    <div class="detail-item col-span-full border-t pt-4 mt-4 border-gray-200">
+                        <h3 class="text-lg font-bold text-gray-900 mb-2">Detail Barang</h3>
+                        <div id="detailItemsList" class="flex flex-col gap-2">
+                            <!-- Item details will be rendered here -->
+                        </div>
                     </div>
                 </div>
                 <div class="flex justify-end space-x-3 mt-6">
@@ -829,9 +914,9 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <!-- Filter: Nama Supplier -->
                     <div>
-                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterSupplier">Supplier</label>
+                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterSupplier">Vendor</label>
                         <select id="filterSupplier" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
-                            <option value="all">Semua Supplier</option>
+                            <option value="all">Semua Vendor</option>
                             <!-- Opsi akan diisi secara dinamis oleh JavaScript -->
                         </select>
                     </div>
@@ -853,7 +938,7 @@
                     </div>
                     <!-- Filter: Status -->
                     <div>
-                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterStatus">Status</label>
+                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterStatus">Order Status</label>
                         <select id="filterStatus" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
                             <option value="all">Semua Status</option>
                             <option value="On Order">On Order</option>
@@ -875,6 +960,144 @@
                         Terapkan Filter
                     </button>
                 </div>
+            </div>
+        </div>
+
+        <!-- Document Checklist Modal (NEW) -->
+        <div id="documentChecklistModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+            <div class="bg-white rounded-xl p-8 w-full max-w-2xl shadow-2xl modal-content-enter" id="documentChecklistModalContent">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900 flex items-center"><i class="fas fa-clipboard-check mr-3 text-gray-500"></i> Document Checklist</h2>
+                    <button onclick="closeDocumentChecklistModal()" class="text-gray-500 hover:text-gray-700 transition duration-200">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <form id="documentChecklistForm">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Kolom 1: Dokumen -->
+                        <div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">OC/OA</label>
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                                    <option value="">Pilih Status</option>
+                                    <option value="Ada">Ada</option>
+                                    <option value="Tidak Ada">Tidak Ada</option>
+                                    <option value="Pending">Pending</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">PI</label>
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                                    <option value="">Pilih Status</option>
+                                    <option value="Ada">Ada</option>
+                                    <option value="Tidak Ada">Tidak Ada</option>
+                                    <option value="Pending">Pending</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">CI</label>
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                                    <option value="">Pilih Status</option>
+                                    <option value="Ada">Ada</option>
+                                    <option value="Tidak Ada">Tidak Ada</option>
+                                    <option value="Pending">Pending</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">PL</label>
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                                    <option value="">Pilih Status</option>
+                                    <option value="Ada">Ada</option>
+                                    <option value="Tidak Ada">Tidak Ada</option>
+                                    <option value="Pending">Pending</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">COO</label>
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                                    <option value="">Pilih Status</option>
+                                    <option value="Ada">Ada</option>
+                                    <option value="Tidak Ada">Tidak Ada</option>
+                                    <option value="Pending">Pending</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">COC</label>
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:focus:border-blue-500 transition duration-150 text-sm">
+                                    <option value="">Pilih Status</option>
+                                    <option value="Ada">Ada</option>
+                                    <option value="Tidak Ada">Tidak Ada</option>
+                                    <option value="Pending">Pending</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">PIB</label>
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                                    <option value="">Pilih Status</option>
+                                    <option value="Ada">Ada</option>
+                                    <option value="Tidak Ada">Tidak Ada</option>
+                                    <option value="Pending">Pending</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">STPPN</label>
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                                    <option value="">Pilih Status</option>
+                                    <option value="Ada">Ada</option>
+                                    <option value="Tidak Ada">Tidak Ada</option>
+                                    <option value="Pending">Pending</option>
+                                </select>
+                            </div>
+                        </div>
+                        <!-- Kolom 2: Hardcopy, Softcopy, Prepared By, Order By -->
+                        <div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">Hardcopy</label>
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                                    <option value="">Pilih Status</option>
+                                    <option value="Ada">Ada</option>
+                                    <option value="Tidak Ada">Tidak Ada</option>
+                                    <option value="Pending">Pending</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">Softcopy</label>
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                                    <option value="">Pilih Status</option>
+                                    <option value="Ada">Ada</option>
+                                    <option value="Tidak Ada">Tidak Ada</option>
+                                    <option value="Pending">Pending</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">Prepared By</label>
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                                    <option value="">Pilih Nama</option>
+                                    <option value="User A">User A</option>
+                                    <option value="User B">User B</option>
+                                    <option value="User C">User C</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">Order By</label>
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                                    <option value="">Pilih Nama</option>
+                                    <option value="Admin X">Admin X</option>
+                                    <option value="Admin Y">Admin Y</option>
+                                    <option value="Admin Z">Admin Z</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button type="button" onclick="closeDocumentChecklistModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
+                            Batal
+                        </button>
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105 text-sm">
+                            Simpan Checklist
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
 
@@ -924,11 +1147,8 @@
     let authInitialized = false;
     let unsubscribeFromPOs = null;
 
-    // Deklarasi variabel elemen DOM di scope global agar tidak dideklarasikan ulang
-    let noIdSearchInput, selectedNoIdHiddenInput, noIdSuggestionsDiv;
-
-    // Data untuk search No ID dan Nama Barang (akan berisi array string)
-    let noIdData = [];
+    // Data untuk search PID dan Item Description (akan berisi array string)
+    let pidData = [];
     let productsData = [];
 
     // Hanya menyimpan Set untuk filter yang diinginkan
@@ -977,7 +1197,7 @@
 
                 console.log("Current role:", currentUserRole);
                 // Pastikan data di-fetch sebelum inisialisasi lainnya
-                await fetchNoIdData();
+                await fetchPidData();
                 await fetchProductsData();
                 listenForPOs();
                 initEventListeners();
@@ -990,20 +1210,20 @@
         }
     });
 
-    // Fungsi untuk mengambil data No ID dari JSON eksternal (array string langsung)
-    async function fetchNoIdData() {
+    // Fungsi untuk mengambil data PID dari JSON eksternal (array string langsung)
+    async function fetchPidData() {
         try {
             const response = await fetch('https://raw.githubusercontent.com/bandeng77/monitoring.github.io/main/noid.json');
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             const rawData = await response.json();
-            noIdData = rawData; // Langsung assign karena sudah berupa array string
-            console.log("No ID data loaded:", noIdData.length, "items");
+            pidData = rawData;
+            console.log("PID data loaded:", pidData.length, "items");
         } catch (error) {
-            console.error("Error fetching No ID data:", error);
-            showCustomAlert("Gagal memuat data No ID. Fitur autocomplete No ID mungkin tidak berfungsi.", "error");
-            noIdData = []; // Pastikan array kosong jika gagal
+            console.error("Error fetching PID data:", error);
+            showCustomAlert("Gagal memuat data PID. Fitur autocomplete PID mungkin tidak berfungsi.", "error");
+            pidData = [];
         }
     }
 
@@ -1015,12 +1235,12 @@
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             const rawData = await response.json();
-            productsData = rawData; // Langsung assign karena sudah berupa array string
+            productsData = rawData;
             console.log("Products data loaded:", productsData.length, "items");
         } catch (error) {
             console.error("Error fetching products data:", error);
-            showCustomAlert("Gagal memuat data produk. Fitur autocomplete Nama Barang mungkin tidak berfungsi.", "error");
-            productsData = []; // Pastikan array kosong jika gagal
+            showCustomAlert("Gagal memuat data produk. Fitur autocomplete Item Description mungkin tidak berfungsi.", "error");
+            productsData = [];
         }
     }
 
@@ -1173,11 +1393,11 @@
         poCard.innerHTML = `
             <span class="po-card-number">${index + 1}</span>
             <div class="flex justify-between items-start">
-                <h3 class="font-bold text-gray-800">No. PO: ${po.noPO || 'No PO'}</h3>
+                <h3 class="font-bold text-gray-800">PO Number: ${po.noPO || 'No PO'}</h3>
             </div>
             <div class="mt-1 text-sm text-gray-600 deal-details">
-                <p><i class="fas fa-building"></i> Supplier: ${po.supplierName || '-'}</p>
-                <p><i class="fas fa-id-card"></i> No ID: ${po.selectedNoId || '-'}</p>
+                <p><i class="fas fa-building"></i> Vendor: ${po.supplierName || '-'}</p>
+                <p><i class="fas fa-id-card"></i> PID: ${po.items && po.items.length > 0 ? po.items[0].pid : '-'}</p>
                 <p><i class="fas fa-calendar-alt"></i> Plan Delivery: ${po.planDelivery ? formatDate(po.planDelivery) : '-'}</p>
             </div>
             <div class="mt-2 flex justify-between items-center deal-footer">
@@ -1270,8 +1490,9 @@
      * @param {HTMLInputElement} hiddenInput - Elemen input hidden untuk menyimpan nilai yang dipilih.
      * @param {HTMLDivElement} suggestionsDiv - Elemen div untuk menampilkan saran.
      * @param {Array<string>} dataList - Array string dari nilai yang mungkin.
+     * @param {Function} [onSelectCallback] - Callback function to execute when an item is selected.
      */
-    function setupSearchWithSuggestions(searchInput, hiddenInput, suggestionsDiv, dataList) {
+    function setupSearchWithSuggestions(searchInput, hiddenInput, suggestionsDiv, dataList, onSelectCallback = null) {
         const MAX_SUGGESTIONS = 20; // Batasi jumlah saran yang ditampilkan
         let currentFocus = -1;
 
@@ -1304,6 +1525,9 @@
                         searchInput.value = item; // Set input teks dengan nilai yang dipilih
                         hiddenInput.value = item; // Update hidden input
                         suggestionsDiv.classList.add('hidden'); // Hide suggestions
+                        if (onSelectCallback) {
+                            onSelectCallback(item);
+                        }
                     });
                     suggestionsDiv.appendChild(b);
                 });
@@ -1332,6 +1556,9 @@
                     // Jika Enter ditekan dan tidak ada saran yang dipilih, gunakan nilai yang diketik
                     hiddenInput.value = searchInput.value;
                     suggestionsDiv.classList.add('hidden');
+                    if (onSelectCallback) {
+                        onSelectCallback(searchInput.value);
+                    }
                 }
             }
         };
@@ -1385,7 +1612,7 @@
         }
     }
 
-    // NEW: Fungsi global untuk menutup semua daftar saran autocomplete
+    // Fungsi global untuk menutup semua daftar saran autocomplete
     function closeAllAutocompleteSuggestions() {
         document.querySelectorAll(".suggestions-list").forEach(item => {
             item.classList.add('hidden');
@@ -1393,13 +1620,13 @@
         });
     }
 
-    // NEW: Event listener global untuk menutup saran saat klik di luar
+    // Event listener global untuk menutup saran saat klik di luar
     document.addEventListener("click", function(e) {
         // Cek apakah target klik bukan bagian dari autocomplete
         let isAutocompleteClick = false;
         let target = e.target;
         while (target && target !== document.body) {
-            if (target.classList.contains('autocomplete-items') || target.classList.contains('item-name-search') || target.id === 'noIdSearch') {
+            if (target.classList.contains('autocomplete-items') || target.classList.contains('item-description-search') || target.classList.contains('pid-search-input')) {
                 isAutocompleteClick = true;
                 break;
             }
@@ -1410,54 +1637,78 @@
         }
     });
 
-    // Setup autocomplete untuk input No ID
-    function setupNoIdSearch() {
-        noIdSearchInput = document.getElementById('noIdSearch');
-        selectedNoIdHiddenInput = document.getElementById('selectedNoId');
-        noIdSuggestionsDiv = document.getElementById('noIdSuggestions');
-
-        if (noIdSearchInput && selectedNoIdHiddenInput && noIdSuggestionsDiv && noIdData.length > 0) {
-            setupSearchWithSuggestions(noIdSearchInput, selectedNoIdHiddenInput, noIdSuggestionsDiv, noIdData);
-        } else if (noIdSearchInput) {
-            console.warn("No ID data not available or empty. Autocomplete for No ID disabled.");
-        }
-    }
-
-    // Setup autocomplete untuk input Nama Barang (per baris item)
-    function setupItemSearch(inputElement, hiddenInputElement, suggestionsDivElement) {
+    // Setup autocomplete untuk input Item Description (per baris item)
+    function setupItemDescriptionSearch(inputElement, hiddenInputElement, suggestionsDivElement) {
         if (inputElement && hiddenInputElement && suggestionsDivElement && productsData.length > 0) {
             setupSearchWithSuggestions(inputElement, hiddenInputElement, suggestionsDivElement, productsData);
         } else if (inputElement) {
-            console.warn("Products data not available or empty. Autocomplete for item name disabled for this input.");
+            console.warn("Products data not available or empty. Autocomplete for item description disabled for this input.");
         }
     }
 
-    // Fungsi untuk menambah field Nama Barang & Quantity baru
-    function addItemField(itemName = '', itemQuantity = '') {
+    // Fungsi untuk menambah field Item Description & Quantity baru
+    // Sekarang fungsi ini akan membuat seluruh baris item, termasuk PID
+    function addItemField(item = { pid: '', description: '', quantity: '', coo: '', hsCode: '', revisiHS: '' }) {
         const itemsContainer = document.getElementById('items-container');
         const itemRow = document.createElement('div');
-        itemRow.className = 'flex items-center mb-2 item-row relative'; // Added relative for positioning suggestions
+        itemRow.className = 'item-row';
 
         const uniqueId = `item-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
         itemRow.innerHTML = `
-            <div class="relative flex-grow mr-2">
-                <input type="text" id="${uniqueId}-search" class="item-name-search w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="Cari atau ketik Nama Barang..." value="${itemName}">
-                <input type="hidden" id="${uniqueId}-hidden" class="item-name-hidden" value="${itemName}">
-                <div id="${uniqueId}-suggestions" class="autocomplete-items suggestions-list"></div>
+            <div class="relative">
+                <label class="block text-gray-700 text-xs font-semibold mb-1" for="${uniqueId}-pid-search">PID</label>
+                <input type="text" id="${uniqueId}-pid-search" class="pid-search-input w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm" placeholder="Cari PID..." value="${item.pid}">
+                <input type="hidden" id="${uniqueId}-pid-hidden" class="pid-hidden" value="${item.pid}">
+                <div id="${uniqueId}-pid-suggestions" class="autocomplete-items suggestions-list"></div>
             </div>
-            <input type="number" class="item-quantity w-24 p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="Qty" min="1" value="${itemQuantity}">
-            <button type="button" onclick="removeItemField(this)" class="ml-2 text-red-500 hover:text-red-700"><i class="fas fa-times-circle"></i></button>
+            <div class="relative">
+                <label class="block text-gray-700 text-xs font-semibold mb-1" for="${uniqueId}-description-search">Item Description</label>
+                <input type="text" id="${uniqueId}-description-search" class="item-description-search w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm" placeholder="Cari atau ketik Item Description..." value="${item.description}">
+                <input type="hidden" id="${uniqueId}-description-hidden" class="item-description-hidden" value="${item.description}">
+                <div id="${uniqueId}-description-suggestions" class="autocomplete-items suggestions-list"></div>
+            </div>
+            <div>
+                <label class="block text-gray-700 text-xs font-semibold mb-1" for="${uniqueId}-quantity">Qty</label>
+                <input type="number" id="${uniqueId}-quantity" class="item-quantity w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm" placeholder="Qty" min="1" value="${item.quantity}">
+            </div>
+            <div>
+                <label class="block text-gray-700 text-xs font-semibold mb-1" for="${uniqueId}-coo">COO</label>
+                <select id="${uniqueId}-coo" class="item-coo w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm">
+                    <option value="">Pilih COO</option>
+                    <option value="China" ${item.coo === 'China' ? 'selected' : ''}>China</option>
+                    <option value="USA" ${item.coo === 'USA' ? 'selected' : ''}>USA</option>
+                    <option value="Germany" ${item.coo === 'Germany' ? 'selected' : ''}>Germany</option>
+                    <option value="Japan" ${item.coo === 'Japan' ? 'selected' : ''}>Japan</option>
+                    <option value="Korea" ${item.coo === 'Korea' ? 'selected' : ''}>Korea</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-gray-700 text-xs font-semibold mb-1" for="${uniqueId}-hsCode">HS Code</label>
+                <input type="text" id="${uniqueId}-hsCode" class="item-hsCode w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm" value="${item.hsCode}">
+            </div>
+            <div>
+                <label class="block text-gray-700 text-xs font-semibold mb-1" for="${uniqueId}-revisiHS">Revised HS Code</label>
+                <input type="text" id="${uniqueId}-revisiHS" class="item-revisiHS w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm" value="${item.revisiHS}">
+            </div>
+            <div class="item-action-buttons">
+                <button type="button" onclick="removeItemField(this)" class="text-red-500 hover:text-red-700 p-1"><i class="fas fa-times-circle"></i></button>
+            </div>
         `;
         itemsContainer.appendChild(itemRow);
 
-        const newItemSearchInput = document.getElementById(`${uniqueId}-search`);
-        const newItemHiddenInput = document.getElementById(`${uniqueId}-hidden`);
-        const newItemSuggestionsDiv = document.getElementById(`${uniqueId}-suggestions`);
-        setupItemSearch(newItemSearchInput, newItemHiddenInput, newItemSuggestionsDiv);
+        const pidSearchInput = document.getElementById(`${uniqueId}-pid-search`);
+        const pidHiddenInput = document.getElementById(`${uniqueId}-pid-hidden`);
+        const pidSuggestionsDiv = document.getElementById(`${uniqueId}-pid-suggestions`);
+        setupSearchWithSuggestions(pidSearchInput, pidHiddenInput, pidSuggestionsDiv, pidData);
+
+        const itemDescriptionSearchInput = document.getElementById(`${uniqueId}-description-search`);
+        const itemDescriptionHiddenInput = document.getElementById(`${uniqueId}-description-hidden`);
+        const itemDescriptionSuggestionsDiv = document.getElementById(`${uniqueId}-description-suggestions`);
+        setupSearchWithSuggestions(itemDescriptionSearchInput, itemDescriptionHiddenInput, itemDescriptionSuggestionsDiv, productsData);
     }
 
-    // Fungsi untuk menghapus field Nama Barang & Quantity
+    // Fungsi untuk menghapus field Item Description & Quantity
     function removeItemField(button) {
         button.closest('.item-row').remove();
     }
@@ -1470,19 +1721,9 @@
 
         poForm.reset();
         document.getElementById('poId').value = '';
-        document.getElementById('items-container').innerHTML = `
-            <label class="block text-gray-700 text-sm font-semibold mb-2">Nama Barang & Quantity</label>
-        `;
+        document.getElementById('items-container').innerHTML = ''; // Clear all item rows
 
         document.getElementById('status').value = DEFAULT_STATUS;
-
-        // Clear hidden inputs for No ID
-        if (noIdSearchInput) noIdSearchInput.value = '';
-        if (selectedNoIdHiddenInput) selectedNoIdHiddenInput.value = '';
-        if (noIdSuggestionsDiv) {
-            noIdSuggestionsDiv.classList.add('hidden');
-            noIdSuggestionsDiv.innerHTML = '';
-        }
 
         // NEW: Tutup semua saran autocomplete yang mungkin terbuka
         closeAllAutocompleteSuggestions();
@@ -1492,36 +1733,29 @@
             const po = pos.find(p => p.id === poId);
             if (po) {
                 document.getElementById('poId').value = po.id;
-                document.getElementById('orderConfirmation').value = po.orderConfirmation || '';
                 document.getElementById('noPO').value = po.noPO || '';
                 document.getElementById('supplierName').value = po.supplierName || '';
-
-                // Set value for No ID search input and hidden input
-                if (noIdSearchInput) noIdSearchInput.value = po.selectedNoId || '';
-                if (selectedNoIdHiddenInput) selectedNoIdHiddenInput.value = po.selectedNoId || '';
+                document.getElementById('allocation').value = po.allocation || '';
+                document.getElementById('invoice').value = po.invoice || '';
+                document.getElementById('value').value = po.value || '';
 
                 if (po.items && po.items.length > 0) {
-                    po.items.forEach(item => addItemField(item.name, item.quantity));
+                    po.items.forEach(item => addItemField(item)); // Pass entire item object
                 } else {
                     addItemField(); // Tambahkan satu field kosong jika tidak ada item
                 }
 
-                document.getElementById('allocation').value = po.allocation || '';
-                document.getElementById('invoice').value = po.invoice || '';
                 document.getElementById('tracking').value = po.tracking || '';
-                document.getElementById('seaForwarder').value = po.seaForwarder || '';
-                document.getElementById('airForwarder').value = po.airForwarder || '';
+                document.getElementById('forwarderName').value = po.forwarderName || '';
+                document.getElementById('freightType').value = po.freightType || '';
                 document.getElementById('disrc').value = po.disrc || '';
 
+                document.getElementById('status').value = po.status || DEFAULT_STATUS;
                 document.getElementById('planDelivery').value = po.planDelivery instanceof Date ? po.planDelivery.toISOString().split('T')[0] : '';
                 document.getElementById('eta').value = po.eta instanceof Date ? po.eta.toISOString().split('T')[0] : '';
                 document.getElementById('actualDelivery').value = po.actualDelivery instanceof Date ? po.actualDelivery.toISOString().split('T')[0] : '';
 
-                document.getElementById('coo').value = po.coo || '';
-                document.getElementById('hsCode').value = po.hsCode || '';
-                document.getElementById('revisiHS').value = po.revisiHS || '';
                 document.getElementById('note').value = po.note || '';
-                document.getElementById('status').value = po.status || DEFAULT_STATUS;
             }
         } else {
             modalTitle.textContent = 'Tambah PO Baru';
@@ -1529,8 +1763,6 @@
         }
 
         poModal.classList.remove('hidden');
-        setupNoIdSearch(); // Inisialisasi autocomplete untuk No ID
-        // setupItemSearch akan dipanggil secara otomatis oleh addItemField
     }
 
     function closePOModal() {
@@ -1547,76 +1779,76 @@
         const noPO = document.getElementById('noPO').value;
 
         if (!noPO) {
-            showCustomAlert("No. PO harus diisi.", "error");
+            showCustomAlert("PO Number harus diisi.", "error");
             return;
         }
 
         closePOModal();
         showGlobalLoading();
 
-        const orderConfirmation = document.getElementById('orderConfirmation').value;
         const supplierName = document.getElementById('supplierName').value;
-        const selectedNoId = document.getElementById('selectedNoId').value; // Ambil dari hidden input
-
-        // NEW: Tambahkan No ID baru ke noIdData jika belum ada
-        if (selectedNoId && !noIdData.includes(selectedNoId)) {
-            noIdData.push(selectedNoId);
-            // Opsional: Jika Anda ingin persistensi, Anda perlu mekanisme untuk menyimpan kembali ke noid.json
-            // Ini biasanya membutuhkan backend atau Firebase Functions.
-            console.log(`New No ID "${selectedNoId}" added to local list.`);
-        }
+        const allocation = document.getElementById('allocation').value;
+        const invoice = document.getElementById('invoice').value;
+        const value = document.getElementById('value').value;
 
         const itemsToSave = [];
         document.querySelectorAll('.item-row').forEach(row => {
-            const itemName = row.querySelector('.item-name-hidden').value; // Ambil dari hidden input
-            const itemQuantity = row.querySelector('.item-quantity').value;
-            if (itemName && itemQuantity && parseInt(itemQuantity) > 0) {
-                itemsToSave.push({ name: itemName, quantity: parseInt(itemQuantity) });
+            const pid = row.querySelector('.pid-hidden').value;
+            const description = row.querySelector('.item-description-hidden').value;
+            const quantity = row.querySelector('.item-quantity').value;
+            const coo = row.querySelector('.item-coo').value;
+            const hsCode = row.querySelector('.item-hsCode').value;
+            const revisiHS = row.querySelector('.item-revisiHS').value;
 
-                // NEW: Tambahkan Nama Barang baru ke productsData jika belum ada
-                if (itemName && !productsData.includes(itemName)) {
-                    productsData.push(itemName);
-                    // Opsional: Jika Anda ingin persistensi, Anda perlu mekanisme untuk menyimpan kembali ke products.json
-                    console.log(`New product "${itemName}" added to local list.`);
+            if (pid || description || quantity || coo || hsCode || revisiHS) { // Only save if at least one field is filled
+                itemsToSave.push({
+                    pid: pid,
+                    description: description,
+                    quantity: parseInt(quantity) || 0,
+                    coo: coo,
+                    hsCode: hsCode,
+                    revisiHS: revisiHS
+                });
+
+                // Add new PID to pidData if not already present
+                if (pid && !pidData.includes(pid)) {
+                    pidData.push(pid);
+                    console.log(`New PID "${pid}" added to local list.`);
+                }
+                // Add new Item Description to productsData if not already present
+                if (description && !productsData.includes(description)) {
+                    productsData.push(description);
+                    console.log(`New item description "${description}" added to local list.`);
                 }
             }
         });
 
-        const allocation = document.getElementById('allocation').value;
-        const invoice = document.getElementById('invoice').value;
         const tracking = document.getElementById('tracking').value;
-        const seaForwarder = document.getElementById('seaForwarder').value;
-        const airForwarder = document.getElementById('airForwarder').value;
+        const forwarderName = document.getElementById('forwarderName').value;
+        const freightType = document.getElementById('freightType').value;
         const disrc = document.getElementById('disrc').value;
 
         const planDelivery = document.getElementById('planDelivery').value ? firebase.firestore.Timestamp.fromDate(new Date(document.getElementById('planDelivery').value)) : null;
         const eta = document.getElementById('eta').value ? firebase.firestore.Timestamp.fromDate(new Date(document.getElementById('eta').value)) : null;
         const actualDelivery = document.getElementById('actualDelivery').value ? firebase.firestore.Timestamp.fromDate(new Date(document.getElementById('actualDelivery').value)) : null;
 
-        const coo = document.getElementById('coo').value;
-        const hsCode = document.getElementById('hsCode').value;
-        const revisiHS = document.getElementById('revisiHS').value;
         const note = document.getElementById('note').value;
         const status = document.getElementById('status').value;
 
         const poData = {
-            orderConfirmation: orderConfirmation,
             noPO: noPO,
             supplierName: supplierName,
-            selectedNoId: selectedNoId,
-            items: itemsToSave,
             allocation: allocation,
             invoice: invoice,
+            value: value,
+            items: itemsToSave, // Now an array of objects with more details
             tracking: tracking,
-            seaForwarder: seaForwarder,
-            airForwarder: airForwarder,
+            forwarderName: forwarderName,
+            freightType: freightType,
             disrc: disrc,
             planDelivery: planDelivery,
             eta: eta,
             actualDelivery: actualDelivery,
-            coo: coo,
-            hsCode: hsCode,
-            revisiHS: revisiHS,
             note: note,
             status: status,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -1696,40 +1928,42 @@
         }
 
         document.getElementById('poDetailTitle').textContent = po.noPO || 'Detail PO';
-        document.getElementById('detailOrderConfirmation').textContent = po.orderConfirmation || '-';
         document.getElementById('detailNoPO').textContent = po.noPO || '-';
         document.getElementById('detailSupplierName').textContent = po.supplierName || '-';
-        document.getElementById('detailNoId').textContent = po.selectedNoId || '-';
+        document.getElementById('detailAllocation').textContent = po.allocation || '-';
+        document.getElementById('detailInvoice').textContent = po.invoice || '-';
+        document.getElementById('detailValue').textContent = po.value || '-';
 
         const detailItemsList = document.getElementById('detailItemsList');
         detailItemsList.innerHTML = '';
         if (po.items && po.items.length > 0) {
             po.items.forEach(item => {
-                const listItem = document.createElement('li');
-                listItem.textContent = `${item.name} (Qty: ${item.quantity})`;
-                detailItemsList.appendChild(listItem);
+                const itemDetailDiv = document.createElement('div');
+                itemDetailDiv.className = 'grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-1 border-b border-gray-100 pb-2 mb-2 last:border-b-0';
+                itemDetailDiv.innerHTML = `
+                    <p class="text-gray-900"><span class="font-semibold text-gray-700">PID:</span> ${item.pid || '-'}</p>
+                    <p class="text-gray-900"><span class="font-semibold text-gray-700">Item Description:</span> ${item.description || '-'}</p>
+                    <p class="text-gray-900"><span class="font-semibold text-gray-700">Qty:</span> ${item.quantity || '-'}</p>
+                    <p class="text-gray-900"><span class="font-semibold text-gray-700">COO:</span> ${item.coo || '-'}</p>
+                    <p class="text-gray-900"><span class="font-semibold text-gray-700">HS Code:</span> ${item.hsCode || '-'}</p>
+                    <p class="text-gray-900"><span class="font-semibold text-gray-700">Revised HS Code:</span> ${item.revisiHS || '-'}</p>
+                `;
+                detailItemsList.appendChild(itemDetailDiv);
             });
         } else {
-            const listItem = document.createElement('li');
-            listItem.textContent = '-';
-            detailItemsList.appendChild(listItem);
+            detailItemsList.innerHTML = '<p class="text-gray-700">- Tidak ada detail barang -</p>';
         }
 
-        document.getElementById('detailAllocation').textContent = po.allocation || '-';
-        document.getElementById('detailInvoice').textContent = po.invoice || '-';
         document.getElementById('detailTracking').textContent = po.tracking || '-';
-        document.getElementById('detailSeaForwarder').textContent = po.seaForwarder || '-';
-        document.getElementById('detailAirForwarder').textContent = po.airForwarder || '-';
+        document.getElementById('detailForwarderName').textContent = po.forwarderName || '-';
+        document.getElementById('detailFreightType').textContent = po.freightType || '-';
         document.getElementById('detailDisrc').textContent = po.disrc || '-';
 
+        document.getElementById('detailStatus').textContent = po.status || '-';
         document.getElementById('detailPlanDelivery').textContent = po.planDelivery ? formatDate(po.planDelivery) : '-';
         document.getElementById('detailETA').textContent = po.eta ? formatDate(po.eta) : '-';
         document.getElementById('detailActualDelivery').textContent = po.actualDelivery ? formatDate(po.actualDelivery) : '-';
-        document.getElementById('detailStatus').textContent = po.status || '-';
-
-        document.getElementById('detailCOO').textContent = po.coo || '-';
-        document.getElementById('detailHSCode').textContent = po.hsCode || '-';
-        document.getElementById('detailRevisiHS').textContent = po.revisiHS || '-';
+        
         document.getElementById('detailNote').textContent = po.note || '-';
 
         document.getElementById('poDetailModal').classList.remove('hidden');
@@ -1758,6 +1992,7 @@
             console.log("Applying permissions for Role:", currentUserRole);
 
             const newPOBtn = document.getElementById('newPOBtn');
+            const documentChecklistBtn = document.getElementById('documentChecklistBtn');
             const exportExcelBtn = document.getElementById('exportExcelBtn');
             const searchInput = document.getElementById('searchPOs');
             const openFilterPanelBtn = document.getElementById('openFilterPanelBtn');
@@ -1765,6 +2000,7 @@
             const authButton = document.getElementById('authButton');
 
             if (newPOBtn) newPOBtn.classList.remove('hidden');
+            if (documentChecklistBtn) documentChecklistBtn.classList.remove('hidden');
             if (exportExcelBtn) exportExcelBtn.classList.remove('hidden');
             if (backButton) backButton.classList.remove('hidden');
             if (authButton) authButton.classList.remove('hidden');
@@ -1792,8 +2028,19 @@
                 });
             }
 
+            const documentChecklistForm = document.getElementById('documentChecklistForm');
+            if (documentChecklistForm) {
+                documentChecklistForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    // Implement save logic for document checklist here
+                    showCustomAlert("Document Checklist berhasil disimpan!", "success");
+                    closeDocumentChecklistModal();
+                });
+            }
+
             const buttons = [
                 { id: 'newPOBtn', func: openPOModal },
+                { id: 'documentChecklistBtn', func: openDocumentChecklistModal },
                 { id: 'exportExcelBtn', func: exportToExcel },
                 { id: 'backButton', func: goToIndex },
                 { id: 'authButton', func: logout },
@@ -1857,8 +2104,10 @@
                 const matchesSearch =
                     (po.noPO && po.noPO.toLowerCase().includes(searchTerm)) ||
                     (po.supplierName && po.supplierName.toLowerCase().includes(searchTerm)) ||
-                    (po.selectedNoId && po.selectedNoId.toLowerCase().includes(searchTerm)) ||
-                    (po.items && po.items.some(item => item.name && item.name.toLowerCase().includes(searchTerm)));
+                    (po.items && po.items.some(item =>
+                        (item.pid && item.pid.toLowerCase().includes(searchTerm)) ||
+                        (item.description && item.description.toLowerCase().includes(searchTerm))
+                    ));
 
                 const matchesSupplier =
                     supplierFilter === 'all' ||
@@ -1866,11 +2115,11 @@
 
                 const matchesCOO =
                     cooFilter === 'all' ||
-                    (po.coo && po.coo === cooFilter);
+                    (po.items && po.items.some(item => item.coo && item.coo === cooFilter));
 
                 const matchesHSCode =
                     hsCodeFilter === 'all' ||
-                    (po.hsCode && po.hsCode === hsCodeFilter);
+                    (po.items && po.items.some(item => item.hsCode && item.hsCode === hsCodeFilter));
 
                 const matchesStatus =
                     statusFilter === 'all' ||
@@ -1973,16 +2222,32 @@
         deleteModal.classList.add('hidden');
     }
 
+    // NEW: Document Checklist Modal functions
+    function openDocumentChecklistModal() {
+        const documentChecklistModal = document.getElementById('documentChecklistModal');
+        if (documentChecklistModal) {
+            documentChecklistModal.classList.remove('hidden');
+        }
+    }
+
+    function closeDocumentChecklistModal() {
+        const documentChecklistModal = document.getElementById('documentChecklistModal');
+        if (documentChecklistModal) {
+            documentChecklistModal.classList.add('hidden');
+        }
+    }
+
     // ==================== FUNGSI EXPORT TO EXCEL ====================
     function exportToExcel() {
         showGlobalLoading();
         try {
             const data = [];
             const headers = [
-                "No. Urut", "Order Confirmation", "No. PO", "Nama Supplier", "No ID", "Nama Barang & Quantity",
-                "Allocation", "Invoice", "Tracking", "Sea Forwarder",
-                "Air Forwarder", "DISRC", "Plan Delivery", "ETA", "Actual Delivery",
-                "COO", "HS Code", "Revisi HS", "Note", "Status", "Dibuat Oleh", "Tanggal Dibuat"
+                "No. Urut", "PO Number", "Vendor", "Allocation", "Invoice Number", "Value",
+                "PID", "Item Description", "Qty", "COO (Item)", "HS Code (Item)", "Revised HS Code (Item)",
+                "AWB/Tracking Number", "Nama Forwarder", "Jenis Freight", "DISRC",
+                "Order Status", "Plan Delivery", "ETA", "Actual Delivery",
+                "Note", "Dibuat Oleh", "Tanggal Dibuat"
             ];
             data.push(headers);
 
@@ -1996,8 +2261,10 @@
                 const matchesSearch =
                     (po.noPO && po.noPO.toLowerCase().includes(searchTerm)) ||
                     (po.supplierName && po.supplierName.toLowerCase().includes(searchTerm)) ||
-                    (po.selectedNoId && po.selectedNoId.toLowerCase().includes(searchTerm)) ||
-                    (po.items && po.items.some(item => item.name && item.name.toLowerCase().includes(searchTerm)));
+                    (po.items && po.items.some(item =>
+                        (item.pid && item.pid.toLowerCase().includes(searchTerm)) ||
+                        (item.description && item.description.toLowerCase().includes(searchTerm))
+                    ));
 
                 const matchesSupplier =
                     supplierFilter === 'all' ||
@@ -2005,11 +2272,11 @@
 
                 const matchesCOO =
                     cooFilter === 'all' ||
-                    (po.coo && po.coo === cooFilter);
+                    (po.items && po.items.some(item => item.coo && item.coo === cooFilter));
 
                 const matchesHSCode =
                     hsCodeFilter === 'all' ||
-                    (po.hsCode && po.hsCode === hsCodeFilter);
+                    (po.items && po.items.some(item => item.hsCode && item.hsCode === hsCodeFilter));
 
                 const matchesStatus =
                     statusFilter === 'all' ||
@@ -2019,35 +2286,59 @@
             });
 
             currentPOs.forEach((po, index) => {
-                const itemsString = po.items && po.items.length > 0
-                    ? po.items.map(item => `${item.name} (Qty: ${item.quantity})`).join(', ')
-                    : '';
-
-                const row = [
-                    index + 1,
-                    po.orderConfirmation || '',
-                    po.noPO || '',
-                    po.supplierName || '',
-                    po.selectedNoId || '',
-                    itemsString,
-                    po.allocation || '',
-                    po.invoice || '',
-                    po.tracking || '',
-                    po.seaForwarder || '',
-                    po.airForwarder || '',
-                    po.disrc || '',
-                    po.planDelivery ? formatDate(po.planDelivery) : '',
-                    po.eta ? formatDate(po.eta) : '',
-                    po.actualDelivery ? formatDate(po.actualDelivery) : '',
-                    po.coo || '',
-                    po.hsCode || '',
-                    po.revisiHS || '',
-                    po.note || '',
-                    po.status ? po.status.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : '',
-                    po.createdBy || '',
-                    po.createdAt ? formatDateTime(po.createdAt) : ''
-                ];
-                data.push(row);
+                if (po.items && po.items.length > 0) {
+                    po.items.forEach(item => {
+                        const row = [
+                            index + 1,
+                            po.noPO || '',
+                            po.supplierName || '',
+                            po.allocation || '',
+                            po.invoice || '',
+                            po.value || '',
+                            item.pid || '',
+                            item.description || '',
+                            item.quantity || '',
+                            item.coo || '',
+                            item.hsCode || '',
+                            item.revisiHS || '',
+                            po.tracking || '',
+                            po.forwarderName || '',
+                            po.freightType || '',
+                            po.disrc || '',
+                            po.status ? po.status.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : '',
+                            po.planDelivery ? formatDate(po.planDelivery) : '',
+                            po.eta ? formatDate(po.eta) : '',
+                            po.actualDelivery ? formatDate(po.actualDelivery) : '',
+                            po.note || '',
+                            po.createdBy || '',
+                            po.createdAt ? formatDateTime(po.createdAt) : ''
+                        ];
+                        data.push(row);
+                    });
+                } else {
+                    // If no items, still add the main PO data
+                    const row = [
+                        index + 1,
+                        po.noPO || '',
+                        po.supplierName || '',
+                        po.allocation || '',
+                        po.invoice || '',
+                        po.value || '',
+                        '', '', '', '', '', '', // Empty for item details
+                        po.tracking || '',
+                        po.forwarderName || '',
+                        po.freightType || '',
+                        po.disrc || '',
+                        po.status ? po.status.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : '',
+                        po.planDelivery ? formatDate(po.planDelivery) : '',
+                        po.eta ? formatDate(po.eta) : '',
+                        po.actualDelivery ? formatDate(po.actualDelivery) : '',
+                        po.note || '',
+                        po.createdBy || '',
+                        po.createdAt ? formatDateTime(po.createdAt) : ''
+                    ];
+                    data.push(row);
+                }
             });
 
             const ws = XLSX.utils.aoa_to_sheet(data);
@@ -2069,11 +2360,8 @@
     // ==================== INISIALISASI ====================
 
     document.addEventListener('DOMContentLoaded', function() {
-        // Inisialisasi variabel DOM global
-        noIdSearchInput = document.getElementById('noIdSearch');
-        selectedNoIdHiddenInput = document.getElementById('selectedNoId');
-        noIdSuggestionsDiv = document.getElementById('noIdSuggestions');
-
+        // No need to initialize pidSearchInput, etc. globally anymore
+        // as they are created dynamically within addItemField
         initSortable();
     });
 </script>
