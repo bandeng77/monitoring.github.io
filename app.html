@@ -1717,7 +1717,7 @@
         } catch (error) {
             console.error("Error deleting PO:", error);
             showCustomAlert("Gagal menghapus PO. Silakan coba lagi.", "error");
-        });
+        }
     }
 
     async function updatePOStatus(poId, newStatus) {
