@@ -917,10 +917,6 @@
     const dealsCollection = db.collection('purchaseOrders');
     const usersCollection = db.collection('users');
 
-    // NEW: Koleksi Firestore untuk daftar No ID dan Produk
-    const noIdsCollection = db.collection('noIdsList');
-    const productsCollection = db.collection('productsList');
-
     let pos = [];
     const DEFAULT_STATUS = 'On Order';
     let currentUserRole = 'user';
@@ -980,9 +976,9 @@
                 }
 
                 console.log("Current role:", currentUserRole);
-                // Pastikan data di-fetch dari Firestore sebelum inisialisasi lainnya
-                await fetchNoIdData(); // NEW: Ambil data No ID dari Firestore
-                await fetchProductsData(); // NEW: Ambil data Produk dari Firestore
+                // Pastikan data di-fetch sebelum inisialisasi lainnya
+                await fetchNoIdData();
+                await fetchProductsData();
                 listenForPOs();
                 initEventListeners();
                 hideGlobalLoading();
@@ -994,29 +990,37 @@
         }
     });
 
-    // Fungsi untuk mengambil data No ID dari Firestore
+    // Fungsi untuk mengambil data No ID dari JSON eksternal (array string langsung)
     async function fetchNoIdData() {
         try {
-            const snapshot = await noIdsCollection.get();
-            noIdData = snapshot.docs.map(doc => doc.data().value);
-            console.log("No ID data loaded from Firestore:", noIdData.length, "items");
+            const response = await fetch('https://raw.githubusercontent.com/bandeng77/monitoring.github.io/main/noid.json');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const rawData = await response.json();
+            noIdData = rawData; // Langsung assign karena sudah berupa array string
+            console.log("No ID data loaded:", noIdData.length, "items");
         } catch (error) {
-            console.error("Error fetching No ID data from Firestore:", error);
-            showCustomAlert("Gagal memuat data No ID dari Firestore. Fitur autocomplete No ID mungkin tidak berfungsi.", "error");
-            noIdData = [];
+            console.error("Error fetching No ID data:", error);
+            showCustomAlert("Gagal memuat data No ID. Fitur autocomplete No ID mungkin tidak berfungsi.", "error");
+            noIdData = []; // Pastikan array kosong jika gagal
         }
     }
 
-    // Fungsi untuk mengambil data produk dari Firestore
+    // Fungsi untuk mengambil data produk dari JSON eksternal (array string langsung)
     async function fetchProductsData() {
         try {
-            const snapshot = await productsCollection.get();
-            productsData = snapshot.docs.map(doc => doc.data().value);
-            console.log("Products data loaded from Firestore:", productsData.length, "items");
+            const response = await fetch('https://raw.githubusercontent.com/bandeng77/monitoring.github.io/main/products.json');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const rawData = await response.json();
+            productsData = rawData; // Langsung assign karena sudah berupa array string
+            console.log("Products data loaded:", productsData.length, "items");
         } catch (error) {
-            console.error("Error fetching products data from Firestore:", error);
-            showCustomAlert("Gagal memuat data produk dari Firestore. Fitur autocomplete Nama Barang mungkin tidak berfungsi.", "error");
-            productsData = [];
+            console.error("Error fetching products data:", error);
+            showCustomAlert("Gagal memuat data produk. Fitur autocomplete Nama Barang mungkin tidak berfungsi.", "error");
+            productsData = []; // Pastikan array kosong jika gagal
         }
     }
 
@@ -1554,41 +1558,29 @@
         const supplierName = document.getElementById('supplierName').value;
         const selectedNoId = document.getElementById('selectedNoId').value; // Ambil dari hidden input
 
-        // NEW: Tambahkan No ID baru ke noIdData (lokal) dan Firestore jika belum ada
+        // NEW: Tambahkan No ID baru ke noIdData jika belum ada
         if (selectedNoId && !noIdData.includes(selectedNoId)) {
-            noIdData.push(selectedNoId); // Tambahkan ke array lokal
-            try {
-                // Tambahkan ke Firestore. Gunakan selectedNoId sebagai ID dokumen
-                // untuk memastikan keunikan dan kemudahan pencarian.
-                await noIdsCollection.doc(selectedNoId).set({ value: selectedNoId });
-                console.log(`New No ID "${selectedNoId}" added to Firestore.`);
-            } catch (error) {
-                console.error(`Error adding new No ID "${selectedNoId}" to Firestore:`, error);
-                // Anda bisa memilih untuk menampilkan alert atau tidak
-            }
+            noIdData.push(selectedNoId);
+            // Opsional: Jika Anda ingin persistensi, Anda perlu mekanisme untuk menyimpan kembali ke noid.json
+            // Ini biasanya membutuhkan backend atau Firebase Functions.
+            console.log(`New No ID "${selectedNoId}" added to local list.`);
         }
 
         const itemsToSave = [];
-        // Gunakan Promise.all untuk menunggu semua operasi async selesai jika ada
-        const itemPromises = [];
         document.querySelectorAll('.item-row').forEach(row => {
             const itemName = row.querySelector('.item-name-hidden').value; // Ambil dari hidden input
             const itemQuantity = row.querySelector('.item-quantity').value;
             if (itemName && itemQuantity && parseInt(itemQuantity) > 0) {
                 itemsToSave.push({ name: itemName, quantity: parseInt(itemQuantity) });
 
-                // NEW: Tambahkan Nama Barang baru ke productsData (lokal) dan Firestore jika belum ada
+                // NEW: Tambahkan Nama Barang baru ke productsData jika belum ada
                 if (itemName && !productsData.includes(itemName)) {
-                    productsData.push(itemName); // Tambahkan ke array lokal
-                    itemPromises.push(
-                        productsCollection.doc(itemName).set({ value: itemName })
-                            .then(() => console.log(`New product "${itemName}" added to Firestore.`))
-                            .catch(error => console.error(`Error adding new product "${itemName}" to Firestore:`, error))
-                    );
+                    productsData.push(itemName);
+                    // Opsional: Jika Anda ingin persistensi, Anda perlu mekanisme untuk menyimpan kembali ke products.json
+                    console.log(`New product "${itemName}" added to local list.`);
                 }
             }
         });
-        await Promise.all(itemPromises); // Tunggu semua penambahan produk ke Firestore selesai
 
         const allocation = document.getElementById('allocation').value;
         const invoice = document.getElementById('invoice').value;
@@ -1645,9 +1637,6 @@
             showCustomAlert("Gagal menyimpan PO. Silakan coba lagi.", "error");
         } finally {
             hideGlobalLoading();
-            // NEW: Panggil ulang fetch data agar autocomplete diperbarui dari Firestore
-            await fetchNoIdData();
-            await fetchProductsData();
         }
     }
 
