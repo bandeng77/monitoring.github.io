@@ -539,7 +539,7 @@
                     <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900">Purchase Order Monitoring <i class="fas fa-box-open text-blue-600 ml-2"></i></h1>
                 </div>
                 <div class="logout-btn-container">
-                    <button id="authButton" onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
+                    <button id="authButton" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
                         <i class="fas fa-sign-out-alt mr-2"></i> Logout
                     </button>
                 </div>
@@ -547,15 +547,15 @@
 
             <!-- Buttons below title -->
             <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 mt-4">
-                <button id="newPOBtn" onclick="openPOModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
+                <button id="newPOBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
                     <i class="fas fa-plus-circle mr-2"></i> PO Baru
                 </button>
 
-                <button id="exportExcelBtn" onclick="exportToExcel()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
+                <button id="exportExcelBtn" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
                     <i class="fas fa-file-excel mr-2"></i> Export Excel
                 </button>
 
-                <button id="backButton" onclick="goToIndex()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
+                <button id="backButton" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
                     <i class="fas fa-arrow-left mr-2"></i> Kembali
                 </button>
             </div>
@@ -618,7 +618,7 @@
                                 <label class="block text-gray-700 text-sm font-semibold mb-2">Nama Barang & Quantity</label>
                                 <!-- Item rows will be added here by JavaScript -->
                             </div>
-                            <button type="button" onclick="addItemField()" class="mt-2 bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
+                            <button type="button" id="addItemFieldBtn" class="mt-2 bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
                                 <i class="fas fa-plus mr-1"></i> Tambah Barang
                             </button>
                         </div>
@@ -699,7 +699,7 @@
                         </div>
                     </div>
                     <div class="flex justify-end space-x-3 mt-6">
-                        <button type="button" onclick="closePOModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
+                        <button type="button" id="closePOModalBtn" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
                             Batal
                         </button>
                         <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105 text-sm">
@@ -794,7 +794,7 @@
                     </div>
                 </div>
                 <div class="flex justify-end space-x-3 mt-6">
-                    <button type="button" onclick="closePODetailModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
+                    <button type="button" id="closePODetailModalBtn" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
                         Tutup
                     </button>
                 </div>
@@ -807,10 +807,10 @@
                 <h2 class="text-xl font-bold mb-4 text-gray-900">Konfirmasi Penghapusan</h2>
                 <p class="text-gray-700 mb-6 text-sm">Apakah Anda yakin ingin menghapus "<span id="dealToDeleteName" class="font-semibold"></span>"? Aksi ini tidak dapat dibatalkan.</p>
                 <div class="flex justify-end space-x-3">
-                    <button type="button" onclick="closeDeleteModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
+                    <button type="button" id="closeDeleteModalBtn" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
                         Batal
                     </button>
-                    <button type="button" id="confirmDeleteBtn" onclick="deletePO()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105 text-sm">
+                    <button type="button" id="confirmDeleteBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105 text-sm">
                         Hapus
                     </button>
                 </div>
@@ -822,7 +822,7 @@
             <div class="bg-white rounded-xl p-8 w-full max-w-2xl shadow-2xl modal-content-enter" id="filterPanelContent">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-xl sm:text-2xl font-bold text-gray-900 flex items-center"><i class="fas fa-filter mr-3 text-gray-500"></i> Filter POs</h2>
-                    <button onclick="closeFilterPanel()" class="text-gray-500 hover:text-gray-700 transition duration-200">
+                    <button id="closeFilterPanelBtn" class="text-gray-500 hover:text-gray-700 transition duration-200">
                         <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
@@ -868,10 +868,10 @@
                     </div>
                 </div>
                 <div class="flex justify-end space-x-3 mt-6">
-                    <button type="button" onclick="resetFilters()" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
+                    <button type="button" id="resetFiltersBtn" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
                         Reset Filter
                     </button>
-                    <button type="button" onclick="applyFiltersAndClosePanel()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105 text-sm">
+                    <button type="button" id="applyFiltersBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105 text-sm">
                         Terapkan Filter
                     </button>
                 </div>
@@ -886,7 +886,7 @@
                 </div>
                 <h2 class="text-2xl font-bold mb-4 text-gray-900">Berhasil!</h2>
                 <p class="text-gray-700 mb-6" id="successAlertMessage">PO berhasil disimpan.</p>
-                <button type="button" onclick="closeSuccessAlertModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105">
+                <button type="button" id="closeSuccessAlertModalBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105">
                     OK
                 </button>
             </div>
@@ -1223,7 +1223,7 @@
                 <div class="relative">
                     <select onchange="updatePOStatus('${po.id}', this.value)" class="status-dropdown ${getStatusClass(po.status)}">
                         <option value="On Order" ${po.status === 'On Order' ? 'selected' : ''}>On Order</option>
-                        <option value="Waiting" ${po.status === 'Waiting' ? 'selected'}>Waiting</option>
+                        <option value="Waiting" ${po.status === 'Waiting' ? 'selected' : ''}>Waiting</option>
                         <option value="Picked Up" ${po.status === 'Picked Up' ? 'selected' : ''}>Picked Up</option>
                         <option value="On Delivery" ${po.status === 'On Delivery' ? 'selected' : ''}>On Delivery</option>
                         <option value="Delivered" ${po.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
@@ -1717,9 +1717,7 @@
         } catch (error) {
             console.error("Error deleting PO:", error);
             showCustomAlert("Gagal menghapus PO. Silakan coba lagi.", "error");
-        } finally {
-            hideGlobalLoading();
-        }
+        });
     }
 
     async function updatePOStatus(poId, newStatus) {
@@ -1854,7 +1852,8 @@
             buttons.forEach(btn => {
                 const element = document.getElementById(btn.id);
                 if (element) {
-                    element.removeEventListener('click', btn.func);
+                    element.removeEventListener('click', btn.func); // Hapus duplikasi jika ada
+                    element.removeEventListener('click', createRipple); // Hapus duplikasi jika ada
                     element.addEventListener('click', btn.func);
                     element.addEventListener('click', createRipple);
                     console.log(`Event listener added for ${btn.id}`);
@@ -1866,6 +1865,66 @@
                 searchInput.removeEventListener('keyup', filterPOs);
                 searchInput.addEventListener('keyup', filterPOs);
             }
+
+            // NEW: Tambahkan event listener untuk tombol "Tambah Barang"
+            const addItemFieldBtn = document.getElementById('addItemFieldBtn');
+            if (addItemFieldBtn) {
+                addItemFieldBtn.addEventListener('click', addItemField);
+                addItemFieldBtn.addEventListener('click', createRipple);
+            }
+
+            // NEW: Tambahkan event listener untuk tombol "Batal" di poModal
+            const closePOModalBtn = document.getElementById('closePOModalBtn');
+            if (closePOModalBtn) {
+                closePOModalBtn.addEventListener('click', closePOModal);
+            }
+
+            // NEW: Tambahkan event listener untuk tombol "Tutup" di poDetailModal
+            const closePODetailModalBtn = document.getElementById('closePODetailModalBtn');
+            if (closePODetailModalBtn) {
+                closePODetailModalBtn.addEventListener('click', closePODetailModal);
+            }
+
+            // NEW: Tambahkan event listener untuk tombol "Batal" di deleteModal
+            const closeDeleteModalBtn = document.getElementById('closeDeleteModalBtn');
+            if (closeDeleteModalBtn) {
+                closeDeleteModalBtn.addEventListener('click', closeDeleteModal);
+            }
+
+            // NEW: Tambahkan event listener untuk tombol "Hapus" di deleteModal
+            const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+            if (confirmDeleteBtn) {
+                confirmDeleteBtn.addEventListener('click', deletePO);
+                confirmDeleteBtn.addEventListener('click', createRipple);
+            }
+
+            // NEW: Tambahkan event listener untuk tombol "Tutup" di filterPanel
+            const closeFilterPanelBtn = document.getElementById('closeFilterPanelBtn');
+            if (closeFilterPanelBtn) {
+                closeFilterPanelBtn.addEventListener('click', closeFilterPanel);
+            }
+
+            // NEW: Tambahkan event listener untuk tombol "Reset Filter" di filterPanel
+            const resetFiltersBtn = document.getElementById('resetFiltersBtn');
+            if (resetFiltersBtn) {
+                resetFiltersBtn.addEventListener('click', resetFilters);
+                resetFiltersBtn.addEventListener('click', createRipple);
+            }
+
+            // NEW: Tambahkan event listener untuk tombol "Terapkan Filter" di filterPanel
+            const applyFiltersBtn = document.getElementById('applyFiltersBtn');
+            if (applyFiltersBtn) {
+                applyFiltersBtn.addEventListener('click', applyFiltersAndClosePanel);
+                applyFiltersBtn.addEventListener('click', createRipple);
+            }
+
+            // NEW: Tambahkan event listener untuk tombol "OK" di successAlertModal
+            const closeSuccessAlertModalBtn = document.getElementById('closeSuccessAlertModalBtn');
+            if (closeSuccessAlertModalBtn) {
+                closeSuccessAlertModalBtn.addEventListener('click', closeSuccessAlertModal);
+                closeSuccessAlertModalBtn.addEventListener('click', createRipple);
+            }
+
         } catch (error) {
             console.error("Error initializing event listeners:", error);
             showCustomAlert("Gagal memuat beberapa fungsi", "error");
