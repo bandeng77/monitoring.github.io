@@ -362,7 +362,7 @@
             font-weight: 500;
         }
         #poDetailModalContent .detail-item p:first-child {
-            color: var(--text-dark); /* Pertahankan warna teks yang lebih terang untuk label */
+            color: var(--text-light); /* Pertahankan warna teks yang lebih terang untuk label */
             font-weight: 600; /* Jadikan label sedikit lebih tebal */
         }
         #poDetailModalContent .detail-item ul,
@@ -828,59 +828,59 @@
                         <div class="detail-grid">
                             <div class="detail-item">
                                 <p class="text-gray-700 font-semibold">PO Number:</p>
-                                <p id="detailNoPO" class="text-dark-900"></p>
+                                <p id="detailNoPO" class="text-gray-900"></p>
                             </div>
                             <div class="detail-item">
                                 <p class="text-gray-700 font-semibold">Vendor:</p>
-                                <p id="detailSupplierName" class="text-dark-900"></p>
+                                <p id="detailSupplierName" class="text-gray-900"></p>
                             </div>
                             <div class="detail-item">
                                 <p class="text-gray-700 font-semibold">Allocation:</p>
-                                <p id="detailAllocation" class="text-dark-900"></p>
+                                <p id="detailAllocation" class="text-gray-900"></p>
                             </div>
                             <div class="detail-item">
                                 <p class="text-gray-700 font-semibold">Invoice Number:</p>
-                                <p id="detailInvoice" class="text-dark-900"></p>
+                                <p id="detailInvoice" class="text-gray-900"></p>
                             </div>
                             <div class="detail-item">
                                 <p class="text-gray-700 font-semibold">Value:</p>
-                                <p id="detailValue" class="text-dark-900"></p>
+                                <p id="detailValue" class="text-gray-900"></p>
                             </div>
                             <div class="detail-item">
                                 <p class="text-gray-700 font-semibold">AWB/Tracking Number:</p>
-                                <p id="detailTracking" class="text-dark-900"></p>
+                                <p id="detailTracking" class="text-gray-900"></p>
                             </div>
                             <div class="detail-item">
                                 <p class="text-gray-700 font-semibold">Nama Forwarder:</p>
-                                <p id="detailForwarderName" class="text-dark-900"></p>
+                                <p id="detailForwarderName" class="text-gray-900"></p>
                             </div>
                             <div class="detail-item">
                                 <p class="text-gray-700 font-semibold">Jenis Freight:</p>
-                                <p id="detailFreightType" class="text-dark-900"></p>
+                                <p id="detailFreightType" class="text-gray-900"></p>
                             </div>
                             <div class="detail-item">
                                 <p class="text-gray-700 font-semibold">DISRC:</p>
-                                <p id="detailDisrc" class="text-dark-900"></p>
+                                <p id="detailDisrc" class="text-gray-900"></p>
                             </div>
                             <div class="detail-item">
                                 <p class="text-gray-700 font-semibold">Order Status:</p>
-                                <p id="detailStatus" class="text-dark-900"></p>
+                                <p id="detailStatus" class="text-gray-900"></p>
                             </div>
                             <div class="detail-item">
                                 <p class="text-gray-700 font-semibold">Plan Delivery:</p>
-                                <p id="detailPlanDelivery" class="text-dark-900"></p>
+                                <p id="detailPlanDelivery" class="text-gray-900"></p>
                             </div>
                             <div class="detail-item">
                                 <p class="text-gray-700 font-semibold">ETA:</p>
-                                <p id="detailETA" class="text-dark-900"></p>
+                                <p id="detailETA" class="text-gray-900"></p>
                             </div>
                             <div class="detail-item">
                                 <p class="text-gray-700 font-semibold">Actual Delivery:</p>
-                                <p id="detailActualDelivery" class="text-dark-900"></p>
+                                <p id="detailActualDelivery" class="text-gray-900"></p>
                             </div>
                             <div class="detail-item col-span-full">
                                 <p class="text-gray-700 font-semibold">Note:</p>
-                                <p id="detailNote" class="text-dark-900"></p>
+                                <p id="detailNote" class="text-gray-900"></p>
                             </div>
                         </div>
                     </div>
@@ -997,6 +997,20 @@
                     </button>
                 </div>
                 <form id="documentChecklistForm">
+                    <!-- PO Number Search for Checklist -->
+                    <div class="mb-6 border-b pb-4 border-gray-200">
+                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="docChecklist_poNumberSearch">Cari PO Number</label>
+                        <div class="relative flex items-center">
+                            <input type="text" id="docChecklist_poNumberSearch" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm pr-10" placeholder="Ketik PO Number...">
+                            <input type="hidden" id="docChecklist_poId" value="">
+                            <div id="docChecklist_poNumberSuggestions" class="autocomplete-items suggestions-list"></div>
+                            <button type="button" id="loadChecklistBtn" class="absolute right-2 top-1/2 -translate-y-1/2 bg-blue-500 text-white rounded-md p-1 text-xs hover:bg-blue-600 transition duration-150">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                        <p id="selectedPoInfo" class="text-sm text-gray-600 mt-2 hidden">PO Terpilih: <span class="font-medium" id="selectedPoNumberDisplay"></span></p>
+                    </div>
+
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4"> <!-- Changed to 3 columns -->
                         <!-- Kolom 1: Dokumen -->
                         <div>
@@ -1641,7 +1655,7 @@
         let isAutocompleteClick = false;
         let target = e.target;
         while (target && target !== document.body) {
-            if (target.classList.contains('autocomplete-items') || target.classList.contains('item-description-search') || target.classList.contains('pid-search-input')) {
+            if (target.classList.contains('autocomplete-items') || target.classList.contains('item-description-search') || target.classList.contains('pid-search-input') || target.id === 'docChecklist_poNumberSearch' || target.id === 'loadChecklistBtn') {
                 isAutocompleteClick = true;
                 break;
             }
@@ -1683,9 +1697,9 @@
                     <option value="">Pilih COO</option>
                     <option value="China" ${item.coo === 'China' ? 'selected' : ''}>China</option>
                     <option value="USA" ${item.coo === 'USA' ? 'selected' : ''}>USA</option>
-                    <option value="UK" ${item.coo === 'UK' ? 'selected' : ''}>UK</option>
-                    <option value="Mexico" ${item.coo === 'Mexico' ? 'selected' : ''}>Mexico</option>
-                    <option value="DLL" ${item.coo === 'DLL' ? 'selected' : ''}>DLL</option>
+                    <option value="Germany" ${item.coo === 'Germany' ? 'selected' : ''}>Germany</option>
+                    <option value="Japan" ${item.coo === 'Japan' ? 'selected' : ''}>Japan</option>
+                    <option value="Korea" ${item.coo === 'Korea' ? 'selected' : ''}>Korea</option>
                 </select>
             </div>
             <div>
@@ -2095,6 +2109,20 @@
                 searchInput.removeEventListener('keyup', filterPOs);
                 searchInput.addEventListener('keyup', filterPOs);
             }
+
+            // Event listener for loading checklist in the Document Checklist modal
+            const loadChecklistBtn = document.getElementById('loadChecklistBtn');
+            if (loadChecklistBtn) {
+                loadChecklistBtn.addEventListener('click', function() {
+                    const poId = document.getElementById('docChecklist_poId').value;
+                    if (poId) {
+                        loadDocumentChecklistForPO(poId);
+                    } else {
+                        showCustomAlert("Pilih PO Number terlebih dahulu.", "warning");
+                    }
+                });
+            }
+
         } catch (error) {
             console.error("Error initializing event listeners:", error);
             showCustomAlert("Gagal memuat beberapa fungsi", "error");
@@ -2259,8 +2287,28 @@
     function openDocumentChecklistModal() {
         const documentChecklistModal = document.getElementById('documentChecklistModal');
         if (documentChecklistModal) {
-            // Optionally, load existing checklist data if editing a PO
-            // For now, it's a generic checklist, not tied to a specific PO
+            // Reset form and search input
+            document.getElementById('documentChecklistForm').reset();
+            document.getElementById('docChecklist_poNumberSearch').value = '';
+            document.getElementById('docChecklist_poId').value = '';
+            document.getElementById('selectedPoInfo').classList.add('hidden');
+            document.getElementById('selectedPoNumberDisplay').textContent = '';
+
+            // Setup autocomplete for PO Number search
+            const poNumberSearchInput = document.getElementById('docChecklist_poNumberSearch');
+            const poIdHiddenInput = document.getElementById('docChecklist_poId');
+            const poNumberSuggestionsDiv = document.getElementById('docChecklist_poNumberSuggestions');
+
+            // Prepare data for autocomplete: array of { noPO: "PO-XXX", id: "firebaseDocId" }
+            const poNumberData = pos.map(p => ({ noPO: p.noPO, id: p.id }));
+
+            setupSearchWithSuggestions(poNumberSearchInput, poIdHiddenInput, poNumberSuggestionsDiv, poNumberData, 'noPO', (selectedPo) => {
+                poIdHiddenInput.value = selectedPo.id;
+                document.getElementById('selectedPoNumberDisplay').textContent = selectedPo.noPO;
+                document.getElementById('selectedPoInfo').classList.remove('hidden');
+                loadDocumentChecklistForPO(selectedPo.id); // Load checklist immediately after selection
+            });
+
             documentChecklistModal.classList.remove('hidden');
         }
     }
@@ -2269,36 +2317,83 @@
         const documentChecklistModal = document.getElementById('documentChecklistModal');
         if (documentChecklistModal) {
             documentChecklistModal.classList.add('hidden');
+            closeAllAutocompleteSuggestions(); // Close any open autocomplete suggestions
         }
     }
 
-    // NEW: Function to save Document Checklist (example, needs actual implementation)
-    async function saveDocumentChecklist() {
+    // NEW: Function to load Document Checklist for a specific PO
+    async function loadDocumentChecklistForPO(poId) {
         showGlobalLoading();
         try {
-            // In a real application, you would save this data to Firestore
-            // For now, we'll just simulate a save and show a success message.
+            const poDoc = await dealsCollection.doc(poId).get();
+            if (poDoc.exists) {
+                const poData = poDoc.data();
+                // Fill the checklist form with existing data
+                document.getElementById('docChecklist_OC_OA').value = poData.docChecklist_OC_OA || '';
+                document.getElementById('docChecklist_PI').value = poData.docChecklist_PI || '';
+                document.getElementById('docChecklist_CI').value = poData.docChecklist_CI || '';
+                document.getElementById('docChecklist_PL').value = poData.docChecklist_PL || '';
+                document.getElementById('docChecklist_COO').value = poData.docChecklist_COO || '';
+                document.getElementById('docChecklist_COC').value = poData.docChecklist_COC || '';
+                document.getElementById('docChecklist_PIB').value = poData.docChecklist_PIB || '';
+                document.getElementById('docChecklist_SPPB').value = poData.docChecklist_SPPB || '';
+                document.getElementById('docChecklist_Hardcopy').value = poData.docChecklist_Hardcopy || '';
+                document.getElementById('docChecklist_Softcopy').value = poData.docChecklist_Softcopy || '';
+                document.getElementById('docChecklist_PreparedBy').value = poData.docChecklist_PreparedBy || '';
+                document.getElementById('docChecklist_OrderBy').value = poData.docChecklist_OrderBy || '';
+
+                document.getElementById('selectedPoNumberDisplay').textContent = poData.noPO;
+                document.getElementById('selectedPoInfo').classList.remove('hidden');
+                document.getElementById('docChecklist_poId').value = poId; // Ensure hidden PO ID is set
+                document.getElementById('docChecklist_poNumberSearch').value = poData.noPO; // Set search input value
+
+                showCustomAlert(`Checklist untuk PO ${poData.noPO} berhasil dimuat.`, "info");
+            } else {
+                // If no checklist exists, reset the form and show info
+                document.getElementById('documentChecklistForm').reset();
+                document.getElementById('selectedPoNumberDisplay').textContent = document.getElementById('docChecklist_poNumberSearch').value;
+                document.getElementById('selectedPoInfo').classList.remove('hidden');
+                showCustomAlert("Tidak ada checklist tersimpan untuk PO ini. Silakan isi dan simpan.", "info");
+            }
+        } catch (error) {
+            console.error("Error loading Document Checklist:", error);
+            showCustomAlert("Gagal memuat Document Checklist. Silakan coba lagi.", "error");
+        } finally {
+            hideGlobalLoading();
+        }
+    }
+
+    // NEW: Function to save Document Checklist
+    async function saveDocumentChecklist() {
+        const poId = document.getElementById('docChecklist_poId').value;
+        const poNumber = document.getElementById('docChecklist_poNumberSearch').value;
+
+        if (!poId) {
+            showCustomAlert("Pilih PO Number terlebih dahulu untuk menyimpan checklist.", "error");
+            return;
+        }
+
+        showGlobalLoading();
+        try {
             const checklistData = {
-                OC_OA: document.getElementById('docChecklist_OC_OA').value,
-                PI: document.getElementById('docChecklist_PI').value,
-                CI: document.getElementById('docChecklist_CI').value,
-                PL: document.getElementById('docChecklist_PL').value,
-                COO: document.getElementById('docChecklist_COO').value,
-                COC: document.getElementById('docChecklist_COC').value,
-                PIB: document.getElementById('docChecklist_PIB').value,
-                SPPB: document.getElementById('docChecklist_SPPB').value,
-                Hardcopy: document.getElementById('docChecklist_Hardcopy').value,
-                Softcopy: document.getElementById('docChecklist_Softcopy').value,
-                PreparedBy: document.getElementById('docChecklist_PreparedBy').value,
-                OrderBy: document.getElementById('docChecklist_OrderBy').value,
+                docChecklist_OC_OA: document.getElementById('docChecklist_OC_OA').value,
+                docChecklist_PI: document.getElementById('docChecklist_PI').value,
+                docChecklist_CI: document.getElementById('docChecklist_CI').value,
+                docChecklist_PL: document.getElementById('docChecklist_PL').value,
+                docChecklist_COO: document.getElementById('docChecklist_COO').value,
+                docChecklist_COC: document.getElementById('docChecklist_COC').value,
+                docChecklist_PIB: document.getElementById('docChecklist_PIB').value,
+                docChecklist_SPPB: document.getElementById('docChecklist_SPPB').value,
+                docChecklist_Hardcopy: document.getElementById('docChecklist_Hardcopy').value,
+                docChecklist_Softcopy: document.getElementById('docChecklist_Softcopy').value,
+                docChecklist_PreparedBy: document.getElementById('docChecklist_PreparedBy').value,
+                docChecklist_OrderBy: document.getElementById('docChecklist_OrderBy').value,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
-            console.log("Saving Document Checklist:", checklistData);
-            // Example: Save to a 'documentChecklists' collection or update a specific PO's checklist
-            // await db.collection('documentChecklists').add(checklistData);
-            // For now, we'll just show success.
 
-            showCustomAlert("Document Checklist berhasil disimpan!", "success");
+            await dealsCollection.doc(poId).update(checklistData);
+
+            showCustomAlert(`Document Checklist untuk PO ${poNumber} berhasil disimpan!`, "success");
             closeDocumentChecklistModal();
         } catch (error) {
             console.error("Error saving Document Checklist:", error);
