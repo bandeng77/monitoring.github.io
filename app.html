@@ -827,6 +827,14 @@
                         <p class="text-gray-700 font-semibold">Allocation:</p>
                         <p id="detailAllocation" class="text-gray-900"></p>
                     </div>
+                    <!-- NEW: Document Checklist in Detail Modal -->
+                    <div class="detail-item">
+                        <p class="text-gray-700 font-semibold">Document Checklist:</p>
+                        <div id="detailDocumentChecklist" class="text-gray-900 text-sm">
+                            <!-- Document checklist items will be rendered here -->
+                        </div>
+                    </div>
+                    <!-- END NEW -->
                     <div class="detail-item">
                         <p class="text-gray-700 font-semibold">Invoice Number:</p>
                         <p id="detailInvoice" class="text-gray-900"></p>
@@ -973,12 +981,12 @@
                     </button>
                 </div>
                 <form id="documentChecklistForm">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4"> <!-- Changed to 3 columns -->
                         <!-- Kolom 1: Dokumen -->
                         <div>
                             <div class="mb-4">
                                 <label class="block text-gray-700 text-sm font-semibold mb-2">OC/OA</label>
-                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_OC_OA">
                                     <option value="">Pilih Status</option>
                                     <option value="Ada">Ada</option>
                                     <option value="Tidak Ada">Tidak Ada</option>
@@ -987,7 +995,7 @@
                             </div>
                             <div class="mb-4">
                                 <label class="block text-gray-700 text-sm font-semibold mb-2">PI</label>
-                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_PI">
                                     <option value="">Pilih Status</option>
                                     <option value="Ada">Ada</option>
                                     <option value="Tidak Ada">Tidak Ada</option>
@@ -996,7 +1004,7 @@
                             </div>
                             <div class="mb-4">
                                 <label class="block text-gray-700 text-sm font-semibold mb-2">CI</label>
-                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_CI">
                                     <option value="">Pilih Status</option>
                                     <option value="Ada">Ada</option>
                                     <option value="Tidak Ada">Tidak Ada</option>
@@ -1005,16 +1013,19 @@
                             </div>
                             <div class="mb-4">
                                 <label class="block text-gray-700 text-sm font-semibold mb-2">PL</label>
-                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_PL">
                                     <option value="">Pilih Status</option>
                                     <option value="Ada">Ada</option>
                                     <option value="Tidak Ada">Tidak Ada</option>
                                     <option value="Pending">Pending</option>
                                 </select>
                             </div>
+                        </div>
+                        <!-- Kolom 2: COO, COC, PIB, STPPN -->
+                        <div>
                             <div class="mb-4">
                                 <label class="block text-gray-700 text-sm font-semibold mb-2">COO</label>
-                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_COO">
                                     <option value="">Pilih Status</option>
                                     <option value="Ada">Ada</option>
                                     <option value="Tidak Ada">Tidak Ada</option>
@@ -1023,7 +1034,7 @@
                             </div>
                             <div class="mb-4">
                                 <label class="block text-gray-700 text-sm font-semibold mb-2">COC</label>
-                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:focus:border-blue-500 transition duration-150 text-sm">
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_COC">
                                     <option value="">Pilih Status</option>
                                     <option value="Ada">Ada</option>
                                     <option value="Tidak Ada">Tidak Ada</option>
@@ -1032,7 +1043,7 @@
                             </div>
                             <div class="mb-4">
                                 <label class="block text-gray-700 text-sm font-semibold mb-2">PIB</label>
-                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_PIB">
                                     <option value="">Pilih Status</option>
                                     <option value="Ada">Ada</option>
                                     <option value="Tidak Ada">Tidak Ada</option>
@@ -1041,7 +1052,7 @@
                             </div>
                             <div class="mb-4">
                                 <label class="block text-gray-700 text-sm font-semibold mb-2">STPPN</label>
-                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_STPPN">
                                     <option value="">Pilih Status</option>
                                     <option value="Ada">Ada</option>
                                     <option value="Tidak Ada">Tidak Ada</option>
@@ -1049,11 +1060,11 @@
                                 </select>
                             </div>
                         </div>
-                        <!-- Kolom 2: Hardcopy, Softcopy, Prepared By, Order By -->
+                        <!-- Kolom 3: Hardcopy, Softcopy, Prepared By, Order By -->
                         <div>
                             <div class="mb-4">
                                 <label class="block text-gray-700 text-sm font-semibold mb-2">Hardcopy</label>
-                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_Hardcopy">
                                     <option value="">Pilih Status</option>
                                     <option value="Ada">Ada</option>
                                     <option value="Tidak Ada">Tidak Ada</option>
@@ -1062,7 +1073,7 @@
                             </div>
                             <div class="mb-4">
                                 <label class="block text-gray-700 text-sm font-semibold mb-2">Softcopy</label>
-                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_Softcopy">
                                     <option value="">Pilih Status</option>
                                     <option value="Ada">Ada</option>
                                     <option value="Tidak Ada">Tidak Ada</option>
@@ -1071,7 +1082,7 @@
                             </div>
                             <div class="mb-4">
                                 <label class="block text-gray-700 text-sm font-semibold mb-2">Prepared By</label>
-                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_PreparedBy">
                                     <option value="">Pilih Nama</option>
                                     <option value="User A">User A</option>
                                     <option value="User B">User B</option>
@@ -1080,7 +1091,7 @@
                             </div>
                             <div class="mb-4">
                                 <label class="block text-gray-700 text-sm font-semibold mb-2">Order By</label>
-                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_OrderBy">
                                     <option value="">Pilih Nama</option>
                                     <option value="Admin X">Admin X</option>
                                     <option value="Admin Y">Admin Y</option>
@@ -1352,8 +1363,13 @@
                 pos.push({ id: doc.id, ...poData });
 
                 if (poData.supplierName) uniqueSuppliers.add(poData.supplierName);
-                if (poData.coo) uniqueCOOs.add(poData.coo);
-                if (poData.hsCode) uniqueHSCodes.add(poData.hsCode);
+                // Collect COO and HS Code from items
+                if (poData.items && poData.items.length > 0) {
+                    poData.items.forEach(item => {
+                        if (item.coo) uniqueCOOs.add(item.coo);
+                        if (item.hsCode) uniqueHSCodes.add(item.hsCode);
+                    });
+                }
                 if (poData.status) uniqueStatuses.add(poData.status);
             });
             console.log("Total POs updated by onSnapshot:", pos.length);
@@ -1931,6 +1947,25 @@
         document.getElementById('detailNoPO').textContent = po.noPO || '-';
         document.getElementById('detailSupplierName').textContent = po.supplierName || '-';
         document.getElementById('detailAllocation').textContent = po.allocation || '-';
+
+        // NEW: Populate Document Checklist in Detail Modal
+        const detailDocumentChecklist = document.getElementById('detailDocumentChecklist');
+        detailDocumentChecklist.innerHTML = `
+            <p><span class="font-semibold text-gray-700">OC/OA:</span> ${po.docChecklist_OC_OA || '-'}</p>
+            <p><span class="font-semibold text-gray-700">PI:</span> ${po.docChecklist_PI || '-'}</p>
+            <p><span class="font-semibold text-gray-700">CI:</span> ${po.docChecklist_CI || '-'}</p>
+            <p><span class="font-semibold text-gray-700">PL:</span> ${po.docChecklist_PL || '-'}</p>
+            <p><span class="font-semibold text-gray-700">COO:</span> ${po.docChecklist_COO || '-'}</p>
+            <p><span class="font-semibold text-gray-700">COC:</span> ${po.docChecklist_COC || '-'}</p>
+            <p><span class="font-semibold text-gray-700">PIB:</span> ${po.docChecklist_PIB || '-'}</p>
+            <p><span class="font-semibold text-gray-700">STPPN:</span> ${po.docChecklist_STPPN || '-'}</p>
+            <p><span class="font-semibold text-gray-700">Hardcopy:</span> ${po.docChecklist_Hardcopy || '-'}</p>
+            <p><span class="font-semibold text-gray-700">Softcopy:</span> ${po.docChecklist_Softcopy || '-'}</p>
+            <p><span class="font-semibold text-gray-700">Prepared By:</span> ${po.docChecklist_PreparedBy || '-'}</p>
+            <p><span class="font-semibold text-gray-700">Order By:</span> ${po.docChecklist_OrderBy || '-'}</p>
+        `;
+        // END NEW
+
         document.getElementById('detailInvoice').textContent = po.invoice || '-';
         document.getElementById('detailValue').textContent = po.value || '-';
 
@@ -2032,9 +2067,7 @@
             if (documentChecklistForm) {
                 documentChecklistForm.addEventListener('submit', function(e) {
                     e.preventDefault();
-                    // Implement save logic for document checklist here
-                    showCustomAlert("Document Checklist berhasil disimpan!", "success");
-                    closeDocumentChecklistModal();
+                    saveDocumentChecklist(); // Call new function to save checklist
                 });
             }
 
@@ -2226,6 +2259,8 @@
     function openDocumentChecklistModal() {
         const documentChecklistModal = document.getElementById('documentChecklistModal');
         if (documentChecklistModal) {
+            // Optionally, load existing checklist data if editing a PO
+            // For now, it's a generic checklist, not tied to a specific PO
             documentChecklistModal.classList.remove('hidden');
         }
     }
@@ -2237,6 +2272,43 @@
         }
     }
 
+    // NEW: Function to save Document Checklist (example, needs actual implementation)
+    async function saveDocumentChecklist() {
+        showGlobalLoading();
+        try {
+            // In a real application, you would save this data to Firestore
+            // For now, we'll just simulate a save and show a success message.
+            const checklistData = {
+                OC_OA: document.getElementById('docChecklist_OC_OA').value,
+                PI: document.getElementById('docChecklist_PI').value,
+                CI: document.getElementById('docChecklist_CI').value,
+                PL: document.getElementById('docChecklist_PL').value,
+                COO: document.getElementById('docChecklist_COO').value,
+                COC: document.getElementById('docChecklist_COC').value,
+                PIB: document.getElementById('docChecklist_PIB').value,
+                STPPN: document.getElementById('docChecklist_STPPN').value,
+                Hardcopy: document.getElementById('docChecklist_Hardcopy').value,
+                Softcopy: document.getElementById('docChecklist_Softcopy').value,
+                PreparedBy: document.getElementById('docChecklist_PreparedBy').value,
+                OrderBy: document.getElementById('docChecklist_OrderBy').value,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            console.log("Saving Document Checklist:", checklistData);
+            // Example: Save to a 'documentChecklists' collection or update a specific PO's checklist
+            // await db.collection('documentChecklists').add(checklistData);
+            // For now, we'll just show success.
+
+            showCustomAlert("Document Checklist berhasil disimpan!", "success");
+            closeDocumentChecklistModal();
+        } catch (error) {
+            console.error("Error saving Document Checklist:", error);
+            showCustomAlert("Gagal menyimpan Document Checklist. Silakan coba lagi.", "error");
+        } finally {
+            hideGlobalLoading();
+        }
+    }
+
+
     // ==================== FUNGSI EXPORT TO EXCEL ====================
     function exportToExcel() {
         showGlobalLoading();
@@ -2247,7 +2319,11 @@
                 "PID", "Item Description", "Qty", "COO (Item)", "HS Code (Item)", "Revised HS Code (Item)",
                 "AWB/Tracking Number", "Nama Forwarder", "Jenis Freight", "DISRC",
                 "Order Status", "Plan Delivery", "ETA", "Actual Delivery",
-                "Note", "Dibuat Oleh", "Tanggal Dibuat"
+                "Note", "Dibuat Oleh", "Tanggal Dibuat",
+                // Document Checklist Headers
+                "Doc Checklist OC/OA", "Doc Checklist PI", "Doc Checklist CI", "Doc Checklist PL",
+                "Doc Checklist COO", "Doc Checklist COC", "Doc Checklist PIB", "Doc Checklist STPPN",
+                "Doc Checklist Hardcopy", "Doc Checklist Softcopy", "Doc Checklist Prepared By", "Doc Checklist Order By"
             ];
             data.push(headers);
 
@@ -2286,58 +2362,55 @@
             });
 
             currentPOs.forEach((po, index) => {
+                const baseRow = [
+                    index + 1,
+                    po.noPO || '',
+                    po.supplierName || '',
+                    po.allocation || '',
+                    po.invoice || '',
+                    po.value || '',
+                    // Item details will be added per item
+                    '', '', '', '', '', '',
+                    po.tracking || '',
+                    po.forwarderName || '',
+                    po.freightType || '',
+                    po.disrc || '',
+                    po.status ? po.status.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : '',
+                    po.planDelivery ? formatDate(po.planDelivery) : '',
+                    po.eta ? formatDate(po.eta) : '',
+                    po.actualDelivery ? formatDate(po.actualDelivery) : '',
+                    po.note || '',
+                    po.createdBy || '',
+                    po.createdAt ? formatDateTime(po.createdAt) : '',
+                    // Document Checklist values
+                    po.docChecklist_OC_OA || '',
+                    po.docChecklist_PI || '',
+                    po.docChecklist_CI || '',
+                    po.docChecklist_PL || '',
+                    po.docChecklist_COO || '',
+                    po.docChecklist_COC || '',
+                    po.docChecklist_PIB || '',
+                    po.docChecklist_STPPN || '',
+                    po.docChecklist_Hardcopy || '',
+                    po.docChecklist_Softcopy || '',
+                    po.docChecklist_PreparedBy || '',
+                    po.docChecklist_OrderBy || ''
+                ];
+
                 if (po.items && po.items.length > 0) {
                     po.items.forEach(item => {
-                        const row = [
-                            index + 1,
-                            po.noPO || '',
-                            po.supplierName || '',
-                            po.allocation || '',
-                            po.invoice || '',
-                            po.value || '',
-                            item.pid || '',
-                            item.description || '',
-                            item.quantity || '',
-                            item.coo || '',
-                            item.hsCode || '',
-                            item.revisiHS || '',
-                            po.tracking || '',
-                            po.forwarderName || '',
-                            po.freightType || '',
-                            po.disrc || '',
-                            po.status ? po.status.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : '',
-                            po.planDelivery ? formatDate(po.planDelivery) : '',
-                            po.eta ? formatDate(po.eta) : '',
-                            po.actualDelivery ? formatDate(po.actualDelivery) : '',
-                            po.note || '',
-                            po.createdBy || '',
-                            po.createdAt ? formatDateTime(po.createdAt) : ''
-                        ];
-                        data.push(row);
+                        const itemRow = [...baseRow]; // Copy base row
+                        itemRow[6] = item.pid || ''; // PID
+                        itemRow[7] = item.description || ''; // Item Description
+                        itemRow[8] = item.quantity || ''; // Qty
+                        itemRow[9] = item.coo || ''; // COO (Item)
+                        itemRow[10] = item.hsCode || ''; // HS Code (Item)
+                        itemRow[11] = item.revisiHS || ''; // Revised HS Code (Item)
+                        data.push(itemRow);
                     });
                 } else {
-                    // If no items, still add the main PO data
-                    const row = [
-                        index + 1,
-                        po.noPO || '',
-                        po.supplierName || '',
-                        po.allocation || '',
-                        po.invoice || '',
-                        po.value || '',
-                        '', '', '', '', '', '', // Empty for item details
-                        po.tracking || '',
-                        po.forwarderName || '',
-                        po.freightType || '',
-                        po.disrc || '',
-                        po.status ? po.status.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : '',
-                        po.planDelivery ? formatDate(po.planDelivery) : '',
-                        po.eta ? formatDate(po.eta) : '',
-                        po.actualDelivery ? formatDate(po.actualDelivery) : '',
-                        po.note || '',
-                        po.createdBy || '',
-                        po.createdAt ? formatDateTime(po.createdAt) : ''
-                    ];
-                    data.push(row);
+                    // If no items, push the base row with empty item details
+                    data.push(baseRow);
                 }
             });
 
