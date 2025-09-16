@@ -357,19 +357,27 @@
             }
         }
         #poDetailModalContent .detail-item p { /* Gabungkan kedua aturan ini */
-            color: var(--text-dark); /* Warna teks utama */
+            color: #000000; /* Set to black */
             font-size: 0.9rem; /* Ukuran font yang diinginkan */
             font-weight: 500;
         }
         #poDetailModalContent .detail-item p:first-child {
-            color: var(--text-light); /* Pertahankan warna teks yang lebih terang untuk label */
+            color: #000000; /* Set to black for labels as well */
             font-weight: 600; /* Jadikan label sedikit lebih tebal */
         }
         #poDetailModalContent .detail-item ul,
         #poDetailModalContent .detail-item li {
             font-size: 0.9rem; /* Sesuaikan dengan ukuran font detail lainnya */
-            color: var(--text-dark); /* Sesuaikan dengan warna teks detail lainnya */
+            color: #000000; /* Set to black */
             font-weight: 500; /* Sesuaikan dengan ketebalan teks detail lainnya */
+        }
+
+        /* Additional rules for dynamic content within the detail modal */
+        #detailDocumentChecklist p,
+        #detailDocumentChecklist span,
+        #detailItemsList p,
+        #detailItemsList span {
+            color: #000000 !important; /* Ensure black for these sections, use !important if needed to override Tailwind */
         }
 
         /* Loading Spinner */
@@ -827,60 +835,60 @@
                         <h3 class="text-lg font-bold text-gray-900 mb-4">Informasi PO</h3>
                         <div class="detail-grid">
                             <div class="detail-item">
-                                <p class="text-dark-700 font-semibold">PO Number:</p>
-                                <p id="detailNoPO" class="text-gray-900"></p>
+                                <p class="font-semibold">PO Number:</p>
+                                <p id="detailNoPO"></p>
                             </div>
                             <div class="detail-item">
-                                <p class="text-dark-700 font-semibold">Vendor:</p>
-                                <p id="detailSupplierName" class="text-gray-900"></p>
+                                <p class="font-semibold">Vendor:</p>
+                                <p id="detailSupplierName"></p>
                             </div>
                             <div class="detail-item">
-                                <p class="text-dark-700 font-semibold">Allocation:</p>
-                                <p id="detailAllocation" class="text-gray-900"></p>
+                                <p class="font-semibold">Allocation:</p>
+                                <p id="detailAllocation"></p>
                             </div>
                             <div class="detail-item">
-                                <p class="text-dark-700 font-semibold">Invoice Number:</p>
-                                <p id="detailInvoice" class="text-gray-900"></p>
+                                <p class="font-semibold">Invoice Number:</p>
+                                <p id="detailInvoice"></p>
                             </div>
                             <div class="detail-item">
-                                <p class="text-dark-700 font-semibold">Value:</p>
-                                <p id="detailValue" class="text-gray-900"></p>
+                                <p class="font-semibold">Value:</p>
+                                <p id="detailValue"></p>
                             </div>
                             <div class="detail-item">
-                                <p class="text-dark-700 font-semibold">AWB/Tracking Number:</p>
-                                <p id="detailTracking" class="text-gray-900"></p>
+                                <p class="font-semibold">AWB/Tracking Number:</p>
+                                <p id="detailTracking"></p>
                             </div>
                             <div class="detail-item">
-                                <p class="text-dark-700 font-semibold">Nama Forwarder:</p>
-                                <p id="detailForwarderName" class="text-gray-900"></p>
+                                <p class="font-semibold">Nama Forwarder:</p>
+                                <p id="detailForwarderName"></p>
                             </div>
                             <div class="detail-item">
-                                <p class="text-dark-700 font-semibold">Jenis Freight:</p>
-                                <p id="detailFreightType" class="text-gray-900"></p>
+                                <p class="font-semibold">Jenis Freight:</p>
+                                <p id="detailFreightType"></p>
                             </div>
                             <div class="detail-item">
-                                <p class="text-dark-700 font-semibold">DISRC:</p>
-                                <p id="detailDisrc" class="text-gray-900"></p>
+                                <p class="font-semibold">DISRC:</p>
+                                <p id="detailDisrc"></p>
                             </div>
                             <div class="detail-item">
-                                <p class="text-dark-700 font-semibold">Order Status:</p>
-                                <p id="detailStatus" class="text-gray-900"></p>
+                                <p class="font-semibold">Order Status:</p>
+                                <p id="detailStatus"></p>
                             </div>
                             <div class="detail-item">
-                                <p class="text-dark-700 font-semibold">Plan Delivery:</p>
-                                <p id="detailPlanDelivery" class="text-gray-900"></p>
+                                <p class="font-semibold">Plan Delivery:</p>
+                                <p id="detailPlanDelivery"></p>
                             </div>
                             <div class="detail-item">
-                                <p class="text-dark-700 font-semibold">ETA:</p>
-                                <p id="detailETA" class="text-gray-900"></p>
+                                <p class="font-semibold">ETA:</p>
+                                <p id="detailETA"></p>
                             </div>
                             <div class="detail-item">
-                                <p class="text-dark-700 font-semibold">Actual Delivery:</p>
-                                <p id="detailActualDelivery" class="text-gray-900"></p>
+                                <p class="font-semibold">Actual Delivery:</p>
+                                <p id="detailActualDelivery"></p>
                             </div>
                             <div class="detail-item col-span-full">
-                                <p class="text-dark-700 font-semibold">Note:</p>
-                                <p id="detailNote" class="text-gray-900"></p>
+                                <p class="font-semibold">Note:</p>
+                                <p id="detailNote"></p>
                             </div>
                         </div>
                     </div>
@@ -888,7 +896,7 @@
                     <!-- Kolom Kanan: Document Checklist -->
                     <div>
                         <h3 class="text-lg font-bold text-gray-900 mb-4">Document Checklist</h3>
-                        <div id="detailDocumentChecklist" class="text-gray-900 text-sm grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
+                        <div id="detailDocumentChecklist" class="text-sm grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
                             <!-- Document checklist items will be rendered here -->
                         </div>
                     </div>
@@ -1981,18 +1989,18 @@
         // Populate Document Checklist in Detail Modal
         const detailDocumentChecklist = document.getElementById('detailDocumentChecklist');
         detailDocumentChecklist.innerHTML = `
-            <p><span class="font-semibold text-gray-700">OC/OA:</span> ${po.docChecklist_OC_OA || '-'}</p>
-            <p><span class="font-semibold text-gray-700">PI:</span> ${po.docChecklist_PI || '-'}</p>
-            <p><span class="font-semibold text-gray-700">CI:</span> ${po.docChecklist_CI || '-'}</p>
-            <p><span class="font-semibold text-gray-700">PL:</span> ${po.docChecklist_PL || '-'}</p>
-            <p><span class="font-semibold text-gray-700">COO:</span> ${po.docChecklist_COO || '-'}</p>
-            <p><span class="font-semibold text-gray-700">COC:</span> ${po.docChecklist_COC || '-'}</p>
-            <p><span class="font-semibold text-gray-700">PIB:</span> ${po.docChecklist_PIB || '-'}</p>
-            <p><span class="font-semibold text-gray-700">SPPB:</span> ${po.docChecklist_SPPB || '-'}</p>
-            <p><span class="font-semibold text-gray-700">Hardcopy:</span> ${po.docChecklist_Hardcopy || '-'}</p>
-            <p><span class="font-semibold text-gray-700">Softcopy:</span> ${po.docChecklist_Softcopy || '-'}</p>
-            <p><span class="font-semibold text-gray-700">Prepared By:</span> ${po.docChecklist_PreparedBy || '-'}</p>
-            <p><span class="font-semibold text-gray-700">Order By:</span> ${po.docChecklist_OrderBy || '-'}</p>
+            <p><span class="font-semibold">OC/OA:</span> ${po.docChecklist_OC_OA || '-'}</p>
+            <p><span class="font-semibold">PI:</span> ${po.docChecklist_PI || '-'}</p>
+            <p><span class="font-semibold">CI:</span> ${po.docChecklist_CI || '-'}</p>
+            <p><span class="font-semibold">PL:</span> ${po.docChecklist_PL || '-'}</p>
+            <p><span class="font-semibold">COO:</span> ${po.docChecklist_COO || '-'}</p>
+            <p><span class="font-semibold">COC:</span> ${po.docChecklist_COC || '-'}</p>
+            <p><span class="font-semibold">PIB:</span> ${po.docChecklist_PIB || '-'}</p>
+            <p><span class="font-semibold">SPPB:</span> ${po.docChecklist_SPPB || '-'}</p>
+            <p><span class="font-semibold">Hardcopy:</span> ${po.docChecklist_Hardcopy || '-'}</p>
+            <p><span class="font-semibold">Softcopy:</span> ${po.docChecklist_Softcopy || '-'}</p>
+            <p><span class="font-semibold">Prepared By:</span> ${po.docChecklist_PreparedBy || '-'}</p>
+            <p><span class="font-semibold">Order By:</span> ${po.docChecklist_OrderBy || '-'}</p>
         `;
 
         const detailItemsList = document.getElementById('detailItemsList');
@@ -2002,17 +2010,17 @@
                 const itemDetailDiv = document.createElement('div');
                 itemDetailDiv.className = 'grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-1 border-b border-gray-100 pb-2 mb-2 last:border-b-0';
                 itemDetailDiv.innerHTML = `
-                    <p class="text-gray-900"><span class="font-semibold text-gray-700">PID:</span> ${item.pid || '-'}</p>
-                    <p class="text-gray-900"><span class="font-semibold text-gray-700">Item Description:</span> ${item.description || '-'}</p>
-                    <p class="text-gray-900"><span class="font-semibold text-gray-700">Qty:</span> ${item.quantity || '-'}</p>
-                    <p class="text-gray-900"><span class="font-semibold text-gray-700">COO:</span> ${item.coo || '-'}</p>
-                    <p class="text-gray-900"><span class="font-semibold text-gray-700">HS Code:</span> ${item.hsCode || '-'}</p>
-                    <p class="text-gray-900"><span class="font-semibold text-gray-700">Revised HS Code:</span> ${item.revisiHS || '-'}</p>
+                    <p><span class="font-semibold">PID:</span> ${item.pid || '-'}</p>
+                    <p><span class="font-semibold">Item Description:</span> ${item.description || '-'}</p>
+                    <p><span class="font-semibold">Qty:</span> ${item.quantity || '-'}</p>
+                    <p><span class="font-semibold">COO:</span> ${item.coo || '-'}</p>
+                    <p><span class="font-semibold">HS Code:</span> ${item.hsCode || '-'}</p>
+                    <p><span class="font-semibold">Revised HS Code:</span> ${item.revisiHS || '-'}</p>
                 `;
                 detailItemsList.appendChild(itemDetailDiv);
             });
         } else {
-            detailItemsList.innerHTML = '<p class="text-gray-700">- Tidak ada detail barang -</p>';
+            detailItemsList.innerHTML = '<p>- Tidak ada detail barang -</p>';
         }
 
         document.getElementById('poDetailModal').classList.remove('hidden');
