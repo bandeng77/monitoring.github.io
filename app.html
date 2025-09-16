@@ -350,6 +350,12 @@
                 grid-template-columns: repeat(3, 1fr); /* 3 kolom */
             }
         }
+        /* Modifikasi untuk 4 kolom pada detail PO */
+        @media (min-width: 1024px) { /* Untuk desktop */
+            #poDetailModalContent .detail-grid {
+                grid-template-columns: repeat(4, 1fr); /* 4 kolom */
+            }
+        }
         #poDetailModalContent .detail-item p { /* Gabungkan kedua aturan ini */
             color: var(--text-dark); /* Warna teks utama */
             font-size: 0.9rem; /* Ukuran font yang diinginkan */
@@ -827,7 +833,7 @@
                         <p class="text-gray-700 font-semibold">Allocation:</p>
                         <p id="detailAllocation" class="text-gray-900"></p>
                     </div>
-                    <!-- NEW: Document Checklist in Detail Modal -->
+                    <!-- Document Checklist moved to be the 4th column item -->
                     <div class="detail-item">
                         <p class="text-gray-700 font-semibold">Document Checklist:</p>
                         <div id="detailDocumentChecklist" class="text-gray-900 text-sm">
