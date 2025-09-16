@@ -818,80 +818,90 @@
 
         <!-- PO Detail Modal -->
         <div id="poDetailModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
-            <div class="bg-white rounded-xl p-8 w-full max-w-3xl shadow-2xl modal-content-enter overflow-y-auto" id="poDetailModalContent"> <!-- Max-width lebih besar -->
+            <div class="bg-white rounded-xl p-8 w-full max-w-5xl shadow-2xl modal-content-enter overflow-y-auto" id="poDetailModalContent"> <!-- Max-width lebih besar untuk menampung 2 kolom utama -->
                 <h2 class="text-xl sm:text-2xl font-bold mb-6 text-gray-900" id="poDetailTitle">Detail PO</h2>
-                <div class="detail-grid">
-                    <div class="detail-item">
-                        <p class="text-gray-700 font-semibold">PO Number:</p>
-                        <p id="detailNoPO" class="text-gray-900"></p>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Kolom Kiri: Detail PO Utama -->
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">Informasi PO</h3>
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <p class="text-gray-700 font-semibold">PO Number:</p>
+                                <p id="detailNoPO" class="text-gray-900"></p>
+                            </div>
+                            <div class="detail-item">
+                                <p class="text-gray-700 font-semibold">Vendor:</p>
+                                <p id="detailSupplierName" class="text-gray-900"></p>
+                            </div>
+                            <div class="detail-item">
+                                <p class="text-gray-700 font-semibold">Allocation:</p>
+                                <p id="detailAllocation" class="text-gray-900"></p>
+                            </div>
+                            <div class="detail-item">
+                                <p class="text-gray-700 font-semibold">Invoice Number:</p>
+                                <p id="detailInvoice" class="text-gray-900"></p>
+                            </div>
+                            <div class="detail-item">
+                                <p class="text-gray-700 font-semibold">Value:</p>
+                                <p id="detailValue" class="text-gray-900"></p>
+                            </div>
+                            <div class="detail-item">
+                                <p class="text-gray-700 font-semibold">AWB/Tracking Number:</p>
+                                <p id="detailTracking" class="text-gray-900"></p>
+                            </div>
+                            <div class="detail-item">
+                                <p class="text-gray-700 font-semibold">Nama Forwarder:</p>
+                                <p id="detailForwarderName" class="text-gray-900"></p>
+                            </div>
+                            <div class="detail-item">
+                                <p class="text-gray-700 font-semibold">Jenis Freight:</p>
+                                <p id="detailFreightType" class="text-gray-900"></p>
+                            </div>
+                            <div class="detail-item">
+                                <p class="text-gray-700 font-semibold">DISRC:</p>
+                                <p id="detailDisrc" class="text-gray-900"></p>
+                            </div>
+                            <div class="detail-item">
+                                <p class="text-gray-700 font-semibold">Order Status:</p>
+                                <p id="detailStatus" class="text-gray-900"></p>
+                            </div>
+                            <div class="detail-item">
+                                <p class="text-gray-700 font-semibold">Plan Delivery:</p>
+                                <p id="detailPlanDelivery" class="text-gray-900"></p>
+                            </div>
+                            <div class="detail-item">
+                                <p class="text-gray-700 font-semibold">ETA:</p>
+                                <p id="detailETA" class="text-gray-900"></p>
+                            </div>
+                            <div class="detail-item">
+                                <p class="text-gray-700 font-semibold">Actual Delivery:</p>
+                                <p id="detailActualDelivery" class="text-gray-900"></p>
+                            </div>
+                            <div class="detail-item col-span-full">
+                                <p class="text-gray-700 font-semibold">Note:</p>
+                                <p id="detailNote" class="text-gray-900"></p>
+                            </div>
+                        </div>
                     </div>
-                    <div class="detail-item">
-                        <p class="text-gray-700 font-semibold">Vendor:</p>
-                        <p id="detailSupplierName" class="text-gray-900"></p>
-                    </div>
-                    <div class="detail-item">
-                        <p class="text-gray-700 font-semibold">Allocation:</p>
-                        <p id="detailAllocation" class="text-gray-900"></p>
-                    </div>
-                    <!-- Document Checklist moved to be the 4th column item -->
-                    <div class="detail-item">
-                        <p class="text-gray-700 font-semibold">Document Checklist:</p>
-                        <div id="detailDocumentChecklist" class="text-gray-900 text-sm">
+
+                    <!-- Kolom Kanan: Document Checklist -->
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">Document Checklist</h3>
+                        <div id="detailDocumentChecklist" class="text-gray-900 text-sm grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
                             <!-- Document checklist items will be rendered here -->
                         </div>
                     </div>
-                    <!-- END NEW -->
-                    <div class="detail-item">
-                        <p class="text-gray-700 font-semibold">Invoice Number:</p>
-                        <p id="detailInvoice" class="text-gray-900"></p>
-                    </div>
-                    <div class="detail-item">
-                        <p class="text-gray-700 font-semibold">Value:</p>
-                        <p id="detailValue" class="text-gray-900"></p>
-                    </div>
-                    <div class="detail-item">
-                        <p class="text-gray-700 font-semibold">AWB/Tracking Number:</p>
-                        <p id="detailTracking" class="text-gray-900"></p>
-                    </div>
-                    <div class="detail-item">
-                        <p class="text-gray-700 font-semibold">Nama Forwarder:</p>
-                        <p id="detailForwarderName" class="text-gray-900"></p>
-                    </div>
-                    <div class="detail-item">
-                        <p class="text-gray-700 font-semibold">Jenis Freight:</p>
-                        <p id="detailFreightType" class="text-gray-900"></p>
-                    </div>
-                    <div class="detail-item">
-                        <p class="text-gray-700 font-semibold">DISRC:</p>
-                        <p id="detailDisrc" class="text-gray-900"></p>
-                    </div>
-                    <div class="detail-item">
-                        <p class="text-gray-700 font-semibold">Order Status:</p>
-                        <p id="detailStatus" class="text-gray-900"></p>
-                    </div>
-                    <div class="detail-item">
-                        <p class="text-gray-700 font-semibold">Plan Delivery:</p>
-                        <p id="detailPlanDelivery" class="text-gray-900"></p>
-                    </div>
-                    <div class="detail-item">
-                        <p class="text-gray-700 font-semibold">ETA:</p>
-                        <p id="detailETA" class="text-gray-900"></p>
-                    </div>
-                    <div class="detail-item">
-                        <p class="text-gray-700 font-semibold">Actual Delivery:</p>
-                        <p id="detailActualDelivery" class="text-gray-900"></p>
-                    </div>
-                    <div class="detail-item col-span-full">
-                        <p class="text-gray-700 font-semibold">Note:</p>
-                        <p id="detailNote" class="text-gray-900"></p>
-                    </div>
-                    <div class="detail-item col-span-full border-t pt-4 mt-4 border-gray-200">
-                        <h3 class="text-lg font-bold text-gray-900 mb-2">Detail Barang</h3>
-                        <div id="detailItemsList" class="flex flex-col gap-2">
-                            <!-- Item details will be rendered here -->
-                        </div>
+                </div>
+
+                <!-- Detail Barang Section (tetap di bawah, spanning full width) -->
+                <div class="detail-item col-span-full border-t pt-4 mt-4 border-gray-200">
+                    <h3 class="text-lg font-bold text-gray-900 mb-2">Detail Barang</h3>
+                    <div id="detailItemsList" class="flex flex-col gap-2">
+                        <!-- Item details will be rendered here -->
                     </div>
                 </div>
+
                 <div class="flex justify-end space-x-3 mt-6">
                     <button type="button" onclick="closePODetailModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
                         Tutup
@@ -1942,8 +1952,19 @@
         document.getElementById('detailNoPO').textContent = po.noPO || '-';
         document.getElementById('detailSupplierName').textContent = po.supplierName || '-';
         document.getElementById('detailAllocation').textContent = po.allocation || '-';
+        document.getElementById('detailInvoice').textContent = po.invoice || '-';
+        document.getElementById('detailValue').textContent = po.value || '-';
+        document.getElementById('detailTracking').textContent = po.tracking || '-';
+        document.getElementById('detailForwarderName').textContent = po.forwarderName || '-';
+        document.getElementById('detailFreightType').textContent = po.freightType || '-';
+        document.getElementById('detailDisrc').textContent = po.disrc || '-';
+        document.getElementById('detailStatus').textContent = po.status || '-';
+        document.getElementById('detailPlanDelivery').textContent = po.planDelivery ? formatDate(po.planDelivery) : '-';
+        document.getElementById('detailETA').textContent = po.eta ? formatDate(po.eta) : '-';
+        document.getElementById('detailActualDelivery').textContent = po.actualDelivery ? formatDate(po.actualDelivery) : '-';
+        document.getElementById('detailNote').textContent = po.note || '-';
 
-        // NEW: Populate Document Checklist in Detail Modal
+        // Populate Document Checklist in Detail Modal
         const detailDocumentChecklist = document.getElementById('detailDocumentChecklist');
         detailDocumentChecklist.innerHTML = `
             <p><span class="font-semibold text-gray-700">OC/OA:</span> ${po.docChecklist_OC_OA || '-'}</p>
@@ -1959,10 +1980,6 @@
             <p><span class="font-semibold text-gray-700">Prepared By:</span> ${po.docChecklist_PreparedBy || '-'}</p>
             <p><span class="font-semibold text-gray-700">Order By:</span> ${po.docChecklist_OrderBy || '-'}</p>
         `;
-        // END NEW
-
-        document.getElementById('detailInvoice').textContent = po.invoice || '-';
-        document.getElementById('detailValue').textContent = po.value || '-';
 
         const detailItemsList = document.getElementById('detailItemsList');
         detailItemsList.innerHTML = '';
@@ -1983,18 +2000,6 @@
         } else {
             detailItemsList.innerHTML = '<p class="text-gray-700">- Tidak ada detail barang -</p>';
         }
-
-        document.getElementById('detailTracking').textContent = po.tracking || '-';
-        document.getElementById('detailForwarderName').textContent = po.forwarderName || '-';
-        document.getElementById('detailFreightType').textContent = po.freightType || '-';
-        document.getElementById('detailDisrc').textContent = po.disrc || '-';
-
-        document.getElementById('detailStatus').textContent = po.status || '-';
-        document.getElementById('detailPlanDelivery').textContent = po.planDelivery ? formatDate(po.planDelivery) : '-';
-        document.getElementById('detailETA').textContent = po.eta ? formatDate(po.eta) : '-';
-        document.getElementById('detailActualDelivery').textContent = po.actualDelivery ? formatDate(po.actualDelivery) : '-';
-        
-        document.getElementById('detailNote').textContent = po.note || '-';
 
         document.getElementById('poDetailModal').classList.remove('hidden');
     }
