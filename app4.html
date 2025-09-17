@@ -1254,7 +1254,8 @@
         if (num === null || num === undefined || isNaN(num)) {
             return 'Rp 0';
         }
-        return 'Rp ' + new Intl.NumberFormat('id-ID').format(num); // Use id-ID for dot as thousands separator
+        // Use id-ID for dot as thousands separator and 'Rp' currency symbol
+        return 'Rp ' + new Intl.NumberFormat('id-ID').format(num);
     }
 
     function formatDate(timestamp) {
