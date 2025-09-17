@@ -33,7 +33,7 @@
             max-width: 960px;
             width: 100%;
             display: grid;
-            grid-template-columns: repeat(2, 1fr); /* Diubah menjadi 2 kolom */
+            grid-template-columns: repeat(2, 1fr);
             gap: 1.5rem;
         }
         .menu-card {
@@ -153,13 +153,14 @@
         </div>
     </main>
 
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
     <script>
-        // Firebase config (samakan dengan konfigurasi di app.html)
-        const firebaseConfig = {
+        // Konfigurasi Firebase untuk Menu 1 (default)
+        const firebaseConfigDefault = {
             apiKey: "AIzaSyB9s6k2K75vrbe1lWgiu42SAXV_lySHHNU",
             authDomain: "monitoring-efk.firebaseapp.com",
             projectId: "monitoring-efk",
@@ -168,27 +169,44 @@
             appId: "1:1083858508151:web:3d505dec79d715f9cd6972"
         };
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
+        // Konfigurasi Firebase untuk Menu 2 (Monitoring Perubahan Accurate)
+        const firebaseConfigMenu2 = {
+            apiKey: "AIzaSyDWgxJfYKksEoeUF2rK67rAH-arejKawJM",
+            authDomain: "monitoring-acc.firebaseapp.com",
+            projectId: "monitoring-acc",
+            storageBucket: "monitoring-acc.firebasestorage.app",
+            messagingSenderId: "898707897888",
+            appId: "1:898707897888:web:8cfe6f77cd784d8c1ec645"
+        };
 
-        // Cek status login saat halaman dimuat
-        auth.onAuthStateChanged((user) => {
+        // Inisialisasi Firebase default (Menu 1)
+        const appDefault = firebase.initializeApp(firebaseConfigDefault);
+
+        // Inisialisasi Firebase kedua untuk Menu 2 dengan nama khusus
+        const appMenu2 = firebase.initializeApp(firebaseConfigMenu2, "appMenu2");
+
+        // Auth dan Firestore untuk masing-masing app
+        const authDefault = appDefault.auth();
+        const dbDefault = appDefault.firestore();
+
+        const authMenu2 = appMenu2.auth();
+        const dbMenu2 = appMenu2.firestore();
+
+        // Cek status login menggunakan Firebase default (Menu 1)
+        authDefault.onAuthStateChanged((user) => {
             if (!user) {
-                // Jika belum login, redirect ke login.html
                 window.location.href = 'login.html';
             }
-            // Jika sudah login, tetap di halaman ini
         });
 
-        // Fungsi navigasi ke halaman lain
+        // Fungsi navigasi
         function navigateTo(url) {
             window.location.href = url;
         }
 
-        // Logout function
+        // Logout menggunakan Firebase default
         document.getElementById('logoutButton').addEventListener('click', () => {
-            auth.signOut()
+            authDefault.signOut()
                 .then(() => {
                     window.location.href = 'login.html';
                 })
