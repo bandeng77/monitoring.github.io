@@ -1148,7 +1148,7 @@
             </div>
         </div>
 
-        <!-- Success Alert Modal (New) -->
+        <!-- Success Alert Modal (NEW) -->
         <div id="successAlertModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
             <div class="bg-white rounded-xl p-8 w-full max-w-sm text-center shadow-2xl modal-content-enter" id="successAlertModalContent">
                 <div class="text-green-500 text-6xl mb-4">
@@ -1186,6 +1186,8 @@
     const auth = firebase.auth();
     const dealsCollection = db.collection('purchaseOrders');
     const usersCollection = db.collection('users');
+    // NEW: Firestore collection for COO list
+    const cooCollection = db.collection('cooList');
 
     let pos = [];
     const DEFAULT_STATUS = 'On Order';
@@ -1193,13 +1195,17 @@
     let sortableInstances = {};
     let authInitialized = false;
     let unsubscribeFromPOs = null;
+    // NEW: Unsubscribe for COO list
+    let unsubscribeFromCOO = null;
 
     // Data for PID and Item Description search (will contain an array of objects from pid.json)
     let productCatalog = [];
+    // NEW: Local COO catalog, will be populated from Firestore
+    let cooCatalog = []; // Array of { name: "Country Name" } objects
 
     // Only store Sets for desired filters
     let uniqueSuppliers = new Set();
-    let uniqueCOOs = new Set();
+    let uniqueCOOs = new Set(); // This will now be populated from cooCatalog
     let uniqueHSCodes = new Set();
     let uniqueStatuses = new Set();
 
@@ -1244,7 +1250,8 @@
                 console.log("Current role:", currentUserRole);
                 // Call new function to load product catalog
                 await fetchProductCatalog(); // <--- IMPORTANT: Call this
-
+                // NEW: Listen for COO list
+                listenForCOOList();
                 listenForPOs();
                 initEventListeners();
                 hideGlobalLoading();
@@ -1272,6 +1279,27 @@
             showCustomAlert("Failed to load product catalog data. Autocomplete feature may not work.", "error");
             productCatalog = []; // Ensure empty if failed
         }
+    }
+
+    // NEW: Function to listen for COO list from Firestore
+    function listenForCOOList() {
+        console.log("Listening for COO list from Firestore (onSnapshot)...");
+        if (unsubscribeFromCOO) {
+            unsubscribeFromCOO();
+        }
+
+        unsubscribeFromCOO = cooCollection.orderBy("name", "asc").onSnapshot(snapshot => {
+            cooCatalog = [];
+            snapshot.forEach(doc => {
+                cooCatalog.push({ id: doc.id, name: doc.data().name });
+            });
+            console.log("COO Catalog updated:", cooCatalog.length, "items");
+            // Update filter dropdowns if filter panel is open or needs re-rendering
+            populateFilterDropdowns();
+        }, (error) => {
+            console.error("Error listening to COO list:", error);
+            showCustomAlert("Failed to load COO list in real-time.", "error");
+        });
     }
 
     // ==================== UTILITY FUNCTIONS ====================
@@ -1368,7 +1396,7 @@
         dealsCollection.orderBy("createdAt", "asc").onSnapshot(snapshot => {
             pos = [];
             uniqueSuppliers.clear();
-            uniqueCOOs.clear();
+            // uniqueCOOs.clear(); // COO filter will now use cooCatalog directly
             uniqueHSCodes.clear();
             uniqueStatuses.clear();
 
@@ -1382,9 +1410,10 @@
                 pos.push({ id: doc.id, ...poData });
 
                 if (poData.supplierName) uniqueSuppliers.add(poData.supplierName);
-                // Collect COO and HS Code from items
+                // Collect HS Code from items
                 if (poData.items && poData.items.length > 0) {
                     poData.items.forEach(item => {
+                        // COO is now managed by cooCatalog, but we still need to collect unique COOs for the filter dropdown
                         if (item.coo) uniqueCOOs.add(item.coo);
                         if (item.hsCode) uniqueHSCodes.add(item.hsCode);
                     });
@@ -1502,7 +1531,8 @@
 
     function populateFilterDropdowns() {
         populateDropdown('filterSupplier', uniqueSuppliers, document.getElementById('filterSupplier').value);
-        populateDropdown('filterCOO', uniqueCOOs, document.getElementById('filterCOO').value);
+        // NEW: Populate COO filter from cooCatalog
+        populateDropdown('filterCOO', cooCatalog.map(c => c.name), document.getElementById('filterCOO').value);
         populateDropdown('filterHSCode', uniqueHSCodes, document.getElementById('filterHSCode').value);
         populateDropdown('filterStatus', uniqueStatuses, document.getElementById('filterStatus').value);
     }
@@ -1663,7 +1693,7 @@
         let isAutocompleteClick = false;
         let target = e.target;
         while (target && target !== document.body) {
-            if (target.classList.contains('autocomplete-items') || target.classList.contains('item-description-search') || target.classList.contains('pid-search-input') || target.id === 'docChecklist_poNumberSearch' || target.id === 'loadChecklistBtn') {
+            if (target.classList.contains('autocomplete-items') || target.classList.contains('item-description-search') || target.classList.contains('pid-search-input') || target.classList.contains('coo-search-input') || target.id === 'docChecklist_poNumberSearch' || target.id === 'loadChecklistBtn') {
                 isAutocompleteClick = true;
                 break;
             }
@@ -1699,16 +1729,11 @@
                 <label class="block text-gray-700 text-xs font-semibold mb-1" for="${uniqueId}-quantity">Qty</label>
                 <input type="number" id="${uniqueId}-quantity" class="item-quantity w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm" placeholder="Qty" min="1" value="${item.quantity}">
             </div>
-            <div>
-                <label class="block text-gray-700 text-xs font-semibold mb-1" for="${uniqueId}-coo">COO</label>
-                <select id="${uniqueId}-coo" class="item-coo w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm">
-                    <option value="">Select COO</option>
-                    <option value="China" ${item.coo === 'China' ? 'selected' : ''}>China</option>
-                    <option value="USA" ${item.coo === 'USA' ? 'selected' : ''}>USA</option>
-                    <option value="Germany" ${item.coo === 'Germany' ? 'selected' : ''}>Germany</option>
-                    <option value="Japan" ${item.coo === 'Japan' ? 'selected' : ''}>Japan</option>
-                    <option value="Korea" ${item.coo === 'Korea' ? 'selected' : ''}>Korea</option>
-                </select>
+            <div class="relative"> <!-- NEW: COO as search input -->
+                <label class="block text-gray-700 text-xs font-semibold mb-1" for="${uniqueId}-coo-search">COO</label>
+                <input type="text" id="${uniqueId}-coo-search" class="coo-search-input w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm" placeholder="Search COO..." value="${item.coo}">
+                <input type="hidden" id="${uniqueId}-coo-hidden" class="coo-hidden" value="${item.coo}">
+                <div id="${uniqueId}-coo-suggestions" class="autocomplete-items suggestions-list"></div>
             </div>
             <div>
                 <label class="block text-gray-700 text-xs font-semibold mb-1" for="${uniqueId}-hsCode">HS Code</label>
@@ -1732,6 +1757,11 @@
         const itemDescriptionHiddenInput = document.getElementById(`${uniqueId}-description-hidden`);
         const itemDescriptionSuggestionsDiv = document.getElementById(`${uniqueId}-description-suggestions`);
 
+        // NEW: COO search elements
+        const cooSearchInput = document.getElementById(`${uniqueId}-coo-search`);
+        const cooHiddenInput = document.getElementById(`${uniqueId}-coo-hidden`);
+        const cooSuggestionsDiv = document.getElementById(`${uniqueId}-coo-suggestions`);
+
         // Callback function for PID selection
         const onPidSelect = (selectedItem) => {
             // Using 'description' because that is the correct property in your JSON
@@ -1749,6 +1779,10 @@
 
         // Setup autocomplete for Item Description, passing the productCatalog, 'description' as displayProperty
         setupSearchWithSuggestions(itemDescriptionSearchInput, itemDescriptionHiddenInput, itemDescriptionSuggestionsDiv, productCatalog, 'description');
+
+        // NEW: Setup autocomplete for COO
+        // cooCatalog is an array of { id: "docId", name: "Country Name" }
+        setupSearchWithSuggestions(cooSearchInput, cooHiddenInput, cooSuggestionsDiv, cooCatalog, 'name');
     }
 
     // Function to remove Item Description & Quantity field
@@ -1835,11 +1869,12 @@
         const value = document.getElementById('value').value;
 
         const itemsToSave = [];
-        document.querySelectorAll('.item-row').forEach(row => {
+        for (const row of document.querySelectorAll('.item-row')) { // Use for...of for async operations if needed, or just forEach
             const pid = row.querySelector('.pid-hidden').value;
             const description = row.querySelector('.item-description-hidden').value;
             const quantity = row.querySelector('.item-quantity').value;
-            const coo = row.querySelector('.item-coo').value;
+            // NEW: Get COO from hidden input
+            const coo = row.querySelector('.coo-hidden').value;
             const hsCode = row.querySelector('.item-hsCode').value;
             const revisiHS = row.querySelector('.item-revisiHS').value;
 
@@ -1863,8 +1898,20 @@
                     existingProduct.description = description;
                     console.log(`Updated description for PID "${pid}" in local catalog.`);
                 }
+
+                // NEW: Save new COO to Firestore if it doesn't exist
+                if (coo && !cooCatalog.some(c => c.name === coo)) {
+                    try {
+                        await cooCollection.add({ name: coo, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+                        console.log(`New COO "${coo}" added to Firestore.`);
+                        // cooCatalog will be updated via onSnapshot listener
+                    } catch (cooError) {
+                        console.error("Error adding new COO to Firestore:", cooError);
+                        showCustomAlert(`Failed to save new COO "${coo}".`, "error");
+                    }
+                }
             }
-        });
+        }
 
         const tracking = document.getElementById('tracking').value;
         const forwarderName = document.getElementById('forwarderName').value;
@@ -2233,10 +2280,16 @@
             unsubscribeFromPOs();
             unsubscribeFromPOs = null;
         }
+        // NEW: Unsubscribe from COO list
+        if (unsubscribeFromCOO) {
+            unsubscribeFromCOO();
+            unsubscribeFromCOO = null;
+        }
         auth.signOut()
             .then(() => {
                 console.log("User logged out successfully");
                 pos = [];
+                cooCatalog = []; // Clear local COO catalog on logout
                 window.location.href = 'login.html';
             })
             .catch((error) => {
@@ -2426,7 +2479,7 @@
                 // Document Checklist Headers
                 "Doc Checklist OC/OA", "Doc Checklist PI", "Doc Checklist CI", "Doc Checklist PL",
                 "Doc Checklist COO", "Doc Checklist COC", "Doc Checklist PIB", "Doc Checklist SPPB",
-                "Doc Checklist Hardcopy", "Doc Checklist Softcopy", "Doc Checklist Prepared By", "Doc Checklist Order By"
+                "Doc Checklist Hardcopy", "Doc Checklist Softcopy", "Doc Checklist COO Prepared By", "Doc Checklist Order By" // Corrected header
             ];
             data.push(headers);
 
