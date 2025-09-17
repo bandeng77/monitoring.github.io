@@ -1,0 +1,2306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitoring Perubahan Accurate</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <!-- Library for Export Excel -->
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+
+    <style>
+        /* New Color Palette */
+        :root {
+            --primary-blue: #3b82f6; /* Primary blue */
+            --primary-dark-blue: #2563eb; /* Dark blue */
+            --accent-teal: #14b8a6; /* Accent teal */
+            --accent-green: #22c55e; /* Accent green */
+            --text-dark: #1e293b; /* Dark text */
+            --text-medium: #475569; /* Medium text */
+            --text-light: #64748b; /* Light text */
+            --bg-light: #f8fafc; /* Light background */
+            --bg-medium: #e2e8f0; /* Medium background */
+            --bg-soft: #f0f2f5; /* Very soft background */
+            --border-color: #cbd5e1; /* Border color */
+            --shadow-light: rgba(0, 0, 0, 0.05);
+            --shadow-medium: rgba(0, 0, 0, 0.1);
+            --shadow-strong: rgba(0, 0, 0, 0.2);
+        }
+
+        html, body {
+            height: 100%; /* Important for fullscreen modal */
+            width: 100%; /* Important for fullscreen modal */
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-soft);
+            color: var(--text-medium);
+            line-height: 1.6;
+        }
+
+        /* Header Styling */
+        .header {
+            background-color: #ffffff;
+            border-radius: 1rem; /* More rounded */
+            box-shadow: 0 8px 20px var(--shadow-light); /* Softer shadow */
+            padding: 1.75rem 2rem;
+            position: relative; /* For logout button placement */
+        }
+        .header h1 {
+            color: var(--text-dark);
+            font-size: 2.25rem; /* Larger */
+            font-weight: 800;
+        }
+        .header .logout-btn-container {
+            position: absolute;
+            top: 1.75rem;
+            right: 2rem;
+        }
+        .header button {
+            font-weight: 600;
+            border-radius: 0.65rem;
+            padding: 0.75rem 1.25rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .header button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px var(--shadow-medium);
+        }
+        .header button.bg-blue-600 { background-color: var(--primary-blue); }
+        .header button.bg-blue-600:hover { background-color: var(--primary-dark-blue); }
+        .header button.bg-green-500 { background-color: var(--accent-green); } /* Using accent-green */
+        .header button.bg-green-500:hover { background-color: #16a34a; } /* Darker green */
+        .header button.bg-red-500 { background-color: #ef4444; }
+        .header button.bg-red-500:hover { background-color: #dc2626; }
+        .header button.bg-gray-500 { background-color: #6b7280; }
+        .header button.bg-gray-500:hover { background-color: #4b5563; }
+        .header button.bg-gray-200 { background-color: var(--bg-medium); color: var(--text-dark); }
+        .header button.bg-gray-200:hover { background-color: var(--border-color); }
+
+        /* Ripple Effect */
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.7);
+            animation: ripple-animation 0.6s linear forwards;
+            transform: scale(0);
+            pointer-events: none;
+        }
+        @keyframes ripple-animation {
+            from { transform: scale(0); opacity: 1; }
+            to { transform: scale(4); opacity: 0; }
+        }
+
+        /* Input & Select Styling */
+        input[type="text"], input[type="date"], input[type="number"], select, textarea {
+            border: 1px solid var(--border-color);
+            border-radius: 0.65rem;
+            padding: 0.75rem 1rem;
+            font-size: 0.95rem;
+            color: var(--text-dark);
+            transition: all 0.2s ease;
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+            outline: none;
+        }
+
+        /* Pipeline Stage */
+        .pipeline-stage {
+            min-height: 480px;
+            max-height: 600px;
+            transition: all 0.4s ease-out;
+            border-radius: 1rem; /* More rounded */
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background-color: #ffffff;
+            box-shadow: 0 12px 30px var(--shadow-light); /* Deeper shadow */
+            box-sizing: border-box;
+        }
+        .pipeline-stage-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--bg-medium);
+            background-image: linear-gradient(to right, var(--primary-blue), var(--accent-teal)); /* Animation: Gradient on header */
+            color: white; /* Animation: Text color for gradient contrast */
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); /* Animation: Shadow on header */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        .pipeline-stage-header h3 {
+            font-size: 1.2rem; /* Larger */
+            font-weight: 700;
+            color: white; /* Animation: Ensure title text remains white */
+            flex-shrink: 0;
+            text-align: center;
+            width: 100%;
+        }
+        .pipeline-stage-content {
+            flex-grow: 1;
+            padding: 1.25rem; /* Larger padding */
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            min-height: 100px;
+            height: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-content: flex-start;
+            background-image: linear-gradient(to bottom right, var(--bg-light), var(--bg-soft)); /* Animation: Soft gradient on content */
+        }
+
+        /* Deal Card */
+        .deal-card {
+            transition: transform 0.4s ease-out, opacity 0.4s ease-out, box-shadow 0.3s ease-out; /* Animation: Smoother transition */
+            cursor: grab;
+            position: relative;
+            background-color: #ffffff;
+            border: 1px solid var(--bg-medium);
+            border-radius: 0.85rem; /* More rounded */
+            padding: 1.1rem; /* Larger padding */
+            margin-bottom: 0;
+            box-shadow: 0 6px 15px var(--shadow-light); /* Clearer shadow */
+            font-size: 0.875rem;
+            width: calc(25% - 0.75rem); /* Adjusted for 4 columns */
+            min-width: 220px; /* Slightly smaller min-width to fit 4 columns */
+            box-sizing: border-box;
+            opacity: 0; /* Animation: Start invisible */
+            transform: translateY(20px); /* Animation: Start slightly below */
+            display: flex; /* Using flexbox for internal layout */
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .deal-card.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .deal-card:hover {
+            transform: translateY(-7px) scale(1.02); /* Animation: More dramatic hover effect (lift and enlarge) */
+            box-shadow: 0 15px 35px var(--shadow-medium); /* Stronger hover shadow */
+        }
+        .deal-card:active {
+            cursor: grabbing;
+        }
+        .deal-card h3 {
+            font-size: 1.05rem; /* Slightly larger font size */
+            font-weight: 700;
+            color: var(--text-dark);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: calc(100% - 60px);
+            margin-bottom: 0.5rem; /* Space below title */
+        }
+        .deal-details {
+            flex-grow: 1; /* Allow details to fill space */
+            margin-bottom: 1rem; /* Space below details */
+        }
+        .deal-details p {
+            font-size: 0.85rem; /* Slightly larger font size */
+            margin-top: 0.3rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--text-medium);
+            display: flex;
+            align-items: center;
+        }
+        .deal-details p i {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            margin-right: 0.5rem; /* Space between icon and text */
+            width: 1rem; /* Fixed width for icon */
+            text-align: center;
+        }
+        .deal-actions {
+            display: flex;
+            justify-content: flex-end; /* Action buttons to the right */
+            gap: 0.5rem; /* Space between action buttons */
+        }
+        .deal-actions button {
+            padding: 0.3rem 0.6rem;
+            font-size: 0.8rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s ease-out, transform 0.2s ease-out;
+            color: var(--text-medium); /* Default icon color */
+            background-color: var(--bg-light); /* Action button background */
+            border: 1px solid var(--border-color);
+        }
+        .deal-actions button:hover {
+            transform: translateY(-2px);
+            background-color: var(--bg-medium);
+        }
+        .deal-actions button.text-blue-600:hover { color: var(--primary-blue); }
+        .deal-actions button.text-green-600:hover { color: #22c55e; } /* Using accent-green */
+        .deal-actions button.text-red-600:hover { color: #ef4444; }
+
+        .deal-footer {
+            margin-top: 1rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--bg-medium);
+            display: flex; /* Add this for flexbox */
+            justify-content: space-between; /* To place status on the left and actions on the right */
+            align-items: center; /* To align vertically */
+        }
+
+        /* Scrollbar */
+        .pipeline-stage-content::-webkit-scrollbar {
+            width: 8px; /* Animation: Scrollbar width */
+        }
+        .pipeline-stage-content::-webkit-scrollbar-track {
+            background: var(--bg-soft); /* Animation: Track color */
+            border-radius: 10px;
+        }
+        .pipeline-stage-content::-webkit-scrollbar-thumb {
+            background: var(--primary-blue); /* Animation: Thumb color */
+            border-radius: 10px;
+            border: 2px solid var(--bg-soft); /* Animation: Border for better appearance */
+        }
+        .pipeline-stage-content::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-dark-blue); /* Animation: Thumb color on hover */
+        }
+
+        /* Modals */
+        /* Remove transition property to remove animation */
+        .modal-content-enter-active, .modal-content-leave-active {
+            /* transition: opacity 0.15s cubic-bezier(0.25, 0.8, 0.25, 1), transform 0.15s cubic-bezier(0.25, 0.8, 0.25, 1); */
+        }
+        #poModalContent, #poDetailModalContent, #deleteModalContent, #filterPanelContent, #successAlertModalContent, #documentChecklistModalContent {
+            background-color: #ffffff;
+            border-radius: 1rem;
+            box-shadow: 0 20px 50px var(--shadow-strong);
+            padding: 2.5rem;
+        }
+
+        /* Fullscreen PO Modal */
+        #poModalContent {
+            width: 98vw; /* Almost fullscreen */
+            height: 98vh; /* Almost fullscreen */
+            max-width: 98vw; /* Ensure it doesn't exceed viewport */
+            max-height: 98vh; /* Ensure it doesn't exceed viewport */
+            border-radius: 1rem;
+            box-shadow: 0 20px 50px var(--shadow-strong);
+            display: flex;
+            flex-direction: column;
+            padding: 1rem; /* Adjust padding to not be too large */
+        }
+        #poModalContent .po-form-container {
+            flex-grow: 1;
+            overflow-y: auto; /* Scrollbar only inside the form if content is too long */
+            padding-right: 0.5rem; /* Space for scrollbar */
+        }
+        #poModalContent .po-form-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        #poModalContent .po-form-container::-webkit-scrollbar-track {
+            background: var(--bg-soft);
+            border-radius: 10px;
+        }
+        #poModalContent .po-form-container::-webkit-scrollbar-thumb {
+            background: var(--primary-blue);
+            border-radius: 10px;
+            border: 2px solid var(--bg-soft);
+        }
+        #poModalContent .po-form-container::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-dark-blue);
+        }
+
+
+        #poModalContent h2, #poDetailModalContent h2, #deleteModalContent h2, #filterPanelContent h2, #successAlertModalContent h2, #documentChecklistModalContent h2 {
+            color: var(--text-dark);
+            font-weight: 800;
+            font-size: 1.75rem; /* Smaller */
+            margin-bottom: 1rem; /* Smaller */
+        }
+        #poForm label, #documentChecklistForm label {
+            color: var(--text-dark);
+            font-weight: 600;
+            font-size: 0.75rem; /* Smaller */
+            margin-bottom: 0.25rem; /* Smaller */
+        }
+        #poForm input, #poForm select, #poForm textarea, #documentChecklistForm input, #documentChecklistForm select, #documentChecklistForm textarea {
+            border-radius: 0.5rem;
+            padding: 0.5rem 0.75rem; /* Smaller */
+            font-size: 0.85rem; /* Smaller */
+        }
+        #poForm textarea, #documentChecklistForm textarea { height: 80px; } /* Slightly shorter */
+
+        /* Detail Grid */
+        #poDetailModalContent .detail-grid {
+            display: grid; /* Ensure this is a grid */
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* Tighter */
+            gap: 1rem;
+        }
+        /* Modification for 3 columns on PO details */
+        @media (min-width: 768px) { /* For tablets and desktops */
+            #poDetailModalContent .detail-grid {
+                grid-template-columns: repeat(3, 1fr); /* 3 columns */
+            }
+        }
+        /* Modification for 4 columns on PO details */
+        @media (min-width: 1024px) { /* For desktops */
+            #poDetailModalContent .detail-grid {
+                grid-template-columns: repeat(4, 1fr); /* 4 columns */
+            }
+        }
+        #poDetailModalContent .detail-item p { /* Combine these two rules */
+            color: #000000; /* Set to black */
+            font-size: 0.9rem; /* Desired font size */
+            font-weight: 500;
+        }
+        #poDetailModalContent .detail-item p:first-child {
+            color: #000000; /* Set to black for labels as well */
+            font-weight: 600; /* Make labels slightly bolder */
+        }
+        #poDetailModalContent .detail-item ul,
+        #poDetailModalContent .detail-item li {
+            font-size: 0.9rem; /* Match other detail font sizes */
+            color: #000000; /* Set to black */
+            font-weight: 500; /* Match other detail text weight */
+        }
+
+        /* Additional rules for dynamic content within the detail modal */
+        #detailDocumentChecklist p,
+        #detailDocumentChecklist span,
+        #detailItemsList p,
+        #detailItemsList span {
+            color: #000000 !important; /* Ensure black for these sections, use !important if needed to override Tailwind */
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: var(--primary-blue);
+            border-radius: 50%;
+            width: 40px; /* Larger */
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        /* Global Loading Overlay */
+        #global-loading-overlay.show {
+            display: flex; /* Ensure overlay is visible when 'show' */
+        }
+
+        /* Empty State */
+        .empty-state {
+            color: var(--text-light);
+            text-align: center;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+        .empty-state i {
+            font-size: 3rem;
+            color: var(--bg-medium);
+            margin-bottom: 1rem;
+        }
+        .empty-state p {
+            font-size: 1rem;
+            color: var(--text-light);
+        }
+
+        /* PO Card Number */
+        .po-card-number {
+            position: absolute;
+            top: 0.6rem;
+            right: 0.6rem; /* Move to top right */
+            left: unset; /* Ensure no conflicting left property */
+            font-size: 0.8rem; /* Slightly larger */
+            font-weight: 700;
+            color: var(--text-dark); /* Darker text color */
+            background-color: var(--bg-medium);
+            padding: 0.15rem 0.5rem;
+            border-radius: 0.35rem;
+            z-index: 10; /* Ensure on top of other content */
+        }
+
+        /* Status Colors - Adjusted to match button colors */
+        .status-on-order { background-color: var(--primary-blue); color: white; } /* Primary blue */
+        .status-waiting { background-color: #facc15; color: #333; } /* Yellow */
+        .status-picked-up { background-color: var(--accent-green); color: white; } /* Accent green */
+        .status-on-delivery { background-color: #a78bfa; color: white; } /* Purple */
+        .status-delivered { background-color: #10b981; color: white; } /* Emerald green */
+        .status-partial-delivered { background-color: #fbbf24; color: #333; } /* Amber */
+        .status-delayed { background-color: #ef4444; color: white; } /* Red */
+        .status-on-hold { background-color: #9ca3af; color: white; } /* Gray */
+
+        /* Styling for status dropdown in deal-card */
+        .status-dropdown {
+            appearance: none; /* Remove default browser styling */
+            background-color: var(--primary-blue);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            min-width: 100px; /* To prevent it from being too small */
+            max-width: 120px;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            position: relative;
+            padding-right: 1.5rem; /* Space for arrow icon */
+        }
+        .status-dropdown:hover {
+            background-color: var(--primary-blue);
+        }
+        .status-dropdown:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+        /* Custom arrow for dropdown */
+        .status-dropdown::after {
+            content: '\f078'; /* FontAwesome chevron-down icon */
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            color: var(--text-medium);
+        }
+
+        /* Media Queries for responsiveness */
+        @media (max-width: 1280px) { /* For large laptop screens, 3 columns */
+            .deal-card {
+                width: calc(33.333% - 0.666rem);
+                min-width: 280px;
+            }
+        }
+
+        @media (max-width: 1024px) { /* For tablets, 2 columns */
+            .deal-card {
+                width: calc(50% - 0.5rem);
+                min-width: 280px;
+            }
+            /* Adjust main PO form grid columns for tablets */
+            #poModalContent .grid.grid-cols-1.sm\:grid-cols-2.md\:grid-cols-3.lg\:grid-cols-4 > div {
+                grid-column: span 1; /* Default 1 column */
+            }
+            @media (min-width: 640px) { /* sm breakpoint */
+                #poModalContent .grid.grid-cols-1.sm\:grid-cols-2.md\:grid-cols-3.lg\:grid-cols-4 > div {
+                    grid-column: span 1; /* 2 columns */
+                }
+            }
+            @media (min-width: 768px) { /* md breakpoint */
+                #poModalContent .grid.grid-cols-1.sm\:grid-cols-2.md\:grid-cols-3.lg\:grid-cols-4 > div {
+                    grid-column: span 1; /* 3 columns */
+                }
+            }
+        }
+
+        @media (max-width: 768px) { /* For mobile, 1 column */
+            .deal-card {
+                width: 100%;
+                min-width: unset;
+            }
+            .max-w-7xl {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 1.25rem 1.5rem;
+            }
+            .header h1 {
+                font-size: 1.75rem;
+            }
+            .header .logout-btn-container {
+                position: static; /* Revert to normal position on mobile */
+                margin-top: 1rem;
+                width: 100%;
+            }
+            .header > div:last-child { /* This is the div containing buttons below the title */
+                margin-top: 1rem;
+                width: 100%;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.75rem;
+            }
+            .header button {
+                width: 100%;
+                justify-content: center;
+                padding: 0.65rem 1rem;
+                font-size: 0.9rem;
+            }
+            .header .flex-col.sm\:flex-row {
+                flex-direction: column;
+            }
+            .header .sm\:w-1\/2 {
+                width: 100%;
+            }
+            #poModalContent {
+                padding: 1rem; /* Smaller padding for mobile */
+            }
+            #poModalContent h2 {
+                font-size: 1.5rem;
+            }
+            /* Adjust main PO form grid columns for mobile */
+            #poModalContent .grid.grid-cols-1.sm\:grid-cols-2.md\:grid-cols-3.lg\:grid-cols-4 > div {
+                grid-column: span 1; /* 1 column */
+            }
+        }
+
+        /* Styling for search dropdown */
+        .autocomplete-items {
+            position: absolute;
+            border: 1px solid #d4d4d4;
+            border-bottom: none;
+            border-top: none;
+            z-index: 99;
+            /*position the autocomplete items to be the same width as the container:*/
+            top: 100%;
+            left: 0;
+            right: 0;
+            max-height: 200px; /* Limit dropdown height */
+            overflow-y: auto; /* Add scroll if too many items */
+            background-color: #fff; /* Ensure white background */
+        }
+
+        .autocomplete-items div {
+            padding: 10px;
+            cursor: pointer;
+            background-color: #fff;
+            border-bottom: 1px solid #d4d4d4;
+        }
+
+        .autocomplete-items div:hover {
+            /*when hovering an item:*/
+            background-color: #e9e9e9;
+        }
+
+        .autocomplete-active {
+            /*when navigating through the items using the arrow keys:*/
+            background-color: DodgerBlue !important;
+            color: #ffffff;
+        }
+
+        /* Custom styles for item rows */
+        .item-row-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem; /* Space between item rows, tighter */
+            margin-top: 1rem; /* Add top margin to prevent being too close */
+            padding-top: 1rem; /* Add top padding */
+            border-top: 1px solid var(--border-color); /* Add separator line */
+        }
+
+        .item-row {
+            display: grid;
+            /* Default for mobile: 1 column */
+            grid-template-columns: 1fr;
+            gap: 0.4rem; /* Space between inputs in a row, tighter */
+            align-items: end; /* Align items at the bottom */
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 0.6rem; /* Smaller */
+            background-color: var(--bg-light);
+        }
+
+        /* For larger screens, adjust item-row columns */
+        @media (min-width: 640px) { /* sm breakpoint */
+            .item-row {
+                /* PID (1.5fr), Description (3fr), Qty (0.8fr), COO (1.2fr), HS Code (1.5fr), Revised HS Code (1.5fr), Actions (0.5fr) */
+                grid-template-columns: 1.5fr 3fr 0.8fr 1.2fr 1.5fr 1.5fr 0.5fr;
+            }
+        }
+        @media (min-width: 1024px) { /* lg breakpoint */
+            .item-row {
+                /* PID (1.5fr), Description (3fr), Qty (0.8fr), COO (1.2fr), HS Code (1.5fr), Revised HS Code (1.5fr), Actions (0.5fr) */
+                grid-template-columns: 1.5fr 3fr 0.8fr 1.2fr 1.5fr 1.5fr 0.5fr;
+            }
+        }
+
+
+        .item-row > div {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .item-row .item-action-buttons {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 0.5rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="mb-8 bg-white p-6 rounded-lg shadow-md header">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900">Monitoring Perubahan Accurate <i class="fas fa-box-open text-blue-600 ml-2"></i></h1>
+                </div>
+                <div class="logout-btn-container">
+                    <button id="authButton" onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
+                        <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                    </button>
+                </div>
+            </div>
+
+            <!-- Buttons below title -->
+            <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 mt-4">
+                <button id="newPOBtn" onclick="openPOModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
+                    <i class="fas fa-plus-circle mr-2"></i> New
+                </button>
+
+                <button id="documentChecklistBtn" onclick="openDocumentChecklistModal()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
+                    <i class="fas fa-clipboard-list mr-2"></i> Document Checklist
+                </button>
+
+                <button id="exportExcelBtn" onclick="exportToExcel()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
+                    <i class="fas fa-file-excel mr-2"></i> Export Excel
+                </button>
+
+                <button id="backButton" onclick="goToIndex()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
+                    <i class="fas fa-arrow-left mr-2"></i> Back
+                </button>
+            </div>
+
+            <!-- Combined Filter Section -->
+            <div class="mt-6 flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 items-center">
+                <input type="text" id="searchPOs" onkeyup="filterPOs()" placeholder="Search by document number, description..." class="w-full sm:w-1/2 p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+
+                <button id="openFilterPanelBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
+                    <i class="fas fa-filter mr-2"></i> Filter
+                </button>
+            </div>
+        </header>
+
+        <!-- Pipeline Visualization -->
+        <div class="grid grid-cols-1 gap-6 mb-10">
+            <div class="pipeline-stage stage-main-pipeline">
+                <div class="pipeline-stage-header">
+                    <h3>Monitoring List</h3>
+                </div>
+                <div id="pos-stage" class="pipeline-stage-content">
+                    <!-- POs will be displayed here -->
+                    <div id="loading-spinner" class="flex justify-center items-center w-full h-full hidden">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add/Edit PO Modal -->
+        <div id="poModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+            <div class="bg-white rounded-none p-8 w-full h-full shadow-2xl modal-content-enter" id="poModalContent">
+                <h2 class="text-xl sm:text-2xl font-bold mb-4 text-gray-900" id="modalTitle">Add New Perubahan</h2>
+                <form id="poForm" class="po-form-container">
+                    <input type="hidden" id="poId">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-3 gap-y-2"> <!-- Changed to 2 columns -->
+                        <!-- Column 1 -->
+                        <div>
+                            <div class="mb-2">
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="documentType">Tipe Dokumen <span class="text-red-500">*</span></label>
+                                <input type="text" id="documentType" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" required>
+                            </div>
+                            <div class="mb-2">
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="documentNumber">Nomor Dokumen <span class="text-red-500">*</span></label>
+                                <input type="text" id="documentNumber" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" required>
+                            </div>
+                            <div class="mb-2">
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="documentDate">Tanggal Dokumen</label>
+                                <input type="date" id="documentDate" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            </div>
+                            <div class="mb-2">
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="description">Deskripsi</label>
+                                <textarea id="description" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" rows="4" placeholder="Deskripsi dokumen..."></textarea>
+                            </div>
+                        </div>
+                        <!-- Column 2 -->
+                        <div>
+                            <div class="mb-2">
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="initialPriceValue">Nilai Harga Awal Perubahan</label>
+                                <input type="number" id="initialPriceValue" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            </div>
+                            <div class="mb-2">
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="changeDate">Tanggal Perubahan</label>
+                                <input type="date" id="changeDate" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            </div>
+                            <div class="mb-2">
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="changeType">Tipe Perubahan</label>
+                                <select id="changeType" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                                    <option value="">Pilih Tipe Perubahan</option>
+                                    <option value="Penambahan">Penambahan</option>
+                                    <option value="Pengurangan">Pengurangan</option>
+                                    <option value="Koreksi">Koreksi</option>
+                                </select>
+                            </div>
+                            <div class="mb-2">
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="changeDescription">Deskripsi Perubahan</label>
+                                <textarea id="changeDescription" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" rows="4" placeholder="Deskripsi perubahan..."></textarea>
+                            </div>
+                            <div class="mb-2">
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="changedPriceValue">Perubahan Nilai Harga</label>
+                                <input type="number" id="changedPriceValue" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end space-x-3 mt-4">
+                        <button type="button" onclick="closePOModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
+                            Cancel
+                        </button>
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105 text-sm">
+                            Save Perubahan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- PO Detail Modal -->
+        <div id="poDetailModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+            <div class="bg-white rounded-xl p-8 w-full max-w-5xl shadow-2xl modal-content-enter overflow-y-auto" id="poDetailModalContent">
+                <h2 class="text-xl sm:text-2xl font-bold mb-6 text-gray-900" id="poDetailTitle">Detail Perubahan</h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Left Column: Main PO Details -->
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">Informasi Dokumen</h3>
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <p class="font-semibold">Tipe Dokumen:</p>
+                                <p id="detailDocumentType"></p>
+                            </div>
+                            <div class="detail-item">
+                                <p class="font-semibold">Nomor Dokumen:</p>
+                                <p id="detailDocumentNumber"></p>
+                            </div>
+                            <div class="detail-item">
+                                <p class="font-semibold">Tanggal Dokumen:</p>
+                                <p id="detailDocumentDate"></p>
+                            </div>
+                            <div class="detail-item col-span-full">
+                                <p class="font-semibold">Deskripsi:</p>
+                                <p id="detailDescription"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Document Checklist -->
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">Informasi Perubahan</h3>
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <p class="font-semibold">Nilai Harga Awal Perubahan:</p>
+                                <p id="detailInitialPriceValue"></p>
+                            </div>
+                            <div class="detail-item">
+                                <p class="font-semibold">Tanggal Perubahan:</p>
+                                <p id="detailChangeDate"></p>
+                            </div>
+                            <div class="detail-item">
+                                <p class="font-semibold">Tipe Perubahan:</p>
+                                <p id="detailChangeType"></p>
+                            </div>
+                            <div class="detail-item col-span-full">
+                                <p class="font-semibold">Deskripsi Perubahan:</p>
+                                <p id="detailChangeDescription"></p>
+                            </div>
+                            <div class="detail-item">
+                                <p class="font-semibold">Perubahan Nilai Harga:</p>
+                                <p id="detailChangedPriceValue"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" onclick="closePODetailModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delete Confirmation Modal -->
+        <div id="deleteModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+            <div class="bg-white rounded-xl p-8 w-full max-w-sm shadow-2xl modal-content-enter" id="deleteModalContent">
+                <h2 class="text-xl font-bold mb-4 text-gray-900">Delete Confirmation</h2>
+                <p class="text-gray-700 mb-6 text-sm">Are you sure you want to delete "<span id="dealToDeleteName" class="font-semibold"></span>"? This action cannot be undone.</p>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="closeDeleteModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
+                        Cancel
+                    </button>
+                    <button type="button" id="confirmDeleteBtn" onclick="deletePO()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105 text-sm">
+                        Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Panel Modal -->
+        <div id="filterPanel" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+            <div class="bg-white rounded-xl p-8 w-full max-w-2xl shadow-2xl modal-content-enter" id="filterPanelContent">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900 flex items-center"><i class="fas fa-filter mr-3 text-gray-500"></i> Filter Perubahan</h2>
+                    <button onclick="closeFilterPanel()" class="text-gray-500 hover:text-gray-700 transition duration-200">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Filter: Tipe Dokumen -->
+                    <div>
+                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterDocumentType">Tipe Dokumen</label>
+                        <select id="filterDocumentType" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            <option value="all">Semua Tipe Dokumen</option>
+                            <!-- Options will be dynamically populated by JavaScript -->
+                        </select>
+                    </div>
+                    <!-- Filter: Tipe Perubahan -->
+                    <div>
+                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterChangeType">Tipe Perubahan</label>
+                        <select id="filterChangeType" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            <option value="all">Semua Tipe Perubahan</option>
+                            <option value="Penambahan">Penambahan</option>
+                            <option value="Pengurangan">Pengurangan</option>
+                            <option value="Koreksi">Koreksi</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" onclick="resetFilters()" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
+                        Reset Filters
+                    </button>
+                    <button type="button" onclick="applyFiltersAndClosePanel()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105 text-sm">
+                        Apply Filters
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Document Checklist Modal (NEW) -->
+        <div id="documentChecklistModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+            <div class="bg-white rounded-xl p-8 w-full max-w-2xl shadow-2xl modal-content-enter" id="documentChecklistModalContent">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900 flex items-center"><i class="fas fa-clipboard-check mr-3 text-gray-500"></i> Document Checklist</h2>
+                    <button onclick="closeDocumentChecklistModal()" class="text-gray-500 hover:text-gray-700 transition duration-200">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <form id="documentChecklistForm">
+                    <!-- Document Number Search for Checklist -->
+                    <div class="mb-6 border-b pb-4 border-gray-200">
+                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="docChecklist_documentNumberSearch">Search Nomor Dokumen</label>
+                        <div class="relative flex items-center">
+                            <input type="text" id="docChecklist_documentNumberSearch" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm pr-10" placeholder="Type Nomor Dokumen...">
+                            <input type="hidden" id="docChecklist_poId" value="">
+                            <div id="docChecklist_documentNumberSuggestions" class="autocomplete-items suggestions-list"></div>
+                            <button type="button" id="loadChecklistBtn" class="absolute right-2 top-1/2 -translate-y-1/2 bg-blue-500 text-white rounded-md p-1 text-xs hover:bg-blue-600 transition duration-150">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                        <p id="selectedPoInfo" class="text-sm text-gray-600 mt-2 hidden">Selected Dokumen: <span class="font-medium" id="selectedDocumentNumberDisplay"></span></p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4"> <!-- Changed to 3 columns -->
+                        <!-- Column 1: Documents -->
+                        <div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">OC/OA</label>
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_OC_OA">
+                                    <option value="">Select Status</option>
+                                    <option value="Download">Download</option>
+                                    <option value="Printed">Printed</option>
+                                    <option value="Waiting">Waiting</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">PI</label>
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_PI">
+                                    <option value="">Select Status</option>
+                                    <option value="Download">Download</option>
+                                    <option value="Printed">Printed</option>
+                                    <option value="Waiting">Waiting</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">CI</label>
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_CI">
+                                    <option value="">Select Status</option>
+                                    <option value="Download">Download</option>
+                                    <option value="Printed">Printed</option>
+                                    <option value="Waiting">Waiting</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">PL</label>
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_PL">
+                                    <option value="">Select Status</option>
+                                    <option value="Download">Download</option>
+                                    <option value="Printed">Printed</option>
+                                    <option value="Waiting">Waiting</option>
+                                </select>
+                            </div>
+                        </div>
+                        <!-- Column 2: COO, COC, PIB, SPPB -->
+                        <div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">COO</label>
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_COO">
+                                    <option value="">Select Status</option>
+                                    <option value="Download">Download</option>
+                                    <option value="Printed">Printed</option>
+                                    <option value="Waiting">Waiting</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">COC</label>
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_COC">
+                                    <option value="">Select Status</option>
+                                    <option value="Download">Download</option>
+                                    <option value="Printed">Printed</option>
+                                    <option value="Waiting">Waiting</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">PIB</label>
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_PIB">
+                                    <option value="">Select Status</option>
+                                    <option value="Download">Download</option>
+                                    <option value="Printed">Printed</option>
+                                    <option value="Waiting">Waiting</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">SPPB</label>
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_SPPB">
+                                    <option value="">Select Status</option>
+                                    <option value="Download">Download</option>
+                                    <option value="Printed">Printed</option>
+                                    <option value="Waiting">Waiting</option>
+                                </select>
+                            </div>
+                        </div>
+                        <!-- Column 3: Hardcopy, Softcopy, Prepared By, Order By -->
+                        <div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">Hardcopy</label>
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_Hardcopy">
+                                    <option value="">Select Status</option>
+                                    <option value="Printed">Printed</option>
+                                    <option value="Signed">Signed</option>
+                                    <option value="Waiting">Waiting</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">Softcopy</label>
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_Softcopy">
+                                    <option value="">Select Status</option>
+                                    <option value="Printed">Printed</option>
+                                    <option value="Signed">Signed</option>
+                                    <option value="Waiting">Waiting</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">Prepared By</label>
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_PreparedBy">
+                                    <option value="">Select Name</option>
+                                    <option value="Maida">Maida</option>
+                                    <option value="Rossiana">Rossiana</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">Order By</label>
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_OrderBy">
+                                    <option value="">Select Name</option>
+                                    <option value="Maida">Maida</option>
+                                    <option value="Rossiana">Rossiana</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button type="button" onclick="closeDocumentChecklistModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
+                            Cancel
+                        </button>
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105 text-sm">
+                            Save Checklist
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Success Alert Modal (NEW) -->
+        <div id="successAlertModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+            <div class="bg-white rounded-xl p-8 w-full max-w-sm text-center shadow-2xl modal-content-enter" id="successAlertModalContent">
+                <div class="text-green-500 text-6xl mb-4">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h2 class="text-2xl font-bold mb-4 text-gray-900">Success!</h2>
+                <p class="text-gray-700 mb-6" id="successAlertMessage">Perubahan saved successfully.</p>
+                <button type="button" onclick="closeSuccessAlertModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105">
+                    OK
+                </button>
+            </div>
+        </div>
+
+        <!-- Global Loading Overlay -->
+        <div id="global-loading-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-[9999] hidden">
+            <div class="spinner"></div>
+        </div>
+
+    </div>
+
+<script>
+    // Firebase configuration
+    const firebaseConfig = {
+          apiKey: "AIzaSyDWgxJfYKksEoeUF2rK67rAH-arejKawJM",
+          authDomain: "monitoring-acc.firebaseapp.com",
+          projectId: "monitoring-acc",
+          storageBucket: "monitoring-acc.firebasestorage.app",
+          messagingSenderId: "898707897888",
+          appId: "1:898707897888:web:8cfe6f77cd784d8c1ec645"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+    const changesCollection = db.collection('accurateChanges'); // Changed collection name
+    const usersCollection = db.collection('users');
+    const documentTypesCollection = db.collection('documentTypes'); // New collection for document types
+    const changeTypesCollection = db.collection('changeTypes'); // New collection for change types
+
+    let changes = []; // Renamed from 'pos'
+    const DEFAULT_CHANGE_TYPE = 'Koreksi'; // Default status for changes
+    let currentUserRole = 'user';
+    let sortableInstances = {};
+    let authInitialized = false;
+    let unsubscribeFromChanges = null; // Renamed from 'unsubscribeFromPOs'
+    let unsubscribeFromDocumentTypes = null; // New unsubscribe for document types
+    let unsubscribeFromChangeTypes = null; // New unsubscribe for change types
+
+    // Data for autocomplete (if needed, e.g., for document numbers)
+    let documentCatalog = []; // Will store document numbers and descriptions
+    let documentTypesCatalog = []; // Array of { name: "Tipe Dokumen" } objects
+    let changeTypesCatalog = []; // Array of { name: "Tipe Perubahan" } objects
+
+    // Only store Sets for desired filters
+    let uniqueDocumentTypes = new Set();
+    let uniqueChangeTypes = new Set();
+    let uniquePreparedBy = new Set(); // For document checklist
+    let uniqueOrderBy = new Set(); // For document checklist
+
+    const ADMIN_EMAIL = 'maida@genetek.co.id';
+
+    // ==================== MAIN FUNCTIONS ====================
+
+    auth.onAuthStateChanged(async (user) => {
+        if (authInitialized) return;
+        authInitialized = true;
+
+        console.log("Auth state changed:", user ? user.email : "no user");
+
+        if (!user && window.location.pathname.includes('app.html')) {
+            console.log("No user, redirecting to login");
+            window.location.href = 'login.html';
+            return;
+        }
+
+        if (user && window.location.pathname.includes('login.html')) {
+            console.log("User already logged in, redirecting to app");
+            window.location.href = 'app.html';
+            return;
+        }
+
+        if (user && window.location.pathname.includes('app.html')) {
+            try {
+                showGlobalLoading();
+                if (user.email === ADMIN_EMAIL) {
+                    currentUserRole = 'admin';
+                    await usersCollection.doc(user.uid).set({
+                        role: 'admin',
+                        email: user.email
+                    }, { merge: true });
+                } else {
+                    console.log("Unauthorized user, logging out and redirecting to login.");
+                    await auth.signOut();
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                console.log("Current role:", currentUserRole);
+                // Load initial data for autocompletes and filters
+                await fetchDocumentCatalog(); // Fetch document data for search
+                listenForDocumentTypes(); // Listen for document types from Firestore
+                listenForChangeTypes(); // Listen for change types from Firestore
+                listenForChanges(); // Listen for accurate changes
+                initEventListeners();
+                hideGlobalLoading();
+            } catch (error) {
+                console.error("Error checking user role or loading data:", error);
+                showCustomAlert("Failed to load user data or application. Please refresh the page.", "error");
+                hideGlobalLoading();
+            }
+        }
+    });
+
+    // Function to fetch document catalog data (e.g., from a JSON or another collection)
+    async function fetchDocumentCatalog() {
+        // For now, we'll populate this from existing changes.
+        // If you have a separate master list of documents, you would fetch it here.
+        console.log("Document catalog will be built from existing changes.");
+    }
+
+    // NEW: Function to listen for Document Types list from Firestore
+    function listenForDocumentTypes() {
+        console.log("Listening for Document Types list from Firestore (onSnapshot)...");
+        if (unsubscribeFromDocumentTypes) {
+            unsubscribeFromDocumentTypes();
+        }
+
+        unsubscribeFromDocumentTypes = documentTypesCollection.orderBy("name", "asc").onSnapshot(snapshot => {
+            documentTypesCatalog = [];
+            snapshot.forEach(doc => {
+                documentTypesCatalog.push({ id: doc.id, name: doc.data().name });
+            });
+            console.log("Document Types Catalog updated:", documentTypesCatalog.length, "items");
+            populateFilterDropdowns();
+            populateDocumentTypeDropdown(); // Populate dropdown in New/Edit modal
+        }, (error) => {
+            console.error("Error listening to Document Types list:", error);
+            showCustomAlert("Failed to load Document Types list in real-time.", "error");
+        });
+    }
+
+    // NEW: Function to listen for Change Types list from Firestore
+    function listenForChangeTypes() {
+        console.log("Listening for Change Types list from Firestore (onSnapshot)...");
+        if (unsubscribeFromChangeTypes) {
+            unsubscribeFromChangeTypes();
+        }
+
+        unsubscribeFromChangeTypes = changeTypesCollection.orderBy("name", "asc").onSnapshot(snapshot => {
+            changeTypesCatalog = [];
+            snapshot.forEach(doc => {
+                changeTypesCatalog.push({ id: doc.id, name: doc.data().name });
+            });
+            console.log("Change Types Catalog updated:", changeTypesCatalog.length, "items");
+            populateFilterDropdowns();
+            populateChangeTypeDropdown(); // Populate dropdown in New/Edit modal
+        }, (error) => {
+            console.error("Error listening to Change Types list:", error);
+            showCustomAlert("Failed to load Change Types list in real-time.", "error");
+        });
+    }
+
+    // ==================== UTILITY FUNCTIONS ====================
+
+    function formatDateTime(timestamp) {
+        if (!timestamp) return '-';
+        try {
+            const date = timestamp instanceof Date ? timestamp : (timestamp && typeof timestamp.toDate === 'function' ? timestamp.toDate() : null);
+            if (!date) return '-';
+
+            return date.toLocaleString('en-US', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        } catch (e) {
+            console.error("Error formatting date time:", e);
+            return '-';
+        }
+    }
+
+    function formatNumber(num) {
+        if (num === null || num === undefined || isNaN(num)) {
+            return '0';
+        }
+        return new Intl.NumberFormat('en-US').format(num);
+    }
+
+    function formatDate(timestamp) {
+        if (!timestamp) return '-';
+        try {
+            const date = timestamp instanceof Date ? timestamp : (timestamp && typeof timestamp.toDate === 'function' ? timestamp.toDate() : null);
+            if (!date) return '-';
+
+            return date.toLocaleDateString('en-US');
+        } catch (e) {
+            console.error("Error formatting date:", e);
+            return '-';
+        }
+    }
+
+    function showCustomAlert(message, type = 'success') {
+        const modal = document.getElementById('successAlertModal');
+        const modalContent = document.getElementById('successAlertModalContent');
+        const alertMessage = document.getElementById('successAlertMessage');
+        const alertIcon = modalContent.querySelector('.text-6xl i');
+
+        alertMessage.textContent = message;
+
+        if (type === 'success') {
+            alertIcon.className = 'fas fa-check-circle text-green-500';
+        } else if (type === 'error') {
+            alertIcon.className = 'fas fa-times-circle text-red-500';
+        } else if (type === 'info') {
+            alertIcon.className = 'fas fa-info-circle text-blue-500';
+        } else if (type === 'warning') {
+            alertIcon.className = 'fas fa-exclamation-triangle text-yellow-500';
+        }
+
+        modal.classList.remove('hidden');
+    }
+
+    function closeSuccessAlertModal() {
+        const modal = document.getElementById('successAlertModal');
+        if (!modal) return;
+        modal.classList.add('hidden');
+    }
+
+    function showGlobalLoading() {
+        document.getElementById('global-loading-overlay').classList.add('show');
+    }
+
+    function hideGlobalLoading() {
+        document.getElementById('global-loading-overlay').classList.remove('show');
+    }
+
+    // ==================== CHANGES FUNCTIONS ====================
+
+    function listenForChanges() {
+        console.log("Listening for Accurate Changes from Firebase (onSnapshot)...");
+        const pipelineStage = document.getElementById('pos-stage'); // Keep ID for now
+        const loadingSpinner = document.getElementById('loading-spinner');
+        if (pipelineStage && loadingSpinner) {
+            pipelineStage.innerHTML = '';
+            loadingSpinner.classList.remove('hidden');
+        }
+
+        if (unsubscribeFromChanges) {
+            unsubscribeFromChanges();
+        }
+
+        changesCollection.orderBy("createdAt", "asc").onSnapshot(snapshot => {
+            changes = [];
+            uniqueDocumentTypes.clear();
+            uniqueChangeTypes.clear();
+            uniquePreparedBy.clear();
+            uniqueOrderBy.clear();
+
+            snapshot.forEach((doc) => {
+                const changeData = doc.data();
+                changeData.createdAt = changeData.createdAt && typeof changeData.createdAt.toDate === 'function' ? changeData.createdAt.toDate() : null;
+                changeData.documentDate = changeData.documentDate && typeof changeData.documentDate.toDate === 'function' ? changeData.documentDate.toDate() : null;
+                changeData.changeDate = changeData.changeDate && typeof changeData.changeDate.toDate === 'function' ? changeData.changeDate.toDate() : null;
+
+                changes.push({ id: doc.id, ...changeData });
+
+                if (changeData.documentType) uniqueDocumentTypes.add(changeData.documentType);
+                if (changeData.changeType) uniqueChangeTypes.add(changeData.changeType);
+                if (changeData.docChecklist_PreparedBy) uniquePreparedBy.add(changeData.docChecklist_PreparedBy);
+                if (changeData.docChecklist_OrderBy) uniqueOrderBy.add(changeData.docChecklist_OrderBy);
+            });
+            console.log("Total Accurate Changes updated by onSnapshot:", changes.length);
+            populateFilterDropdowns();
+            filterPOs(); // Renamed from filterPOs to filterChanges if needed, but keeping for now
+            if (loadingSpinner) {
+                loadingSpinner.classList.add('hidden');
+            }
+        }, (error) => {
+            console.error("Error listening to Accurate Changes:", error);
+            showCustomAlert("Failed to load Accurate Changes data in real-time.", "error");
+            if (loadingSpinner) {
+                loadingSpinner.classList.add('hidden');
+            }
+        });
+    }
+
+    function renderChangeCard(change, index) {
+        const changeCard = document.createElement('div');
+        changeCard.className = 'deal-card'; // Keep deal-card class for styling
+        changeCard.dataset.id = change.id;
+
+        // Status class based on changeType (example, adjust as needed)
+        function getChangeTypeClass(changeType) {
+            switch (changeType) {
+                case 'Penambahan': return 'status-picked-up'; // Green
+                case 'Pengurangan': return 'status-delayed'; // Red
+                case 'Koreksi': return 'status-waiting'; // Yellow
+                default: return 'bg-gray-400 text-white';
+            }
+        }
+
+        changeCard.innerHTML = `
+            <span class="po-card-number">${index + 1}</span>
+            <div class="flex justify-between items-start">
+                <h3 class="font-bold text-gray-800">Nomor Dokumen: ${change.documentNumber || 'No Dokumen'}</h3>
+            </div>
+            <div class="mt-1 text-sm text-gray-600 deal-details">
+                <p><i class="fas fa-file-alt"></i> Tipe Dokumen: ${change.documentType || '-'}</p>
+                <p><i class="fas fa-calendar-alt"></i> Tanggal Dokumen: ${change.documentDate ? formatDate(change.documentDate) : '-'}</p>
+                <p><i class="fas fa-tag"></i> Tipe Perubahan: ${change.changeType || '-'}</p>
+            </div>
+            <div class="mt-2 flex justify-between items-center deal-footer">
+                <div class="relative">
+                    <select onchange="updateChangeType('${change.id}', this.value)" class="status-dropdown ${getChangeTypeClass(change.changeType)}">
+                        <option value="Penambahan" ${change.changeType === 'Penambahan' ? 'selected' : ''}>Penambahan</option>
+                        <option value="Pengurangan" ${change.changeType === 'Pengurangan' ? 'selected' : ''}>Pengurangan</option>
+                        <option value="Koreksi" ${change.changeType === 'Koreksi' ? 'selected' : ''}>Koreksi</option>
+                    </select>
+                </div>
+                <div class="flex space-x-1 deal-actions">
+                    <button onclick="openChangeDetailModal('${change.id}')" class="text-blue-600 hover:text-blue-800" title="View Details">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button onclick="prepareEditChange('${change.id}')" class="text-green-600 hover:text-green-800" title="Edit Perubahan">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button onclick="confirmDeleteChange('${change.id}', '${change.documentNumber}')" class="text-red-600 hover:text-red-800" title="Delete Perubahan">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+
+        return changeCard;
+    }
+
+    function populateDropdown(selectElementId, uniqueValues, selectedValue = 'all') {
+        const selectElement = document.getElementById(selectElementId);
+        if (!selectElement) {
+            console.warn(`Element with ID '${selectElementId}' not found.`);
+            return;
+        }
+
+        const currentSelectedValue = selectElement.value;
+
+        selectElement.innerHTML = '';
+
+        const defaultOption = document.createElement('option');
+        defaultOption.value = 'all';
+        const labelElement = selectElement.previousElementSibling;
+        const labelText = labelElement ? labelElement.textContent.replace(':', '').replace('*', '').trim() : '';
+        defaultOption.textContent = `Semua ${labelText}`;
+        selectElement.appendChild(defaultOption);
+
+        const sortedValues = Array.from(uniqueValues).sort();
+        sortedValues.forEach(value => {
+            if (value) {
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = value;
+                selectElement.appendChild(option);
+            }
+        });
+
+        if (Array.from(selectElement.options).some(option => option.value === currentSelectedValue)) {
+            selectElement.value = currentSelectedValue;
+        } else {
+            selectElement.value = 'all';
+        }
+    }
+
+    function populateFilterDropdowns() {
+        populateDropdown('filterDocumentType', uniqueDocumentTypes, document.getElementById('filterDocumentType').value);
+        populateDropdown('filterChangeType', uniqueChangeTypes, document.getElementById('filterChangeType').value);
+    }
+
+    // Populate dropdown for documentType in New/Edit modal
+    function populateDocumentTypeDropdown() {
+        const selectElement = document.getElementById('documentType');
+        if (!selectElement) return;
+
+        const currentSelectedValue = selectElement.value;
+        selectElement.innerHTML = '<option value="">Pilih Tipe Dokumen</option>';
+        documentTypesCatalog.forEach(type => {
+            const option = document.createElement('option');
+            option.value = type.name;
+            option.textContent = type.name;
+            selectElement.appendChild(option);
+        });
+        selectElement.value = currentSelectedValue;
+    }
+
+    // Populate dropdown for changeType in New/Edit modal
+    function populateChangeTypeDropdown() {
+        const selectElement = document.getElementById('changeType');
+        if (!selectElement) return;
+
+        const currentSelectedValue = selectElement.value;
+        selectElement.innerHTML = '<option value="">Pilih Tipe Perubahan</option>';
+        changeTypesCatalog.forEach(type => {
+            const option = document.createElement('option');
+            option.value = type.name;
+            option.textContent = type.name;
+            selectElement.appendChild(option);
+        });
+        selectElement.value = currentSelectedValue;
+    }
+
+    // ==================== FUNCTIONS FOR ADDITIONAL FORMS WITH SEARCH (Generic Autocomplete) ====================
+
+    // Debounce function to delay function execution
+    function debounce(func, delay) {
+        let timeout;
+        return function(...args) {
+            const context = this;
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(context, args), delay);
+        };
+    }
+
+    /**
+     * Generic autocomplete function that supports a hidden input to store the selected value.
+     * @param {HTMLInputElement} searchInput - The text input element used for searching.
+     * @param {HTMLInputElement} hiddenInput - The hidden input element to store the selected value.
+     * @param {HTMLDivElement} suggestionsDiv - The div element to display suggestions.
+     * @param {Array<Object>} dataList - An array of objects of possible values.
+     * @param {string} displayProperty - The name of the property from the object to be displayed and searched.
+     * @param {Function} [onSelectCallback] - Callback function to execute when an item is selected. Receives the selected item object.
+     */
+    function setupSearchWithSuggestions(searchInput, hiddenInput, suggestionsDiv, dataList, displayProperty, onSelectCallback = null) {
+        const MAX_SUGGESTIONS = 20;
+        let currentFocus = -1;
+
+        const processInput = () => {
+            const val = searchInput.value.trim();
+            suggestionsDiv.innerHTML = '';
+            suggestionsDiv.classList.add('hidden');
+
+            if (!val) {
+                hiddenInput.value = '';
+                return false;
+            }
+            currentFocus = -1;
+
+            const filteredSuggestions = dataList
+                .filter(item => {
+                    const itemValue = item[displayProperty];
+                    return itemValue && itemValue.toLowerCase().includes(val.toLowerCase());
+                })
+                .sort((a, b) => {
+                    const valA = a[displayProperty];
+                    const valB = b[displayProperty];
+                    return valA.localeCompare(valB);
+                })
+                .slice(0, MAX_SUGGESTIONS);
+
+            if (filteredSuggestions.length > 0) {
+                filteredSuggestions.forEach(item => {
+                    const itemValue = item[displayProperty];
+                    const b = document.createElement("DIV");
+                    b.classList.add("autocomplete-item");
+                    const startIdx = itemValue.toLowerCase().indexOf(val.toLowerCase());
+                    b.innerHTML = itemValue.substring(0, startIdx) + "<strong>" + itemValue.substring(startIdx, startIdx + val.length) + "</strong>" + itemValue.substring(startIdx + val.length);
+
+                    b.addEventListener("click", function(e) {
+                        e.stopPropagation();
+                        searchInput.value = itemValue; // Set text input with displayed value
+                        hiddenInput.value = itemValue; // Update hidden input with displayed value
+                        suggestionsDiv.classList.add('hidden');
+                        if (onSelectCallback) {
+                            onSelectCallback(item); // Send the entire selected item object
+                        }
+                    });
+                    suggestionsDiv.appendChild(b);
+                });
+                suggestionsDiv.classList.remove('hidden');
+            } else {
+                suggestionsDiv.classList.add('hidden');
+            }
+        };
+
+        const debouncedProcessInput = debounce(processInput, 300);
+
+        const handleKeydown = (e) => {
+            let x = suggestionsDiv.getElementsByClassName("autocomplete-item");
+            if (e.keyCode == 40) {
+                currentFocus++;
+                addActive(x);
+            } else if (e.keyCode == 38) {
+                currentFocus--;
+                addActive(x);
+            } else if (e.keyCode == 13) {
+                e.preventDefault();
+                if (currentFocus > -1) {
+                    if (x && x[currentFocus]) x[currentFocus].click();
+                } else {
+                    // If Enter is pressed and no suggestion is selected, use the typed value
+                    hiddenInput.value = searchInput.value;
+                    suggestionsDiv.classList.add('hidden');
+                    // If there's a callback, call it with a simple object containing only the searched property
+                    if (onSelectCallback) {
+                        onSelectCallback({ [displayProperty]: searchInput.value });
+                    }
+                }
+            }
+        };
+
+        const handleBlur = () => {
+            setTimeout(() => {
+                const currentInputValue = searchInput.value.trim();
+                if (currentInputValue !== '') {
+                    hiddenInput.value = currentInputValue;
+                } else {
+                    hiddenInput.value = '';
+                }
+                suggestionsDiv.classList.add('hidden');
+            }, 100);
+        };
+
+        const handleFocus = () => {
+            if (searchInput.value.length > 0) {
+                processInput();
+            }
+        };
+
+        searchInput.removeEventListener('input', debouncedProcessInput);
+        searchInput.removeEventListener('keydown', handleKeydown);
+        searchInput.removeEventListener('blur', handleBlur);
+        searchInput.removeEventListener('focus', handleFocus);
+
+        searchInput.addEventListener('input', debouncedProcessInput);
+        searchInput.addEventListener('keydown', handleKeydown);
+        searchInput.addEventListener('blur', handleBlur);
+        searchInput.addEventListener('focus', handleFocus);
+
+        function addActive(x) {
+            if (!x || x.length === 0) return false;
+            removeActive(x);
+            currentFocus = (currentFocus + x.length) % x.length;
+            x[currentFocus].classList.add("autocomplete-active");
+            x[currentFocus].scrollIntoView({ block: "nearest", inline: "nearest" });
+        }
+
+        function removeActive(x) {
+            for (let i = 0; i < x.length; i++) {
+                x[i].classList.remove("autocomplete-active");
+            }
+        }
+    }
+
+    // Global function to close all autocomplete suggestion lists
+    function closeAllAutocompleteSuggestions() {
+        document.querySelectorAll(".suggestions-list").forEach(item => {
+            item.classList.add('hidden');
+            item.innerHTML = ''; // Clear content
+        });
+    }
+
+    // Global event listener to close suggestions when clicking outside
+    document.addEventListener("click", function(e) {
+        // Check if the click target is not part of the autocomplete
+        let isAutocompleteClick = false;
+        let target = e.target;
+        while (target && target !== document.body) {
+            if (target.classList.contains('autocomplete-items') || target.id === 'docChecklist_documentNumberSearch' || target.id === 'loadChecklistBtn') {
+                isAutocompleteClick = true;
+                break;
+            }
+            target = target.parentNode;
+        }
+        if (!isAutocompleteClick) {
+            closeAllAutocompleteSuggestions();
+        }
+    });
+
+    // Open Change modal (for add or edit)
+    async function openPOModal(changeId = null) { // Renamed from openPOModal
+        const poModal = document.getElementById('poModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const poForm = document.getElementById('poForm');
+
+        poForm.reset();
+        document.getElementById('poId').value = ''; // Keep poId for consistency, but it refers to changeId
+
+        // Populate dropdowns for documentType and changeType
+        populateDocumentTypeDropdown();
+        populateChangeTypeDropdown();
+
+        document.getElementById('changeType').value = DEFAULT_CHANGE_TYPE;
+
+        closeAllAutocompleteSuggestions();
+
+        if (changeId) {
+            modalTitle.textContent = 'Edit Perubahan';
+            const change = changes.find(c => c.id === changeId);
+            if (change) {
+                document.getElementById('poId').value = change.id;
+                document.getElementById('documentType').value = change.documentType || '';
+                document.getElementById('documentNumber').value = change.documentNumber || '';
+                document.getElementById('documentDate').value = change.documentDate instanceof Date ? change.documentDate.toISOString().split('T')[0] : '';
+                document.getElementById('description').value = change.description || '';
+                document.getElementById('initialPriceValue').value = change.initialPriceValue || '';
+                document.getElementById('changeDate').value = change.changeDate instanceof Date ? change.changeDate.toISOString().split('T')[0] : '';
+                document.getElementById('changeType').value = change.changeType || DEFAULT_CHANGE_TYPE;
+                document.getElementById('changeDescription').value = change.changeDescription || '';
+                document.getElementById('changedPriceValue').value = change.changedPriceValue || '';
+            }
+        } else {
+            modalTitle.textContent = 'Add New Perubahan';
+        }
+
+        poModal.classList.remove('hidden');
+    }
+
+    function closePOModal() { // Renamed from closePOModal
+        const poModal = document.getElementById('poModal');
+        if (!poModal) return;
+        poModal.classList.add('hidden');
+        closeAllAutocompleteSuggestions();
+    }
+
+    // Save Change data to Firestore
+    async function savePO() { // Renamed from savePO
+        const changeId = document.getElementById('poId').value;
+        const documentNumber = document.getElementById('documentNumber').value;
+
+        if (!documentNumber) {
+            showCustomAlert("Nomor Dokumen is required.", "error");
+            return;
+        }
+
+        closePOModal();
+        showGlobalLoading();
+
+        const documentType = document.getElementById('documentType').value;
+        const documentDate = document.getElementById('documentDate').value ? firebase.firestore.Timestamp.fromDate(new Date(document.getElementById('documentDate').value)) : null;
+        const description = document.getElementById('description').value;
+        const initialPriceValue = parseFloat(document.getElementById('initialPriceValue').value) || 0;
+        const changeDate = document.getElementById('changeDate').value ? firebase.firestore.Timestamp.fromDate(new Date(document.getElementById('changeDate').value)) : null;
+        const changeType = document.getElementById('changeType').value;
+        const changeDescription = document.getElementById('changeDescription').value;
+        const changedPriceValue = parseFloat(document.getElementById('changedPriceValue').value) || 0;
+
+        const changeData = {
+            documentType: documentType,
+            documentNumber: documentNumber,
+            documentDate: documentDate,
+            description: description,
+            initialPriceValue: initialPriceValue,
+            changeDate: changeDate,
+            changeType: changeType,
+            changeDescription: changeDescription,
+            changedPriceValue: changedPriceValue,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        try {
+            if (changeId) {
+                await changesCollection.doc(changeId).update(changeData);
+                showCustomAlert("Perubahan updated successfully!", "success");
+            } else {
+                changeData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                changeData.createdBy = auth.currentUser.email;
+                await changesCollection.add(changeData);
+                showCustomAlert("New Perubahan added successfully!", "success");
+            }
+
+            // NEW: Add new documentType to Firestore if it doesn't exist
+            if (documentType && !documentTypesCatalog.some(dt => dt.name === documentType)) {
+                try {
+                    await documentTypesCollection.add({ name: documentType, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+                    console.log(`New Document Type "${documentType}" added to Firestore.`);
+                } catch (dtError) {
+                    console.error("Error adding new Document Type to Firestore:", dtError);
+                    showCustomAlert(`Failed to save new Document Type "${documentType}".`, "error");
+                }
+            }
+
+            // NEW: Add new changeType to Firestore if it doesn't exist
+            if (changeType && !changeTypesCatalog.some(ct => ct.name === changeType)) {
+                try {
+                    await changeTypesCollection.add({ name: changeType, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+                    console.log(`New Change Type "${changeType}" added to Firestore.`);
+                } catch (ctError) {
+                    console.error("Error adding new Change Type to Firestore:", ctError);
+                    showCustomAlert(`Failed to save new Change Type "${changeType}".`, "error");
+                }
+            }
+
+        } catch (error) {
+            console.error("Error saving Perubahan:", error);
+            showCustomAlert("Failed to save Perubahan. Please try again.", "error");
+        } finally {
+            hideGlobalLoading();
+        }
+    }
+
+    function prepareEditChange(changeId) { // Renamed from prepareEditPO
+        openPOModal(changeId);
+    }
+
+    let changeToDeleteId = null;
+    let changeToDeleteNumber = '';
+
+    function confirmDeleteChange(changeId, documentNumber) { // Renamed from confirmDeletePO
+        changeToDeleteId = changeId;
+        changeToDeleteNumber = documentNumber;
+        document.getElementById('dealToDeleteName').textContent = documentNumber;
+        document.getElementById('deleteModal').classList.remove('hidden');
+    }
+
+    async function deletePO() { // Renamed from deletePO
+        if (!changeToDeleteId) return;
+
+        closeDeleteModal();
+        showGlobalLoading();
+
+        try {
+            await changesCollection.doc(changeToDeleteId).delete();
+            showCustomAlert(`Perubahan "${changeToDeleteNumber}" deleted successfully!`, "success");
+        } catch (error) {
+            console.error("Error deleting Perubahan:", error);
+            showCustomAlert("Failed to delete Perubahan. Please try again.", "error");
+        } finally {
+            hideGlobalLoading();
+        }
+    }
+
+    async function updateChangeType(changeId, newChangeType) { // Renamed from updatePOStatus
+        showGlobalLoading();
+        try {
+            await changesCollection.doc(changeId).update({
+                changeType: newChangeType,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            showCustomAlert(`Tipe Perubahan updated to "${newChangeType}" successfully!`, "success");
+        } catch (error) {
+            console.error("Error updating Tipe Perubahan:", error);
+            showCustomAlert("Failed to update Tipe Perubahan. Please try again.", "error");
+        } finally {
+            hideGlobalLoading();
+        }
+    }
+
+    // Open Change detail modal
+    function openChangeDetailModal(changeId) { // Renamed from openPODetailModal
+        const change = changes.find(c => c.id === changeId);
+        if (!change) {
+            showCustomAlert("Detail perubahan tidak ditemukan.", "error");
+            return;
+        }
+
+        document.getElementById('poDetailTitle').textContent = change.documentNumber || 'Detail Perubahan';
+        document.getElementById('detailDocumentType').textContent = change.documentType || '-';
+        document.getElementById('detailDocumentNumber').textContent = change.documentNumber || '-';
+        document.getElementById('detailDocumentDate').textContent = change.documentDate ? formatDate(change.documentDate) : '-';
+        document.getElementById('detailDescription').textContent = change.description || '-';
+        document.getElementById('detailInitialPriceValue').textContent = formatNumber(change.initialPriceValue) || '-';
+        document.getElementById('detailChangeDate').textContent = change.changeDate ? formatDate(change.changeDate) : '-';
+        document.getElementById('detailChangeType').textContent = change.changeType || '-';
+        document.getElementById('detailChangeDescription').textContent = change.changeDescription || '-';
+        document.getElementById('detailChangedPriceValue').textContent = formatNumber(change.changedPriceValue) || '-';
+
+        // Populate Document Checklist in Detail Modal (if still relevant, otherwise remove)
+        const detailDocumentChecklist = document.getElementById('detailDocumentChecklist');
+        if (detailDocumentChecklist) {
+            detailDocumentChecklist.innerHTML = `
+                <p><span class="font-semibold">OC/OA:</span> ${change.docChecklist_OC_OA || '-'}</p>
+                <p><span class="font-semibold">PI:</span> ${change.docChecklist_PI || '-'}</p>
+                <p><span class="font-semibold">CI:</span> ${change.docChecklist_CI || '-'}</p>
+                <p><span class="font-semibold">PL:</span> ${change.docChecklist_PL || '-'}</p>
+                <p><span class="font-semibold">COO:</span> ${change.docChecklist_COO || '-'}</p>
+                <p><span class="font-semibold">COC:</span> ${change.docChecklist_COC || '-'}</p>
+                <p><span class="font-semibold">PIB:</span> ${change.docChecklist_PIB || '-'}</p>
+                <p><span class="font-semibold">SPPB:</span> ${change.docChecklist_SPPB || '-'}</p>
+                <p><span class="font-semibold">Hardcopy:</span> ${change.docChecklist_Hardcopy || '-'}</p>
+                <p><span class="font-semibold">Softcopy:</span> ${change.docChecklist_Softcopy || '-'}</p>
+                <p><span class="font-semibold">Prepared By:</span> ${change.docChecklist_PreparedBy || '-'}</p>
+                <p><span class="font-semibold">Order By:</span> ${change.docChecklist_OrderBy || '-'}</p>
+            `;
+        }
+
+        document.getElementById('poDetailModal').classList.remove('hidden');
+    }
+
+    function closePODetailModal() { // Renamed from closePODetailModal
+        const poDetailModal = document.getElementById('poDetailModal');
+        if (!poDetailModal) return;
+        poDetailModal.classList.add('hidden');
+    }
+
+    // ==================== SORTABLE FUNCTIONS ====================
+
+    function initSortable() {
+        const pipelineStage = document.getElementById('pos-stage');
+        if (!pipelineStage) return;
+        console.log("SortableJS is disabled.");
+    }
+
+    // ==================== PERMISSIONS FUNCTIONS ====================
+
+    function applyUserPermissions() {
+        try {
+            const isAdmin = currentUserRole === 'admin';
+
+            console.log("Applying permissions for Role:", currentUserRole);
+
+            const newPOBtn = document.getElementById('newPOBtn');
+            const documentChecklistBtn = document.getElementById('documentChecklistBtn');
+            const exportExcelBtn = document.getElementById('exportExcelBtn');
+            const searchInput = document.getElementById('searchPOs');
+            const openFilterPanelBtn = document.getElementById('openFilterPanelBtn');
+            const backButton = document.getElementById('backButton');
+            const authButton = document.getElementById('authButton');
+
+            if (newPOBtn) newPOBtn.classList.remove('hidden');
+            if (documentChecklistBtn) documentChecklistBtn.classList.remove('hidden');
+            if (exportExcelBtn) exportExcelBtn.classList.remove('hidden');
+            if (backButton) backButton.classList.remove('hidden');
+            if (authButton) authButton.classList.remove('hidden');
+
+            if (searchInput) searchInput.classList.remove('hidden');
+            if (openFilterPanelBtn) openFilterPanelBtn.classList.remove('hidden');
+
+        } catch (error) {
+            console.error("Error in applyUserPermissions:", error);
+            showCustomAlert("Failed to apply permissions", "error");
+        }
+    }
+
+    // ==================== EVENT LISTENERS FUNCTIONS ====================
+
+    function initEventListeners() {
+        console.log("Initializing event listeners...");
+
+        try {
+            const poForm = document.getElementById('poForm');
+            if (poForm) {
+                poForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    savePO();
+                });
+            }
+
+            const documentChecklistForm = document.getElementById('documentChecklistForm');
+            if (documentChecklistForm) {
+                documentChecklistForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    saveDocumentChecklist();
+                });
+            }
+
+            const buttons = [
+                { id: 'newPOBtn', func: openPOModal },
+                { id: 'documentChecklistBtn', func: openDocumentChecklistModal },
+                { id: 'exportExcelBtn', func: exportToExcel },
+                { id: 'backButton', func: goToIndex },
+                { id: 'authButton', func: logout },
+                { id: 'openFilterPanelBtn', func: openFilterPanel }
+            ];
+
+            buttons.forEach(btn => {
+                const element = document.getElementById(btn.id);
+                if (element) {
+                    element.removeEventListener('click', btn.func);
+                    element.addEventListener('click', btn.func);
+                    element.addEventListener('click', createRipple);
+                    console.log(`Event listener added for ${btn.id}`);
+                }
+            });
+
+            const searchInput = document.getElementById('searchPOs');
+            if (searchInput) {
+                searchInput.removeEventListener('keyup', filterPOs);
+                searchInput.addEventListener('keyup', filterPOs);
+            }
+
+            const loadChecklistBtn = document.getElementById('loadChecklistBtn');
+            if (loadChecklistBtn) {
+                loadChecklistBtn.addEventListener('click', function() {
+                    const changeId = document.getElementById('docChecklist_poId').value; // poId now refers to changeId
+                    if (changeId) {
+                        loadDocumentChecklistForChange(changeId); // Renamed function
+                    } else {
+                        showCustomAlert("Please select a Document Number first.", "warning");
+                    }
+                });
+            }
+
+        } catch (error) {
+            console.error("Error initializing event listeners:", error);
+            showCustomAlert("Failed to load some functions", "error");
+        }
+    }
+
+    function createRipple(event) {
+        const button = event.currentTarget;
+        const circle = document.createElement('span');
+        const diameter = Math.max(button.clientWidth, button.clientHeight);
+        const radius = diameter / 2;
+
+        circle.style.width = circle.style.height = `${diameter}px`;
+        circle.style.left = `${event.clientX - (button.getBoundingClientRect().left + radius)}px`;
+        circle.style.top = `${event.clientY - (button.getBoundingClientRect().top + radius)}px`;
+        circle.classList.add('ripple');
+
+        const ripple = button.getElementsByClassName('ripple')[0];
+
+        if (ripple) {
+            ripple.remove();
+        }
+
+        button.appendChild(circle);
+    }
+
+    // ==================== OTHER FUNCTIONS ====================
+
+    function filterPOs() { // Renamed from filterPOs to filterChanges if needed
+        try {
+            const searchTerm = document.getElementById('searchPOs').value.toLowerCase();
+            const documentTypeFilter = document.getElementById('filterDocumentType').value;
+            const changeTypeFilter = document.getElementById('filterChangeType').value;
+
+            let baseChanges = changes;
+
+            const filteredChanges = baseChanges.filter(change => {
+                const matchesSearch =
+                    (change.documentNumber && change.documentNumber.toLowerCase().includes(searchTerm)) ||
+                    (change.description && change.description.toLowerCase().includes(searchTerm)) ||
+                    (change.changeDescription && change.changeDescription.toLowerCase().includes(searchTerm));
+
+                const matchesDocumentType =
+                    documentTypeFilter === 'all' ||
+                    (change.documentType && change.documentType === documentTypeFilter);
+
+                const matchesChangeType =
+                    changeTypeFilter === 'all' ||
+                    (change.changeType && change.changeType === changeTypeFilter);
+
+                return matchesSearch && matchesDocumentType && matchesChangeType;
+            });
+
+            renderFilteredChanges(filteredChanges); // Renamed function
+        } catch (error) {
+            console.error("Error filtering Changes:", error);
+        }
+    }
+
+    function renderFilteredChanges(filteredChanges) { // Renamed from renderFilteredPOs
+        const pipelineStage = document.getElementById('pos-stage');
+        if (!pipelineStage) return;
+
+        pipelineStage.innerHTML = '';
+
+        if (filteredChanges.length === 0) {
+            pipelineStage.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-search"></i>
+                    <p>No changes match the filter.</p>
+                </div>
+            `;
+            return;
+        }
+
+        filteredChanges.forEach((change, index) => {
+            const changeCard = renderChangeCard(change, index);
+            pipelineStage.appendChild(changeCard);
+            setTimeout(() => {
+                changeCard.classList.add('show');
+            }, 50 * index);
+        });
+    }
+
+    function logout() {
+        if (unsubscribeFromChanges) {
+            unsubscribeFromChanges();
+            unsubscribeFromChanges = null;
+        }
+        if (unsubscribeFromDocumentTypes) {
+            unsubscribeFromDocumentTypes();
+            unsubscribeFromDocumentTypes = null;
+        }
+        if (unsubscribeFromChangeTypes) {
+            unsubscribeFromChangeTypes();
+            unsubscribeFromChangeTypes = null;
+        }
+        auth.signOut()
+            .then(() => {
+                console.log("User logged out successfully");
+                changes = [];
+                documentTypesCatalog = [];
+                changeTypesCatalog = [];
+                window.location.href = 'login.html';
+            })
+            .catch((error) => {
+                console.error("Error logging out:", error);
+                showCustomAlert("Failed to log out. Please try again.", "error");
+            });
+    }
+
+    function goToIndex() {
+        window.location.href = 'index.html';
+    }
+
+    function openFilterPanel() {
+        const filterPanel = document.getElementById('filterPanel');
+        if (!filterPanel) {
+            console.error("Filter panel element not found.");
+            showCustomAlert("Failed to open filter: Incomplete elements.", "error");
+            return;
+        }
+
+        populateFilterDropdowns();
+
+        filterPanel.classList.remove('hidden');
+    }
+
+    function closeFilterPanel() {
+        const filterPanel = document.getElementById('filterPanel');
+        if (!filterPanel) {
+            console.error("filterPanelContent element not found when closing modal.");
+            return;
+        }
+        filterPanel.classList.add('hidden');
+    }
+
+    function applyFiltersAndClosePanel() {
+        filterPOs();
+        closeFilterPanel();
+    }
+
+    function resetFilters() {
+        document.getElementById('filterDocumentType').value = 'all';
+        document.getElementById('filterChangeType').value = 'all';
+        document.getElementById('searchPOs').value = '';
+        filterPOs();
+    }
+
+    function closeDeleteModal() {
+        const deleteModal = document.getElementById('deleteModal');
+        if (!deleteModal) return;
+        deleteModal.classList.add('hidden');
+    }
+
+    // NEW: Document Checklist Modal functions
+    function openDocumentChecklistModal() {
+        const documentChecklistModal = document.getElementById('documentChecklistModal');
+        if (documentChecklistModal) {
+            document.getElementById('documentChecklistForm').reset();
+            document.getElementById('docChecklist_documentNumberSearch').value = '';
+            document.getElementById('docChecklist_poId').value = ''; // poId now refers to changeId
+            document.getElementById('selectedPoInfo').classList.add('hidden');
+            document.getElementById('selectedDocumentNumberDisplay').textContent = '';
+
+            const documentNumberSearchInput = document.getElementById('docChecklist_documentNumberSearch');
+            const changeIdHiddenInput = document.getElementById('docChecklist_poId');
+            const documentNumberSuggestionsDiv = document.getElementById('docChecklist_documentNumberSuggestions');
+
+            const documentNumberData = changes.map(c => ({ documentNumber: c.documentNumber, id: c.id }));
+
+            setupSearchWithSuggestions(documentNumberSearchInput, changeIdHiddenInput, documentNumberSuggestionsDiv, documentNumberData, 'documentNumber', (selectedChange) => {
+                changeIdHiddenInput.value = selectedChange.id;
+                document.getElementById('selectedDocumentNumberDisplay').textContent = selectedChange.documentNumber;
+                document.getElementById('selectedPoInfo').classList.remove('hidden');
+                loadDocumentChecklistForChange(selectedChange.id);
+            });
+
+            documentChecklistModal.classList.remove('hidden');
+        }
+    }
+
+    function closeDocumentChecklistModal() {
+        const documentChecklistModal = document.getElementById('documentChecklistModal');
+        if (documentChecklistModal) {
+            documentChecklistModal.classList.add('hidden');
+            closeAllAutocompleteSuggestions();
+        }
+    }
+
+    // NEW: Function to load Document Checklist for a specific Change
+    async function loadDocumentChecklistForChange(changeId) {
+        showGlobalLoading();
+        try {
+            const changeDoc = await changesCollection.doc(changeId).get();
+            if (changeDoc.exists) {
+                const changeData = changeDoc.data();
+                document.getElementById('docChecklist_OC_OA').value = changeData.docChecklist_OC_OA || '';
+                document.getElementById('docChecklist_PI').value = changeData.docChecklist_PI || '';
+                document.getElementById('docChecklist_CI').value = changeData.docChecklist_CI || '';
+                document.getElementById('docChecklist_PL').value = changeData.docChecklist_PL || '';
+                document.getElementById('docChecklist_COO').value = changeData.docChecklist_COO || '';
+                document.getElementById('docChecklist_COC').value = changeData.docChecklist_COC || '';
+                document.getElementById('docChecklist_PIB').value = changeData.docChecklist_PIB || '';
+                document.getElementById('docChecklist_SPPB').value = changeData.docChecklist_SPPB || '';
+                document.getElementById('docChecklist_Hardcopy').value = changeData.docChecklist_Hardcopy || '';
+                document.getElementById('docChecklist_Softcopy').value = changeData.docChecklist_Softcopy || '';
+                document.getElementById('docChecklist_PreparedBy').value = changeData.docChecklist_PreparedBy || '';
+                document.getElementById('docChecklist_OrderBy').value = changeData.docChecklist_OrderBy || '';
+
+                document.getElementById('selectedDocumentNumberDisplay').textContent = changeData.documentNumber;
+                document.getElementById('selectedPoInfo').classList.remove('hidden');
+                document.getElementById('docChecklist_poId').value = changeId;
+                document.getElementById('docChecklist_documentNumberSearch').value = changeData.documentNumber;
+
+                showCustomAlert(`Checklist for Document ${changeData.documentNumber} loaded successfully.`, "info");
+            } else {
+                document.getElementById('documentChecklistForm').reset();
+                document.getElementById('selectedDocumentNumberDisplay').textContent = document.getElementById('docChecklist_documentNumberSearch').value;
+                document.getElementById('selectedPoInfo').classList.remove('hidden');
+                showCustomAlert("No checklist saved for this Document. Please fill and save.", "info");
+            }
+        } catch (error) {
+            console.error("Error loading Document Checklist:", error);
+            showCustomAlert("Failed to load Document Checklist. Please try again.", "error");
+        } finally {
+            hideGlobalLoading();
+        }
+    }
+
+    // NEW: Function to save Document Checklist
+    async function saveDocumentChecklist() {
+        const changeId = document.getElementById('docChecklist_poId').value;
+        const documentNumber = document.getElementById('docChecklist_documentNumberSearch').value;
+
+        if (!changeId) {
+            showCustomAlert("Please select a Document Number first to save the checklist.", "error");
+            return;
+        }
+
+        showGlobalLoading();
+        try {
+            const checklistData = {
+                docChecklist_OC_OA: document.getElementById('docChecklist_OC_OA').value,
+                docChecklist_PI: document.getElementById('docChecklist_PI').value,
+                docChecklist_CI: document.getElementById('docChecklist_CI').value,
+                docChecklist_PL: document.getElementById('docChecklist_PL').value,
+                docChecklist_COO: document.getElementById('docChecklist_COO').value,
+                docChecklist_COC: document.getElementById('docChecklist_COC').value,
+                docChecklist_PIB: document.getElementById('docChecklist_PIB').value,
+                docChecklist_SPPB: document.getElementById('docChecklist_SPPB').value,
+                docChecklist_Hardcopy: document.getElementById('docChecklist_Hardcopy').value,
+                docChecklist_Softcopy: document.getElementById('docChecklist_Softcopy').value,
+                docChecklist_PreparedBy: document.getElementById('docChecklist_PreparedBy').value,
+                docChecklist_OrderBy: document.getElementById('docChecklist_OrderBy').value,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            await changesCollection.doc(changeId).update(checklistData);
+
+            showCustomAlert(`Document Checklist for Document ${documentNumber} saved successfully!`, "success");
+            closeDocumentChecklistModal();
+        } catch (error) {
+            console.error("Error saving Document Checklist:", error);
+            showCustomAlert("Failed to save Document Checklist. Please try again.", "error");
+        } finally {
+            hideGlobalLoading();
+        }
+    }
+
+
+    // ==================== EXPORT TO EXCEL FUNCTION ====================
+    function exportToExcel() {
+        showGlobalLoading();
+        try {
+            const data = [];
+            const headers = [
+                "No. Urut", "Tipe Dokumen", "Nomor Dokumen", "Tanggal Dokumen", "Deskripsi",
+                "Nilai Harga Awal Perubahan", "Tanggal Perubahan", "Tipe Perubahan", "Deskripsi Perubahan", "Perubahan Nilai Harga",
+                "Created By", "Created At",
+                // Document Checklist Headers
+                "Doc Checklist OC/OA", "Doc Checklist PI", "Doc Checklist CI", "Doc Checklist PL",
+                "Doc Checklist COO", "Doc Checklist COC", "Doc Checklist PIB", "Doc Checklist SPPB",
+                "Doc Checklist Hardcopy", "Doc Checklist Softcopy", "Doc Checklist Prepared By", "Doc Checklist Order By"
+            ];
+            data.push(headers);
+
+            const currentChanges = changes.filter(change => {
+                const searchTerm = document.getElementById('searchPOs').value.toLowerCase();
+                const documentTypeFilter = document.getElementById('filterDocumentType').value;
+                const changeTypeFilter = document.getElementById('filterChangeType').value;
+
+                const matchesSearch =
+                    (change.documentNumber && change.documentNumber.toLowerCase().includes(searchTerm)) ||
+                    (change.description && change.description.toLowerCase().includes(searchTerm)) ||
+                    (change.changeDescription && change.changeDescription.toLowerCase().includes(searchTerm));
+
+                const matchesDocumentType =
+                    documentTypeFilter === 'all' ||
+                    (change.documentType && change.documentType === documentTypeFilter);
+
+                const matchesChangeType =
+                    changeTypeFilter === 'all' ||
+                    (change.changeType && change.changeType === changeTypeFilter);
+
+                return matchesSearch && matchesDocumentType && matchesChangeType;
+            });
+
+            currentChanges.forEach((change, index) => {
+                const row = [
+                    index + 1,
+                    change.documentType || '',
+                    change.documentNumber || '',
+                    change.documentDate ? formatDate(change.documentDate) : '',
+                    change.description || '',
+                    change.initialPriceValue || '',
+                    change.changeDate ? formatDate(change.changeDate) : '',
+                    change.changeType || '',
+                    change.changeDescription || '',
+                    change.changedPriceValue || '',
+                    change.createdBy || '',
+                    change.createdAt ? formatDateTime(change.createdAt) : '',
+                    // Document Checklist values
+                    change.docChecklist_OC_OA || '',
+                    change.docChecklist_PI || '',
+                    change.docChecklist_CI || '',
+                    change.docChecklist_PL || '',
+                    change.docChecklist_COO || '',
+                    change.docChecklist_COC || '',
+                    change.docChecklist_PIB || '',
+                    change.docChecklist_SPPB || '',
+                    change.docChecklist_Hardcopy || '',
+                    change.docChecklist_Softcopy || '',
+                    change.docChecklist_PreparedBy || '',
+                    change.docChecklist_OrderBy || ''
+                ];
+                data.push(row);
+            });
+
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Monitoring Perubahan Accurate");
+
+            const fileName = `Monitoring_Perubahan_Accurate_${new Date().toISOString().slice(0,10)}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+            showCustomAlert("Data perubahan Accurate diekspor ke Excel berhasil!", "success");
+
+        } catch (error) {
+            console.error("Error exporting to Excel:", error);
+            showCustomAlert("Gagal mengekspor data ke Excel.", "error");
+        } finally {
+            hideGlobalLoading();
+        }
+    }
+
+    // ==================== INITIALIZATION ====================
+
+    document.addEventListener('DOMContentLoaded', function() {
+        initSortable();
+    });
+</script>
+</body>
+</html>
