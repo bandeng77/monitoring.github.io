@@ -14,7 +14,7 @@
     <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
     <!-- Google API Loader -->
     <script src="https://apis.google.com/js/api.js"></script>
-    <script src="https://apis.google.com/js/platform.js" async defer></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script> <!-- Corrected GIS script -->
 
     <style>
         /* New Color Palette */
@@ -281,7 +281,7 @@
         .modal-content-enter-active, .modal-content-leave-active {
             /* transition: opacity 0.15s cubic-bezier(0.25, 0.8, 0.25, 1), transform 0.15s cubic-bezier(0.25, 0.8, 0.25, 1); */
         }
-        #poModalContent, #poDetailModalContent, #deleteModalContent, #filterPanelContent, #successAlertModalContent, #documentChecklistModalContent {
+        #poModalContent, #poDetailModalContent, #deleteModalContent, #filterPanelContent, #successAlertModalContent, #documentChecklistModalContent, #documentUploadModalContent {
             background-color: #ffffff;
             border-radius: 1rem;
             box-shadow: 0 20px 50px var(--shadow-strong);
@@ -322,7 +322,7 @@
         }
 
 
-        #poModalContent h2, #poDetailModalContent h2, #deleteModalContent h2, #filterPanelContent h2, #successAlertModalContent h2, #documentChecklistModalContent h2 {
+        #poModalContent h2, #poDetailModalContent h2, #deleteModalContent h2, #filterPanelContent h2, #successAlertModalContent h2, #documentChecklistModalContent h2, #documentUploadModalContent h2 {
             color: var(--text-dark);
             font-weight: 800;
             font-size: 1.75rem; /* Smaller */
@@ -1019,13 +1019,13 @@
     let changes = [];
     const DEFAULT_CHANGE_TYPE = 'Koreksi';
     let currentUserRole = 'user';
-    let sortableInstances = {};
+    let sortableInstances = {}; // sortableInstances is defined but not used, as SortableJS is disabled.
     let authInitialized = false;
     let unsubscribeFromChanges = null;
     let unsubscribeFromDocumentTypes = null;
     let unsubscribeFromChangeTypes = null;
 
-    let documentCatalog = [];
+    let documentCatalog = []; // documentCatalog is defined but not used.
     let documentTypesCatalog = [];
     let changeTypesCatalog = [];
 
@@ -1170,12 +1170,13 @@
                 }
 
                 console.log("Current role:", currentUserRole);
-                fetchDocumentCatalog();
+                fetchDocumentCatalog(); // This function is called but its content is a console log.
                 listenForDocumentTypes();
                 listenForChangeTypes();
                 listenForChanges();
                 initEventListeners();
                 maybeInitGoogleAuth(); // Check if Google APIs are ready
+                applyUserPermissions(); // Ensure permissions are applied on load
                 hideGlobalLoading();
             } catch (error) {
                 console.error("Error checking user role or loading data:", error);
@@ -1187,6 +1188,9 @@
 
     async function fetchDocumentCatalog() {
         console.log("Document catalog will be built from existing changes.");
+        // This function is currently just a console log. If it's meant to fetch data,
+        // you would add Firestore queries here to populate `documentCatalog`.
+        // For now, `documentTypesCatalog` and `changeTypesCatalog` are populated by their respective listeners.
     }
 
     function listenForDocumentTypes() {
@@ -1251,7 +1255,7 @@
     }
 
     function formatRupiah(num) {
-        if (num === null || num === undefined || isNaN(num)) {
+        if (num === null || num === undefined || isNaN(num) || num === '') {
             return 'Rp 0';
         }
         // Ensure num is a number before formatting
@@ -1267,7 +1271,7 @@
     function parseRupiah(rupiahString) {
         if (!rupiahString) return 0;
         // Remove "Rp", dots, and commas, then parse as float
-        const cleanedString = rupiahString.replace(/Rp|\./g, '').replace(/,/g, '.').trim();
+        const cleanedString = String(rupiahString).replace(/Rp|\./g, '').replace(/,/g, '.').trim();
         return parseFloat(cleanedString) || 0;
     }
 
@@ -1334,7 +1338,7 @@
             unsubscribeFromChanges();
         }
 
-        changesCollection.orderBy("createdAt", "asc").onSnapshot(snapshot => {
+        unsubscribeFromChanges = changesCollection.orderBy("createdAt", "asc").onSnapshot(snapshot => {
             changes = [];
             uniqueDocumentTypes.clear();
             uniqueChangeTypes.clear();
@@ -1676,11 +1680,11 @@
                 document.getElementById('documentDate').value = change.documentDate instanceof Date ? change.documentDate.toISOString().split('T')[0] : '';
                 document.getElementById('description').value = change.description || '';
                 // Format existing values to Rupiah for display
-                document.getElementById('initialPriceValue').value = formatRupiah(change.initialPriceValue);
+                document.getElementById('initialPriceValue').value = formatRupiah(change.initialPriceValue).replace('Rp ', ''); // Remove 'Rp ' for input editing
                 document.getElementById('changeDate').value = change.changeDate instanceof Date ? change.changeDate.toISOString().split('T')[0] : '';
                 document.getElementById('changeType').value = change.changeType || DEFAULT_CHANGE_TYPE;
                 document.getElementById('changeDescription').value = change.changeDescription || '';
-                document.getElementById('changedPriceValue').value = formatRupiah(change.changedPriceValue);
+                document.getElementById('changedPriceValue').value = formatRupiah(change.changedPriceValue).replace('Rp ', ''); // Remove 'Rp ' for input editing
             }
         } else {
             modalTitle.textContent = 'Add New Perubahan';
@@ -1880,6 +1884,11 @@
         const pipelineStage = document.getElementById('pos-stage');
         if (!pipelineStage) return;
         console.log("SortableJS is disabled.");
+        // If you ever want to enable SortableJS, you would initialize it here:
+        // sortableInstances.main = new Sortable(pipelineStage, {
+        //     group: 'shared', // set both lists to same group
+        //     animation: 150
+        // });
     }
 
     // ==================== PERMISSIONS FUNCTIONS ====================
@@ -1891,13 +1900,15 @@
             console.log("Applying permissions for Role:", currentUserRole);
 
             const newPOBtn = document.getElementById('newPOBtn');
-            const documentUploadBtn = document.getElementById('documentUploadBtn'); // Changed ID
+            const documentUploadBtn = document.getElementById('documentUploadBtn');
             const exportExcelBtn = document.getElementById('exportExcelBtn');
             const searchInput = document.getElementById('searchPOs');
             const openFilterPanelBtn = document.getElementById('openFilterPanelBtn');
             const backButton = document.getElementById('backButton');
             const authButton = document.getElementById('authButton');
 
+            // All buttons are visible for admin, as per original code.
+            // If you want to restrict certain buttons for non-admins, add logic here.
             if (newPOBtn) newPOBtn.classList.remove('hidden');
             if (documentUploadBtn) documentUploadBtn.classList.remove('hidden');
             if (exportExcelBtn) exportExcelBtn.classList.remove('hidden');
@@ -1927,17 +1938,17 @@
                 });
             }
 
-            const documentUploadForm = document.getElementById('documentUploadForm'); // Changed ID
+            const documentUploadForm = document.getElementById('documentUploadForm');
             if (documentUploadForm) {
                 documentUploadForm.addEventListener('submit', function(e) {
                     e.preventDefault();
-                    uploadDocuments(); // New function to handle upload
+                    uploadDocuments();
                 });
             }
 
             const buttons = [
                 { id: 'newPOBtn', func: openPOModal },
-                { id: 'documentUploadBtn', func: openDocumentUploadModal }, // Changed ID and function
+                { id: 'documentUploadBtn', func: openDocumentUploadModal },
                 { id: 'exportExcelBtn', func: exportToExcel },
                 { id: 'backButton', func: goToIndex },
                 { id: 'authButton', func: logout },
@@ -1947,7 +1958,7 @@
             buttons.forEach(btn => {
                 const element = document.getElementById(btn.id);
                 if (element) {
-                    element.removeEventListener('click', btn.func);
+                    element.removeEventListener('click', btn.func); // Remove existing to prevent duplicates
                     element.addEventListener('click', btn.func);
                     element.addEventListener('click', createRipple);
                     console.log(`Event listener added for ${btn.id}`);
@@ -1960,16 +1971,20 @@
                 searchInput.addEventListener('keyup', filterPOs);
             }
 
-            const loadDocumentForUploadBtn = document.getElementById('loadDocumentForUploadBtn'); // Changed ID
+            const loadDocumentForUploadBtn = document.getElementById('loadDocumentForUploadBtn');
             if (loadDocumentForUploadBtn) {
-                loadDocumentForUploadBtn.addEventListener('click', function() {
-                    const changeId = document.getElementById('docUpload_changeId').value;
-                    if (changeId) {
-                        loadDocumentForUpload(changeId); // New function
-                    } else {
-                        showCustomAlert("Please select a Document Number first.", "warning");
-                    }
-                });
+                loadDocumentForUploadBtn.removeEventListener('click', handleLoadDocumentForUploadClick); // Remove existing
+                loadDocumentForUploadBtn.addEventListener('click', handleLoadDocumentForUploadClick);
+            }
+
+            // Helper function for loadDocumentForUploadBtn click
+            function handleLoadDocumentForUploadClick() {
+                const changeId = document.getElementById('docUpload_changeId').value;
+                if (changeId) {
+                    loadDocumentForUpload(changeId);
+                } else {
+                    showCustomAlert("Please select a Document Number first.", "warning");
+                }
             }
 
             // File input change listeners
@@ -1997,7 +2012,7 @@
                 });
                 initialPriceValueInput.addEventListener('blur', function(e) {
                     // On blur, apply formatting
-                    e.target.value = formatRupiah(e.target.value);
+                    e.target.value = formatRupiah(e.target.value).replace('Rp ', ''); // Format and remove 'Rp ' for input display
                 });
             }
 
@@ -2012,7 +2027,7 @@
                 });
                 changedPriceValueInput.addEventListener('blur', function(e) {
                     // On blur, apply formatting
-                    e.target.value = formatRupiah(e.target.value);
+                    e.target.value = formatRupiah(e.target.value).replace('Rp ', ''); // Format and remove 'Rp ' for input display
                 });
             }
 
@@ -2243,23 +2258,25 @@
                 // Display existing links
                 const pdfBeforeLink = document.getElementById('pdfBeforeLink');
                 const pdfAfterLink = document.getElementById('pdfAfterLink');
+                const pdfBeforeFileName = document.getElementById('pdfBeforeFileName');
+                const pdfAfterFileName = document.getElementById('pdfAfterFileName');
 
                 if (changeData.pdfBeforeChangeLink) {
                     pdfBeforeLink.href = changeData.pdfBeforeChangeLink;
                     pdfBeforeLink.classList.remove('hidden');
-                    document.getElementById('pdfBeforeFileName').textContent = 'Dokumen sudah diunggah';
+                    pdfBeforeFileName.textContent = 'Dokumen sudah diunggah';
                 } else {
                     pdfBeforeLink.classList.add('hidden');
-                    document.getElementById('pdfBeforeFileName').textContent = 'Tidak ada file dipilih';
+                    pdfBeforeFileName.textContent = 'Tidak ada file dipilih';
                 }
 
                 if (changeData.pdfAfterChangeLink) {
                     pdfAfterLink.href = changeData.pdfAfterChangeLink;
                     pdfAfterLink.classList.remove('hidden');
-                    document.getElementById('pdfAfterFileName').textContent = 'Dokumen sudah diunggah';
+                    pdfAfterFileName.textContent = 'Dokumen sudah diunggah';
                 } else {
                     pdfAfterLink.classList.add('hidden');
-                    document.getElementById('pdfAfterFileName').textContent = 'Tidak ada file dipilih';
+                    pdfAfterFileName.textContent = 'Tidak ada file dipilih';
                 }
 
                 document.getElementById('selectedDocumentUploadNumberDisplay').textContent = changeData.documentNumber;
@@ -2307,6 +2324,10 @@
                 throw new Error("Google Drive access not granted.");
             }
 
+            // Ensure gapi.client.drive is loaded
+            if (!gapi.client.drive) {
+                await gapi.client.load('drive', 'v3');
+            }
             const drive = gapi.client.drive;
             const updateData = {};
 
