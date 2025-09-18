@@ -956,18 +956,21 @@
 
         console.log("Auth state changed:", user ? user.email : "no user");
 
+        // Redirect to login if no user and on app4.html
         if (!user && window.location.pathname.includes('app4.html')) {
             console.log("No user, redirecting to login");
             window.location.href = 'login.html';
             return;
         }
 
+        // Redirect to app4.html if user logged in and on login.html
         if (user && window.location.pathname.includes('login.html')) {
-            console.log("User already logged in, redirecting to app");
+            console.log("User already logged in, redirecting to app4");
             window.location.href = 'app4.html';
             return;
         }
 
+        // If user is logged in and on app4.html
         if (user && window.location.pathname.includes('app4.html')) {
             try {
                 showGlobalLoading();
