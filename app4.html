@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Purchase Order Monitoring - Genetek</title>
+    <title>Monitoring Perubahan Accurate</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -12,6 +12,9 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
     <!-- Library for Export Excel -->
     <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+    <!-- Google API Loader (Removed as upload document is removed) -->
+    <!-- <script src="https://apis.google.com/js/api.js"></script> -->
+    <!-- <script src="https://apis.google.com/js/platform.js" async defer></script> -->
 
     <style>
         /* New Color Palette */
@@ -373,6 +376,8 @@
         }
 
         /* Additional rules for dynamic content within the detail modal */
+        #detailDocumentChecklist p,
+        #detailDocumentChecklist span,
         #detailItemsList p,
         #detailItemsList span {
             color: #000000 !important; /* Ensure black for these sections, use !important if needed to override Tailwind */
@@ -651,7 +656,7 @@
         <header class="mb-8 bg-white p-6 rounded-lg shadow-md header">
             <div class="flex justify-between items-start">
                 <div>
-                    <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900">Purchase Order Monitoring <i class="fas fa-box-open text-blue-600 ml-2"></i></h1>
+                    <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900">Monitoring Perubahan Accurate <i class="fas fa-box-open text-blue-600 ml-2"></i></h1>
                 </div>
                 <div class="logout-btn-container">
                     <button id="authButton" onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
@@ -666,6 +671,13 @@
                     <i class="fas fa-plus-circle mr-2"></i> New
                 </button>
 
+                <!-- Removed Upload Dokumen Button -->
+                <!--
+                <button id="documentUploadBtn" onclick="openDocumentUploadModal()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
+                    <i class="fas fa-upload mr-2"></i> Upload Dokumen
+                </button>
+                -->
+
                 <button id="exportExcelBtn" onclick="exportToExcel()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
                     <i class="fas fa-file-excel mr-2"></i> Export Excel
                 </button>
@@ -677,7 +689,7 @@
 
             <!-- Combined Filter Section -->
             <div class="mt-6 flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 items-center">
-                <input type="text" id="searchPOs" onkeyup="filterPOs()" placeholder="Search PO by number, vendor, item..." class="w-full sm:w-1/2 p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                <input type="text" id="searchPOs" onkeyup="filterPOs()" placeholder="Search by document number, description..." class="w-full sm:w-1/2 p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
 
                 <button id="openFilterPanelBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
                     <i class="fas fa-filter mr-2"></i> Filter
@@ -689,7 +701,7 @@
         <div class="grid grid-cols-1 gap-6 mb-10">
             <div class="pipeline-stage stage-main-pipeline">
                 <div class="pipeline-stage-header">
-                    <h3>PO List</h3>
+                    <h3>Monitoring List</h3>
                 </div>
                 <div id="pos-stage" class="pipeline-stage-content">
                     <!-- POs will be displayed here -->
@@ -703,11 +715,11 @@
         <!-- Add/Edit PO Modal -->
         <div id="poModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
             <div class="bg-white rounded-none p-8 w-full h-full shadow-2xl modal-content-enter" id="poModalContent">
-                <h2 class="text-xl sm:text-2xl font-bold mb-4 text-gray-900" id="modalTitle">Add New PO</h2>
+                <h2 class="text-xl sm:text-2xl font-bold mb-4 text-gray-900" id="modalTitle">Add New Perubahan</h2>
                 <form id="poForm" class="po-form-container">
                     <input type="hidden" id="poId">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-2"> <!-- Changed to 2 columns -->
-                        <!-- Column 1: Document Details -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-3 gap-y-2"> <!-- Changed to 2 columns -->
+                        <!-- Column 1 -->
                         <div>
                             <div class="mb-2">
                                 <label class="block text-gray-700 text-sm font-semibold mb-1" for="documentType">Tipe Dokumen <span class="text-red-500">*</span></label>
@@ -722,15 +734,15 @@
                                 <input type="date" id="documentDate" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
                             </div>
                             <div class="mb-2">
-                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="documentDescription">Deskripsi</label>
-                                <textarea id="documentDescription" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" rows="4" placeholder="Tambahkan deskripsi dokumen..."></textarea>
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="description">Deskripsi</label>
+                                <textarea id="description" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" rows="4" placeholder="Deskripsi dokumen..."></textarea>
                             </div>
                         </div>
-                        <!-- Column 2: Change Details -->
+                        <!-- Column 2 -->
                         <div>
                             <div class="mb-2">
                                 <label class="block text-gray-700 text-sm font-semibold mb-1" for="initialPriceValue">Nilai Harga Awal Perubahan</label>
-                                <input type="text" id="initialPriceValue" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" oninput="formatRupiah(this)">
+                                <input type="text" id="initialPriceValue" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" inputmode="numeric">
                             </div>
                             <div class="mb-2">
                                 <label class="block text-gray-700 text-sm font-semibold mb-1" for="changeDate">Tanggal Perubahan</label>
@@ -742,21 +754,21 @@
                             </div>
                             <div class="mb-2">
                                 <label class="block text-gray-700 text-sm font-semibold mb-1" for="changeDescription">Deskripsi Perubahan</label>
-                                <textarea id="changeDescription" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" rows="4" placeholder="Tambahkan deskripsi perubahan..."></textarea>
+                                <textarea id="changeDescription" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" rows="4" placeholder="Deskripsi perubahan..."></textarea>
                             </div>
                             <div class="mb-2">
                                 <label class="block text-gray-700 text-sm font-semibold mb-1" for="changedPriceValue">Perubahan Nilai Harga</label>
-                                <input type="text" id="changedPriceValue" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" oninput="formatRupiah(this)">
+                                <input type="text" id="changedPriceValue" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" inputmode="numeric">
                             </div>
                         </div>
                     </div>
 
-                    <div class="flex justify-end space-x-3 mt-4"> <!-- Smaller margin -->
+                    <div class="flex justify-end space-x-3 mt-4">
                         <button type="button" onclick="closePOModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
                             Cancel
                         </button>
                         <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105 text-sm">
-                            Save PO
+                            Save Perubahan
                         </button>
                     </div>
                 </form>
@@ -765,11 +777,11 @@
 
         <!-- PO Detail Modal -->
         <div id="poDetailModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
-            <div class="bg-white rounded-xl p-8 w-full max-w-5xl shadow-2xl modal-content-enter overflow-y-auto" id="poDetailModalContent"> <!-- Larger max-width to accommodate 2 main columns -->
-                <h2 class="text-xl sm:text-2xl font-bold mb-6 text-gray-900" id="poDetailTitle">PO Details</h2>
+            <div class="bg-white rounded-xl p-8 w-full max-w-5xl shadow-2xl modal-content-enter overflow-y-auto" id="poDetailModalContent">
+                <h2 class="text-xl sm:text-2xl font-bold mb-6 text-gray-900" id="poDetailTitle">Detail Perubahan</h2>
                 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <!-- Left Column: Document Details -->
+                    <!-- Left Column: Main PO Details -->
                     <div>
                         <h3 class="text-lg font-bold text-gray-900 mb-4">Informasi Dokumen</h3>
                         <div class="detail-grid">
@@ -786,13 +798,13 @@
                                 <p id="detailDocumentDate"></p>
                             </div>
                             <div class="detail-item col-span-full">
-                                <p class="font-semibold">Deskripsi Dokumen:</p>
-                                <p id="detailDocumentDescription"></p>
+                                <p class="font-semibold">Deskripsi:</p>
+                                <p id="detailDescription"></p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Right Column: Change Details -->
+                    <!-- Right Column: Document Checklist -->
                     <div>
                         <h3 class="text-lg font-bold text-gray-900 mb-4">Informasi Perubahan</h3>
                         <div class="detail-grid">
@@ -819,6 +831,17 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Document Upload Links Section (Removed as upload document is removed) -->
+                <!--
+                <div class="detail-item col-span-full border-t pt-4 mt-4 border-gray-200">
+                    <h3 class="text-lg font-bold text-gray-900 mb-2">Dokumen Terkait</h3>
+                    <div id="detailDocumentLinks" class="flex flex-col gap-2">
+                        <p><span class="font-semibold">PDF Dokumen Sebelum Perubahan:</span> <a id="linkPdfBefore" href="#" target="_blank" class="text-blue-600 hover:underline">Lihat Dokumen</a></p>
+                        <p><span class="font-semibold">PDF Dokumen Setelah Perubahan:</span> <a id="linkPdfAfter" href="#" target="_blank" class="text-blue-600 hover:underline">Lihat Dokumen</a></p>
+                    </div>
+                </div>
+                -->
 
                 <div class="flex justify-end space-x-3 mt-6">
                     <button type="button" onclick="closePODetailModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
@@ -848,13 +871,13 @@
         <div id="filterPanel" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
             <div class="bg-white rounded-xl p-8 w-full max-w-2xl shadow-2xl modal-content-enter" id="filterPanelContent">
                 <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900 flex items-center"><i class="fas fa-filter mr-3 text-gray-500"></i> Filter POs</h2>
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900 flex items-center"><i class="fas fa-filter mr-3 text-gray-500"></i> Filter Perubahan</h2>
                     <button onclick="closeFilterPanel()" class="text-gray-500 hover:text-gray-700 transition duration-200">
                         <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Filter: Document Type -->
+                    <!-- Filter: Tipe Dokumen -->
                     <div>
                         <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterDocumentType">Tipe Dokumen</label>
                         <select id="filterDocumentType" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
@@ -862,27 +885,14 @@
                             <!-- Options will be dynamically populated by JavaScript -->
                         </select>
                     </div>
-                    <!-- Filter: Change Type -->
+                    <!-- Filter: Tipe Perubahan -->
                     <div>
                         <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterChangeType">Tipe Perubahan</label>
                         <select id="filterChangeType" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
                             <option value="all">Semua Tipe Perubahan</option>
-                            <!-- Options populated dynamically -->
-                        </select>
-                    </div>
-                    <!-- Filter: Status -->
-                    <div>
-                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterStatus">Status Order</label>
-                        <select id="filterStatus" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
-                            <option value="all">Semua Status</option>
-                            <option value="On Order">On Order</option>
-                            <option value="Waiting">Waiting</option>
-                            <option value="Picked Up">Picked Up</option>
-                            <option value="On Delivery">On Delivery</option>
-                            <option value="Delivered">Delivered</option>
-                            <option value="Partial Delivered">Partial Delivered</option>
-                            <option value="Delayed">Delayed</option>
-                            <option value="On Hold">On Hold</option>
+                            <option value="Penambahan">Penambahan</option>
+                            <option value="Pengurangan">Pengurangan</option>
+                            <option value="Koreksi">Koreksi</option>
                         </select>
                     </div>
                 </div>
@@ -904,7 +914,7 @@
                     <i class="fas fa-check-circle"></i>
                 </div>
                 <h2 class="text-2xl font-bold mb-4 text-gray-900">Success!</h2>
-                <p class="text-gray-700 mb-6" id="successAlertMessage">PO saved successfully.</p>
+                <p class="text-gray-700 mb-6" id="successAlertMessage">Perubahan saved successfully.</p>
                 <button type="button" onclick="closeSuccessAlertModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105">
                     OK
                 </button>
@@ -921,32 +931,148 @@
 <script>
     // Firebase configuration
     const firebaseConfig = {
-        apiKey: "AIzaSyDWgxJfYKksEoeUF2rK67rAH-arejKawJM",
-        authDomain: "monitoring-acc.firebaseapp.com",
-        projectId: "monitoring-acc",
-        storageBucket: "monitoring-acc.firebasestorage.app",
-        messagingSenderId: "898707897888",
-        appId: "1:898707897888:web:8cfe6f77cd784d8c1ec645"
+          apiKey: "AIzaSyDWgxJfYKksEoeUF2rK67rAH-arejKawJM",
+          authDomain: "monitoring-acc.firebaseapp.com",
+          projectId: "monitoring-acc",
+          storageBucket: "monitoring-acc.firebasestorage.app",
+          messagingSenderId: "898707897888",
+          appId: "1:898707897888:web:8cfe6f77cd784d8c1ec645"
     };
+
+    // Google API configuration (Removed as upload document is removed)
+    // const GOOGLE_API_CONFIG = {
+    //     clientId: "484546392348-f0spk1eghjepp9eiafs7n54gs1abqv6v.apps.googleusercontent.com",
+    //     scope: "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email", // drive.file for specific file access, userinfo.email for email
+    // };
 
     // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const auth = firebase.auth();
-    const dealsCollection = db.collection('purchaseOrders'); // Collection name remains 'purchaseOrders'
+    const changesCollection = db.collection('accurateChanges');
+    const usersCollection = db.collection('users');
+    // Removed documentTypesCollection and changeTypesCollection as dropdowns are removed
+    // const documentTypesCollection = db.collection('documentTypes');
+    // const changeTypesCollection = db.collection('changeTypes');
 
-    let pos = [];
-    const DEFAULT_STATUS = 'On Order';
+    let changes = [];
+    const DEFAULT_CHANGE_TYPE = 'Koreksi';
     let currentUserRole = 'user';
+    let sortableInstances = {};
     let authInitialized = false;
-    let unsubscribeFromPOs = null;
+    let unsubscribeFromChanges = null;
+    // Removed unsubscribeFromDocumentTypes and unsubscribeFromChangeTypes
+    // let unsubscribeFromDocumentTypes = null;
+    // let unsubscribeFromChangeTypes = null;
 
-    // Only store Sets for desired filters
+    // Removed documentCatalog, documentTypesCatalog, changeTypesCatalog
+    // let documentCatalog = [];
+    // let documentTypesCatalog = [];
+    // let changeTypesCatalog = [];
+
     let uniqueDocumentTypes = new Set();
     let uniqueChangeTypes = new Set();
-    let uniqueStatuses = new Set();
 
-    const ADMIN_EMAIL = 'maida@genetek.co.id'; // Keep admin email for authentication
+    const ADMIN_EMAIL = 'maida@genetek.co.id';
+
+    // Google API related variables (Removed as upload document is removed)
+    // let gapiInited = false;
+    // let gisInited = false;
+    // let tokenClient;
+    let googleAccessToken = null; // Keep this for potential future use or if other Google integrations exist
+
+    // ==================== GOOGLE API INITIALIZATION (Removed as upload document is removed) ====================
+
+    // function gapiLoaded() {
+    //     gapi.load('client', initializeGapiClient);
+    // }
+
+    // async function initializeGapiClient() {
+    //     await gapi.client.init({
+    //         // No API key needed if using OAuth for Drive
+    //     });
+    //     gapiInited = true;
+    //     maybeInitGoogleAuth();
+    // }
+
+    // function gisLoaded() {
+    //     tokenClient = google.accounts.oauth2.initTokenClient({
+    //         client_id: GOOGLE_API_CONFIG.clientId,
+    //         scope: GOOGLE_API_CONFIG.scope,
+    //         callback: (tokenResponse) => {
+    //             if (tokenResponse && tokenResponse.access_token) {
+    //                 googleAccessToken = tokenResponse.access_token;
+    //                 console.log("Google Access Token obtained:", googleAccessToken);
+    //                 // You can now use googleAccessToken for Drive API calls
+    //             } else {
+    //                 console.error("Failed to obtain Google Access Token.");
+    //                 showCustomAlert("Failed to connect to Google Drive. Please try again.", "error");
+    //             }
+    //         },
+    //     });
+    //     gisInited = true;
+    //     maybeInitGoogleAuth();
+    // }
+
+    // function maybeInitGoogleAuth() {
+    //     if (gapiInited && gisInited && authInitialized) {
+    //         // Check if user is logged in via Google and has necessary scopes
+    //         const user = auth.currentUser;
+    //         if (user && user.providerData.some(p => p.providerId === 'google.com')) {
+    //             // Attempt to get a token silently if possible, or prompt if needed
+    //             // For simplicity, we'll prompt on first Drive action
+    //             console.log("Google API client and GIS loaded, ready for Drive operations.");
+    //         } else if (user) {
+    //             console.warn("User is logged in but not via Google. Drive features may require re-authentication.");
+    //         }
+    //     }
+    // }
+
+    // Function to handle Google Sign-in for Drive access (Removed as upload document is removed)
+    // async function handleGoogleSignInForDrive() {
+    //     return new Promise((resolve, reject) => {
+    //         if (googleAccessToken) {
+    //             resolve(googleAccessToken);
+    //             return;
+    //         }
+
+    //         // Check if user is already signed in with Google via Firebase
+    //         const user = auth.currentUser;
+    //         if (user && user.providerData.some(p => p.providerId === 'google.com')) {
+    //             // Request token from Google Identity Services
+    //             tokenClient.requestAccessToken({ prompt: 'consent' }); // 'consent' ensures user is prompted for permissions
+    //             // The callback in initTokenClient will handle setting googleAccessToken
+    //             // We need to wait for that callback to complete.
+    //             // This is a simplified approach; a more robust solution would use a promise wrapper around tokenClient.requestAccessToken
+    //             // For now, we'll rely on the global googleAccessToken being set.
+    //             // A small delay or a custom event listener could be used here.
+    //             setTimeout(() => {
+    //                 if (googleAccessToken) {
+    //                     resolve(googleAccessToken);
+    //                 } else {
+    //                     reject("Google Drive access token not obtained after prompt.");
+    //                 }
+    //             }, 3000); // Give some time for the tokenClient callback
+    //         } else {
+    //             // If not signed in with Google via Firebase, prompt for Google login first
+    //             const provider = new firebase.auth.GoogleAuthProvider();
+    //             provider.addScope(GOOGLE_API_CONFIG.scope); // Request Drive scope during Firebase Google login
+    //             auth.signInWithPopup(provider)
+    //                 .then((result) => {
+    //                     // This gives you a Google Access Token. You can use it to access the Google API.
+    //                     googleAccessToken = result.credential.accessToken;
+    //                     console.log("Firebase Google login successful, Drive Access Token:", googleAccessToken);
+    //                     resolve(googleAccessToken);
+    //                 })
+    //                 .catch((error) => {
+    //                     console.error("Firebase Google login failed for Drive access:", error);
+    //                     showCustomAlert("Failed to sign in with Google for Drive access.", "error");
+    //                     reject(error);
+    //                 });
+    //         }
+    //     });
+    // }
+
 
     // ==================== MAIN FUNCTIONS ====================
 
@@ -956,28 +1082,24 @@
 
         console.log("Auth state changed:", user ? user.email : "no user");
 
-        // Redirect to login if no user and on app4.html
-        if (!user && window.location.pathname.includes('app4.html')) {
+        if (!user && window.location.pathname.includes('app.html')) {
             console.log("No user, redirecting to login");
             window.location.href = 'login.html';
             return;
         }
 
-        // Redirect to app4.html if user logged in and on login.html
         if (user && window.location.pathname.includes('login.html')) {
-            console.log("User already logged in, redirecting to app4");
-            window.location.href = 'app4.html';
+            console.log("User already logged in, redirecting to app");
+            window.location.href = 'app.html';
             return;
         }
 
-        // If user is logged in and on app4.html
-        if (user && window.location.pathname.includes('app4.html')) {
+        if (user && window.location.pathname.includes('app.html')) {
             try {
                 showGlobalLoading();
                 if (user.email === ADMIN_EMAIL) {
                     currentUserRole = 'admin';
-                    // Ensure user role is set in Firestore if not already
-                    await db.collection('users').doc(user.uid).set({
+                    await usersCollection.doc(user.uid).set({
                         role: 'admin',
                         email: user.email
                     }, { merge: true });
@@ -989,8 +1111,14 @@
                 }
 
                 console.log("Current role:", currentUserRole);
-                listenForPOs();
+                fetchDocumentCatalog();
+                // Removed listenForDocumentTypes and listenForChangeTypes
+                // listenForDocumentTypes();
+                // listenForChangeTypes();
+                listenForChanges();
                 initEventListeners();
+                // Removed maybeInitGoogleAuth
+                // maybeInitGoogleAuth(); // Check if Google APIs are ready
                 hideGlobalLoading();
             } catch (error) {
                 console.error("Error checking user role or loading data:", error);
@@ -999,6 +1127,52 @@
             }
         }
     });
+
+    async function fetchDocumentCatalog() {
+        console.log("Document catalog will be built from existing changes.");
+    }
+
+    // Removed listenForDocumentTypes
+    // function listenForDocumentTypes() {
+    //     console.log("Listening for Document Types list from Firestore (onSnapshot)...");
+    //     if (unsubscribeFromDocumentTypes) {
+    //         unsubscribeFromDocumentTypes();
+    //     }
+
+    //     unsubscribeFromDocumentTypes = documentTypesCollection.orderBy("name", "asc").onSnapshot(snapshot => {
+    //         documentTypesCatalog = [];
+    //         snapshot.forEach(doc => {
+    //             documentTypesCatalog.push({ id: doc.id, name: doc.data().name });
+    //         });
+    //         console.log("Document Types Catalog updated:", documentTypesCatalog.length, "items");
+    //         populateFilterDropdowns();
+    //         populateDocumentTypeDropdown();
+    //     }, (error) => {
+    //         console.error("Error listening to Document Types list:", error);
+    //         showCustomAlert("Failed to load Document Types list in real-time.", "error");
+    //     });
+    // }
+
+    // Removed listenForChangeTypes
+    // function listenForChangeTypes() {
+    //     console.log("Listening for Change Types list from Firestore (onSnapshot)...");
+    //     if (unsubscribeFromChangeTypes) {
+    //         unsubscribeFromChangeTypes();
+    //     }
+
+    //     unsubscribeFromChangeTypes = changeTypesCollection.orderBy("name", "asc").onSnapshot(snapshot => {
+    //         changeTypesCatalog = [];
+    //         snapshot.forEach(doc => {
+    //             changeTypesCatalog.push({ id: doc.id, name: doc.data().name });
+    //         });
+    //         console.log("Change Types Catalog updated:", changeTypesCatalog.length, "items");
+    //         populateFilterDropdowns();
+    //         populateChangeTypeDropdown();
+    //     }, (error) => {
+    //         console.error("Error listening to Change Types list:", error);
+    //         showCustomAlert("Failed to load Change Types list in real-time.", "error");
+    //     });
+    // }
 
     // ==================== UTILITY FUNCTIONS ====================
 
@@ -1021,51 +1195,25 @@
         }
     }
 
-    function formatRupiah(inputElement) {
-        let value = inputElement.value.replace(/[^,\d]/g, '').toString();
-        let rupiah = '';
-        let parts = value.split(',');
-        let integerPart = parts[0];
-        let decimalPart = parts.length > 1 ? ',' + parts[1] : '';
-
-        let number_string = integerPart.replace(/[^,\d]/g, '').toString();
-        let split = number_string.split('.');
-        let sisa = split[0].length % 3;
-        rupiah = split[0].substr(0, sisa);
-        let ribuan = split[0].substr(sisa).match(/\d{3}/gi);
-
-        if (ribuan) {
-            let separator = sisa ? '.' : '';
-            rupiah += separator + ribuan.join('.');
-        }
-
-        rupiah = rupiah ? 'Rp ' + rupiah : '';
-        inputElement.value = rupiah + decimalPart;
-    }
-
-    function parseRupiah(rupiahString) {
-        if (!rupiahString) return 0;
-        // Remove "Rp ", dots, and replace comma with dot for parsing
-        const cleanedString = rupiahString.replace(/Rp\s?|\./g, '').replace(',', '.');
-        return parseFloat(cleanedString) || 0;
-    }
-
-    function formatNumberToRupiah(number) {
-        if (number === null || number === undefined || isNaN(number)) {
+    function formatRupiah(num) {
+        if (num === null || num === undefined || isNaN(num)) {
             return 'Rp 0';
         }
-        const parts = number.toFixed(0).toString().split('.'); // Ensure no decimal places for now
-        let integerPart = parts[0];
-        let rupiah = '';
-        let sisa = integerPart.length % 3;
-        rupiah = integerPart.substr(0, sisa);
-        let ribuan = integerPart.substr(sisa).match(/\d{3}/g);
-
-        if (ribuan) {
-            let separator = sisa ? '.' : '';
-            rupiah += separator + ribuan.join('.');
+        // Ensure num is a number before formatting
+        const number = parseFloat(num);
+        if (isNaN(number)) {
+            return 'Rp 0';
         }
-        return 'Rp ' + rupiah;
+        // Use id-ID for dot as thousands separator and 'Rp' currency symbol
+        return 'Rp ' + new Intl.NumberFormat('id-ID').format(number);
+    }
+
+    // Function to parse Rupiah string back to a number
+    function parseRupiah(rupiahString) {
+        if (!rupiahString) return 0;
+        // Remove "Rp", dots, and commas, then parse as float
+        const cleanedString = rupiahString.replace(/Rp|\./g, '').replace(/,/g, '.').trim();
+        return parseFloat(cleanedString) || 0;
     }
 
     function formatDate(timestamp) {
@@ -1116,10 +1264,10 @@
         document.getElementById('global-loading-overlay').classList.remove('show');
     }
 
-    // ==================== PO FUNCTIONS ====================
+    // ==================== CHANGES FUNCTIONS ====================
 
-    function listenForPOs() {
-        console.log("Listening for POs from Firebase (onSnapshot)...");
+    function listenForChanges() {
+        console.log("Listening for Accurate Changes from Firebase (onSnapshot)...");
         const pipelineStage = document.getElementById('pos-stage');
         const loadingSpinner = document.getElementById('loading-spinner');
         if (pipelineStage && loadingSpinner) {
@@ -1127,100 +1275,88 @@
             loadingSpinner.classList.remove('hidden');
         }
 
-        if (unsubscribeFromPOs) {
-            unsubscribeFromPOs();
+        if (unsubscribeFromChanges) {
+            unsubscribeFromChanges();
         }
 
-        dealsCollection.orderBy("createdAt", "asc").onSnapshot(snapshot => {
-            pos = [];
+        changesCollection.orderBy("createdAt", "asc").onSnapshot(snapshot => {
+            changes = [];
             uniqueDocumentTypes.clear();
             uniqueChangeTypes.clear();
-            uniqueStatuses.clear();
 
             snapshot.forEach((doc) => {
-                const poData = doc.data();
-                poData.createdAt = poData.createdAt && typeof poData.createdAt.toDate === 'function' ? poData.createdAt.toDate() : null;
-                poData.documentDate = poData.documentDate && typeof poData.documentDate.toDate === 'function' ? poData.documentDate.toDate() : null;
-                poData.changeDate = poData.changeDate && typeof poData.changeDate.toDate === 'function' ? poData.changeDate.toDate() : null;
+                const changeData = doc.data();
+                changeData.createdAt = changeData.createdAt && typeof changeData.createdAt.toDate === 'function' ? changeData.createdAt.toDate() : null;
+                changeData.documentDate = changeData.documentDate && typeof changeData.documentDate.toDate === 'function' ? changeData.documentDate.toDate() : null;
+                changeData.changeDate = changeData.changeDate && typeof changeData.changeDate.toDate === 'function' ? changeData.changeDate.toDate() : null;
 
-                pos.push({ id: doc.id, ...poData });
+                changes.push({ id: doc.id, ...changeData });
 
-                if (poData.documentType) uniqueDocumentTypes.add(poData.documentType);
-                if (poData.changeType) uniqueChangeTypes.add(poData.changeType);
-                if (poData.status) uniqueStatuses.add(poData.status);
+                if (changeData.documentType) uniqueDocumentTypes.add(changeData.documentType);
+                if (changeData.changeType) uniqueChangeTypes.add(changeData.changeType);
             });
-            console.log("Total POs updated by onSnapshot:", pos.length);
+            console.log("Total Accurate Changes updated by onSnapshot:", changes.length);
             populateFilterDropdowns();
             filterPOs();
             if (loadingSpinner) {
                 loadingSpinner.classList.add('hidden');
             }
         }, (error) => {
-            console.error("Error listening to POs:", error);
-            showCustomAlert("Failed to load PO data in real-time.", "error");
+            console.error("Error listening to Accurate Changes:", error);
+            showCustomAlert("Failed to load Accurate Changes data in real-time.", "error");
             if (loadingSpinner) {
                 loadingSpinner.classList.add('hidden');
             }
         });
     }
 
-    function renderPO(po, index) {
-        const poCard = document.createElement('div');
-        poCard.className = 'deal-card';
-        poCard.dataset.id = po.id;
+    function renderChangeCard(change, index) {
+        const changeCard = document.createElement('div');
+        changeCard.className = 'deal-card';
+        changeCard.dataset.id = change.id;
 
-        function getStatusClass(status) {
-            switch (status) {
-                case 'On Order': return 'status-on-order';
-                case 'Waiting': return 'status-waiting';
-                case 'Picked Up': return 'status-picked-up';
-                case 'On Delivery': return 'status-on-delivery';
-                case 'Delivered': return 'status-delivered';
-                case 'Partial Delivered': return 'status-partial-delivered';
-                case 'Delayed': return 'status-delayed';
-                case 'On Hold': return 'status-on-hold';
+        function getChangeTypeClass(changeType) {
+            switch (changeType) {
+                case 'Penambahan': return 'status-picked-up';
+                case 'Pengurangan': return 'status-delayed';
+                case 'Koreksi': return 'status-waiting';
                 default: return 'bg-gray-400 text-white';
             }
         }
 
-        poCard.innerHTML = `
+        changeCard.innerHTML = `
             <span class="po-card-number">${index + 1}</span>
             <div class="flex justify-between items-start">
-                <h3 class="font-bold text-gray-800">No. Dokumen: ${po.documentNumber || 'No Document'}</h3>
+                <h3 class="font-bold text-gray-800">Nomor Dokumen: ${change.documentNumber || 'No Dokumen'}</h3>
             </div>
             <div class="mt-1 text-sm text-gray-600 deal-details">
-                <p><i class="fas fa-file-alt"></i> Tipe Dokumen: ${po.documentType || '-'}</p>
-                <p><i class="fas fa-calendar-alt"></i> Tanggal Dokumen: ${po.documentDate ? formatDate(po.documentDate) : '-'}</p>
-                <p><i class="fas fa-money-bill-wave"></i> Nilai Harga Awal: ${po.initialPriceValue || '-'}</p>
+                <p><i class="fas fa-file-alt"></i> Tipe Dokumen: ${change.documentType || '-'}</p>
+                <p><i class="fas fa-calendar-alt"></i> Tanggal Dokumen: ${change.documentDate ? formatDate(change.documentDate) : '-'}</p>
+                <p><i class="fas fa-tag"></i> Tipe Perubahan: ${change.changeType || '-'}</p>
             </div>
             <div class="mt-2 flex justify-between items-center deal-footer">
                 <div class="relative">
-                    <select onchange="updatePOStatus('${po.id}', this.value)" class="status-dropdown ${getStatusClass(po.status)}">
-                        <option value="On Order" ${po.status === 'On Order' ? 'selected' : ''}>On Order</option>
-                        <option value="Waiting" ${po.status === 'Waiting' ? 'selected' : ''}>Waiting</option>
-                        <option value="Picked Up" ${po.status === 'Picked Up' ? 'selected' : ''}>Picked Up</option>
-                        <option value="On Delivery" ${po.status === 'On Delivery' ? 'selected' : ''}>On Delivery</option>
-                        <option value="Delivered" ${po.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
-                        <option value="Partial Delivered" ${po.status === 'Partial Delivered' ? 'selected' : ''}>Partial Delivered</option>
-                        <option value="Delayed" ${po.status === 'Delayed' ? 'selected' : ''}>Delayed</option>
-                        <option value="On Hold" ${po.status === 'On Hold' ? 'selected' : ''}>On Hold</option>
+                    <select onchange="updateChangeType('${change.id}', this.value)" class="status-dropdown ${getChangeTypeClass(change.changeType)}">
+                        <option value="Penambahan" ${change.changeType === 'Penambahan' ? 'selected' : ''}>Penambahan</option>
+                        <option value="Pengurangan" ${change.changeType === 'Pengurangan' ? 'selected' : ''}>Pengurangan</option>
+                        <option value="Koreksi" ${change.changeType === 'Koreksi' ? 'selected' : ''}>Koreksi</option>
                     </select>
                 </div>
                 <div class="flex space-x-1 deal-actions">
-                    <button onclick="openPODetailModal('${po.id}')" class="text-blue-600 hover:text-blue-800" title="View Details">
+                    <button onclick="openChangeDetailModal('${change.id}')" class="text-blue-600 hover:text-blue-800" title="View Details">
                         <i class="fas fa-eye"></i>
                     </button>
-                    <button onclick="prepareEditPO('${po.id}')" class="text-green-600 hover:text-green-800" title="Edit PO">
+                    <button onclick="prepareEditChange('${change.id}')" class="text-green-600 hover:text-green-800" title="Edit Perubahan">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button onclick="confirmDeletePO('${po.id}', '${po.documentNumber}')" class="text-red-600 hover:text-red-800" title="Delete PO">
+                    <button onclick="confirmDeleteChange('${change.id}', '${change.documentNumber}')" class="text-red-600 hover:text-red-800" title="Delete Perubahan">
                         <i class="fas fa-trash-alt"></i>
                     </button>
                 </div>
             </div>
         `;
 
-        return poCard;
+        return changeCard;
     }
 
     function populateDropdown(selectElementId, uniqueValues, selectedValue = 'all') {
@@ -1261,37 +1397,243 @@
     function populateFilterDropdowns() {
         populateDropdown('filterDocumentType', uniqueDocumentTypes, document.getElementById('filterDocumentType').value);
         populateDropdown('filterChangeType', uniqueChangeTypes, document.getElementById('filterChangeType').value);
-        populateDropdown('filterStatus', uniqueStatuses, document.getElementById('filterStatus').value);
     }
 
-    // Open PO modal (for add or edit)
-    async function openPOModal(poId = null) {
+    // Removed populateDocumentTypeDropdown
+    // function populateDocumentTypeDropdown() {
+    //     const selectElement = document.getElementById('documentType');
+    //     if (!selectElement) return;
+
+    //     const currentSelectedValue = selectElement.value;
+    //     selectElement.innerHTML = '<option value="">Pilih Tipe Dokumen</option>';
+    //     documentTypesCatalog.forEach(type => {
+    //         const option = document.createElement('option');
+    //         option.value = type.name;
+    //         option.textContent = type.name;
+    //         selectElement.appendChild(option);
+    //     });
+    //     selectElement.value = currentSelectedValue;
+    // }
+
+    // Removed populateChangeTypeDropdown
+    // function populateChangeTypeDropdown() {
+    //     const selectElement = document.getElementById('changeType');
+    //     if (!selectElement) return;
+
+    //     const currentSelectedValue = selectElement.value;
+    //     selectElement.innerHTML = '<option value="">Pilih Tipe Perubahan</option>';
+    //     changeTypesCatalog.forEach(type => {
+    //         const option = document.createElement('option');
+    //         option.value = type.name;
+    //         option.textContent = type.name;
+    //         selectElement.appendChild(option);
+    //     });
+    //     selectElement.value = currentSelectedValue;
+    // }
+
+    // ==================== FUNCTIONS FOR ADDITIONAL FORMS WITH SEARCH (Generic Autocomplete) ====================
+
+    function debounce(func, delay) {
+        let timeout;
+        return function(...args) {
+            const context = this;
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(context, args), delay);
+        };
+    }
+
+    // Removed setupSearchWithSuggestions and related autocomplete functions as upload document is removed
+    // function setupSearchWithSuggestions(searchInput, hiddenInput, suggestionsDiv, dataList, displayProperty, onSelectCallback = null) {
+    //     const MAX_SUGGESTIONS = 20;
+    //     let currentFocus = -1;
+
+    //     const processInput = () => {
+    //         const val = searchInput.value.trim();
+    //         suggestionsDiv.innerHTML = '';
+    //         suggestionsDiv.classList.add('hidden');
+
+    //         if (!val) {
+    //             hiddenInput.value = '';
+    //             if (onSelectCallback) onSelectCallback(null); // Indicate no selection
+    //             return false;
+    //         }
+    //         currentFocus = -1;
+
+    //         const filteredSuggestions = dataList
+    //             .filter(item => {
+    //                 const itemValue = item[displayProperty];
+    //                 return itemValue && itemValue.toLowerCase().includes(val.toLowerCase());
+    //             })
+    //             .sort((a, b) => {
+    //                 const valA = a[displayProperty];
+    //                 const valB = b[displayProperty];
+    //                 return valA.localeCompare(valB);
+    //             })
+    //             .slice(0, MAX_SUGGESTIONS);
+
+    //         if (filteredSuggestions.length > 0) {
+    //             filteredSuggestions.forEach(item => {
+    //                 const itemValue = item[displayProperty];
+    //                 const b = document.createElement("DIV");
+    //                 b.classList.add("autocomplete-item");
+    //                 const startIdx = itemValue.toLowerCase().indexOf(val.toLowerCase());
+    //                 b.innerHTML = itemValue.substring(0, startIdx) + "<strong>" + itemValue.substring(startIdx, startIdx + val.length) + "</strong>" + itemValue.substring(startIdx + val.length);
+
+    //                 b.addEventListener("click", function(e) {
+    //                     e.stopPropagation();
+    //                     searchInput.value = itemValue;
+    //                     hiddenInput.value = item.id; // Store the ID of the selected item
+    //                     suggestionsDiv.classList.add('hidden');
+    //                     if (onSelectCallback) {
+    //                         onSelectCallback(item);
+    //                     }
+    //                 });
+    //                 suggestionsDiv.appendChild(b);
+    //             });
+    //             suggestionsDiv.classList.remove('hidden');
+    //         } else {
+    //             suggestionsDiv.classList.add('hidden');
+    //         }
+    //     };
+
+    //     const debouncedProcessInput = debounce(processInput, 300);
+
+    //     const handleKeydown = (e) => {
+    //         let x = suggestionsDiv.getElementsByClassName("autocomplete-item");
+    //         if (e.keyCode == 40) {
+    //             currentFocus++;
+    //             addActive(x);
+    //         } else if (e.keyCode == 38) {
+    //             currentFocus--;
+    //             addActive(x);
+    //         } else if (e.keyCode == 13) {
+    //             e.preventDefault();
+    //             if (currentFocus > -1) {
+    //                 if (x && x[currentFocus]) x[currentFocus].click();
+    //             } else {
+    //                 // If Enter is pressed and no suggestion is selected, use the typed value
+    //                 // For this specific autocomplete, we want to ensure a valid selection.
+    //                 // If no item is selected, clear the hidden input and show a warning.
+    //                 hiddenInput.value = '';
+    //                 suggestionsDiv.classList.add('hidden');
+    //                 // showCustomAlert("Please select a valid document from the suggestions.", "warning"); // Removed to avoid excessive alerts
+    //                 if (onSelectCallback) onSelectCallback(null); // Indicate no selection
+    //             }
+    //         }
+    //     };
+
+    //     const handleBlur = () => {
+    //         setTimeout(() => {
+    //             const currentInputValue = searchInput.value.trim();
+    //             const selectedId = hiddenInput.value;
+    //             const selectedItem = dataList.find(item => item.id === selectedId);
+
+    //             if (currentInputValue === '' || (selectedItem && selectedItem[displayProperty] === currentInputValue)) {
+    //                 // Input is empty or matches a selected item, do nothing
+    //             } else {
+    //                 // Input does not match a selected item, clear it
+    //                 searchInput.value = '';
+    //                 hiddenInput.value = '';
+    //                 if (onSelectCallback) {
+    //                     onSelectCallback(null); // Indicate no item selected
+    //                 }
+    //             }
+    //             suggestionsDiv.classList.add('hidden');
+    //         }, 100);
+    //     };
+
+    //     const handleFocus = () => {
+    //         if (searchInput.value.length > 0) {
+    //             processInput();
+    //         }
+    //     };
+
+    //     searchInput.removeEventListener('input', debouncedProcessInput);
+    //     searchInput.removeEventListener('keydown', handleKeydown);
+    //     searchInput.removeEventListener('blur', handleBlur);
+    //     searchInput.removeEventListener('focus', handleFocus);
+
+    //     searchInput.addEventListener('input', debouncedProcessInput);
+    //     searchInput.addEventListener('keydown', handleKeydown);
+    //     searchInput.addEventListener('blur', handleBlur);
+    //     searchInput.addEventListener('focus', handleFocus);
+
+    //     function addActive(x) {
+    //         if (!x || x.length === 0) return false;
+    //         removeActive(x);
+    //         currentFocus = (currentFocus + x.length) % x.length;
+    //         x[currentFocus].classList.add("autocomplete-active");
+    //         x[currentFocus].scrollIntoView({ block: "nearest", inline: "nearest" });
+    //     }
+
+    //     function removeActive(x) {
+    //         for (let i = 0; i < x.length; i++) {
+    //             x[i].classList.remove("autocomplete-active");
+    //         }
+    //     }
+    // }
+
+    function closeAllAutocompleteSuggestions() {
+        document.querySelectorAll(".suggestions-list").forEach(item => {
+            item.classList.add('hidden');
+            item.innerHTML = '';
+        });
+    }
+
+    document.addEventListener("click", function(e) {
+        let isAutocompleteClick = false;
+        let target = e.target;
+        while (target && target !== document.body) {
+            // Removed conditions related to docUpload_documentNumberSearch and loadDocumentForUploadBtn
+            if (target.classList.contains('autocomplete-items')) {
+                isAutocompleteClick = true;
+                break;
+            }
+            target = target.parentNode;
+        }
+        if (!isAutocompleteClick) {
+            closeAllAutocompleteSuggestions();
+        }
+    });
+
+    async function openPOModal(changeId = null) {
         const poModal = document.getElementById('poModal');
         const modalTitle = document.getElementById('modalTitle');
         const poForm = document.getElementById('poForm');
 
         poForm.reset();
         document.getElementById('poId').value = '';
-        document.getElementById('status').value = DEFAULT_STATUS;
 
-        if (poId) {
-            modalTitle.textContent = 'Edit PO';
-            const po = pos.find(p => p.id === poId);
-            if (po) {
-                document.getElementById('poId').value = po.id;
-                document.getElementById('documentType').value = po.documentType || '';
-                document.getElementById('documentNumber').value = po.documentNumber || '';
-                document.getElementById('documentDate').value = po.documentDate instanceof Date ? po.documentDate.toISOString().split('T')[0] : '';
-                document.getElementById('documentDescription').value = po.documentDescription || '';
-                document.getElementById('initialPriceValue').value = po.initialPriceValue || '';
-                document.getElementById('changeDate').value = po.changeDate instanceof Date ? po.changeDate.toISOString().split('T')[0] : '';
-                document.getElementById('changeType').value = po.changeType || '';
-                document.getElementById('changeDescription').value = po.changeDescription || '';
-                document.getElementById('changedPriceValue').value = po.changedPriceValue || '';
-                document.getElementById('status').value = po.status || DEFAULT_STATUS;
+        // Reset Rupiah inputs
+        document.getElementById('initialPriceValue').value = '';
+        document.getElementById('changedPriceValue').value = '';
+
+        // Removed populateDocumentTypeDropdown and populateChangeTypeDropdown
+        // populateDocumentTypeDropdown();
+        // populateChangeTypeDropdown();
+
+        document.getElementById('changeType').value = DEFAULT_CHANGE_TYPE;
+
+        closeAllAutocompleteSuggestions();
+
+        if (changeId) {
+            modalTitle.textContent = 'Edit Perubahan';
+            const change = changes.find(c => c.id === changeId);
+            if (change) {
+                document.getElementById('poId').value = change.id;
+                document.getElementById('documentType').value = change.documentType || '';
+                document.getElementById('documentNumber').value = change.documentNumber || '';
+                document.getElementById('documentDate').value = change.documentDate instanceof Date ? change.documentDate.toISOString().split('T')[0] : '';
+                document.getElementById('description').value = change.description || '';
+                // Format existing values to Rupiah for display
+                document.getElementById('initialPriceValue').value = formatRupiah(change.initialPriceValue);
+                document.getElementById('changeDate').value = change.changeDate instanceof Date ? change.changeDate.toISOString().split('T')[0] : '';
+                document.getElementById('changeType').value = change.changeType || DEFAULT_CHANGE_TYPE;
+                document.getElementById('changeDescription').value = change.changeDescription || '';
+                document.getElementById('changedPriceValue').value = formatRupiah(change.changedPriceValue);
             }
         } else {
-            modalTitle.textContent = 'Add New PO';
+            modalTitle.textContent = 'Add New Perubahan';
         }
 
         poModal.classList.remove('hidden');
@@ -1301,128 +1643,177 @@
         const poModal = document.getElementById('poModal');
         if (!poModal) return;
         poModal.classList.add('hidden');
+        closeAllAutocompleteSuggestions();
     }
 
-    // Save PO data to Firestore
     async function savePO() {
-        const poId = document.getElementById('poId').value;
-        const documentType = document.getElementById('documentType').value;
+        const changeId = document.getElementById('poId').value;
         const documentNumber = document.getElementById('documentNumber').value;
 
-        if (!documentType || !documentNumber) {
-            showCustomAlert("Tipe Dokumen dan Nomor Dokumen wajib diisi.", "error");
+        if (!documentNumber) {
+            showCustomAlert("Nomor Dokumen is required.", "error");
             return;
         }
+
+        // Parse Rupiah values back to numbers before saving
+        const initialPriceValueRaw = document.getElementById('initialPriceValue').value;
+        const changedPriceValueRaw = document.getElementById('changedPriceValue').value;
+
+        const initialPriceValue = parseRupiah(initialPriceValueRaw);
+        const changedPriceValue = parseRupiah(changedPriceValueRaw);
 
         closePOModal();
         showGlobalLoading();
 
+        const documentType = document.getElementById('documentType').value;
         const documentDate = document.getElementById('documentDate').value ? firebase.firestore.Timestamp.fromDate(new Date(document.getElementById('documentDate').value)) : null;
-        const documentDescription = document.getElementById('documentDescription').value;
-        const initialPriceValue = document.getElementById('initialPriceValue').value;
+        const description = document.getElementById('description').value;
         const changeDate = document.getElementById('changeDate').value ? firebase.firestore.Timestamp.fromDate(new Date(document.getElementById('changeDate').value)) : null;
         const changeType = document.getElementById('changeType').value;
         const changeDescription = document.getElementById('changeDescription').value;
-        const changedPriceValue = document.getElementById('changedPriceValue').value;
-        const status = document.getElementById('status').value;
 
-        const poData = {
+        const changeData = {
             documentType: documentType,
             documentNumber: documentNumber,
             documentDate: documentDate,
-            documentDescription: documentDescription,
-            initialPriceValue: initialPriceValue,
+            description: description,
+            initialPriceValue: initialPriceValue, // Use parsed number
             changeDate: changeDate,
             changeType: changeType,
             changeDescription: changeDescription,
-            changedPriceValue: changedPriceValue,
-            status: status,
+            changedPriceValue: changedPriceValue, // Use parsed number
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
 
         try {
-            if (poId) {
-                await dealsCollection.doc(poId).update(poData);
-                showCustomAlert("PO updated successfully!", "success");
+            if (changeId) {
+                await changesCollection.doc(changeId).update(changeData);
+                showCustomAlert("Perubahan updated successfully!", "success");
             } else {
-                poData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-                poData.createdBy = auth.currentUser.email;
-                await dealsCollection.add(poData);
-                showCustomAlert("New PO added successfully!", "success");
+                changeData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                changeData.createdBy = auth.currentUser.email;
+                await changesCollection.add(changeData);
+                showCustomAlert("New Perubahan added successfully!", "success");
             }
+
+            // Removed logic for adding new document type if it doesn't exist
+            // if (documentType && !documentTypesCatalog.some(dt => dt.name === documentType)) {
+            //     try {
+            //         await documentTypesCollection.add({ name: documentType, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+            //         console.log(`New Document Type "${documentType}" added to Firestore.`);
+            //     } catch (dtError) {
+            //         console.error("Error adding new Document Type to Firestore:", dtError);
+            //         // showCustomAlert(`Failed to save new Document Type "${documentType}".`, "error"); // Avoid multiple alerts
+            //     }
+            // }
+
+            // Removed logic for adding new change type if it doesn't exist
+            // if (changeType && !changeTypesCatalog.some(ct => ct.name === changeType)) {
+            //     try {
+            //         await changeTypesCollection.add({ name: changeType, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+            //         console.log(`New Change Type "${changeType}" added to Firestore.`);
+            //     } catch (ctError) {
+            //         console.error("Error adding new Change Type to Firestore:", ctError);
+            //         // showCustomAlert(`Failed to save new Change Type "${changeType}".`, "error"); // Avoid multiple alerts
+            //     }
+            // }
+
         } catch (error) {
-            console.error("Error saving PO:", error);
-            showCustomAlert("Failed to save PO. Please try again.", "error");
+            console.error("Error saving Perubahan:", error);
+            showCustomAlert("Failed to save Perubahan. Please try again.", "error");
         } finally {
             hideGlobalLoading();
         }
     }
 
-    function prepareEditPO(poId) {
-        openPOModal(poId);
+    function prepareEditChange(changeId) {
+        openPOModal(changeId);
     }
 
-    let poToDeleteId = null;
-    let poToDeleteNo = '';
+    let changeToDeleteId = null;
+    let changeToDeleteNumber = '';
 
-    function confirmDeletePO(poId, poNo) {
-        poToDeleteId = poId;
-        poToDeleteNo = poNo;
-        document.getElementById('dealToDeleteName').textContent = poNo;
+    function confirmDeleteChange(changeId, documentNumber) {
+        changeToDeleteId = changeId;
+        changeToDeleteNumber = documentNumber;
+        document.getElementById('dealToDeleteName').textContent = documentNumber;
         document.getElementById('deleteModal').classList.remove('hidden');
     }
 
     async function deletePO() {
-        if (!poToDeleteId) return;
+        if (!changeToDeleteId) return;
 
         closeDeleteModal();
         showGlobalLoading();
 
         try {
-            await dealsCollection.doc(poToDeleteId).delete();
-            showCustomAlert(`PO "${poToDeleteNo}" deleted successfully!`, "success");
+            await changesCollection.doc(changeToDeleteId).delete();
+            showCustomAlert(`Perubahan "${changeToDeleteNumber}" deleted successfully!`, "success");
         } catch (error) {
-            console.error("Error deleting PO:", error);
-            showCustomAlert("Failed to delete PO. Please try again.", "error");
+            console.error("Error deleting Perubahan:", error);
+            showCustomAlert("Failed to delete Perubahan. Please try again.", "error");
         } finally {
             hideGlobalLoading();
         }
     }
 
-    async function updatePOStatus(poId, newStatus) {
+    async function updateChangeType(changeId, newChangeType) {
         showGlobalLoading();
         try {
-            await dealsCollection.doc(poId).update({
-                status: newStatus,
+            await changesCollection.doc(changeId).update({
+                changeType: newChangeType,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
-            showCustomAlert(`PO status updated to "${newStatus}" successfully!`, "success");
+            showCustomAlert(`Tipe Perubahan updated to "${newChangeType}" successfully!`, "success");
         } catch (error) {
-            console.error("Error updating PO status:", error);
-            showCustomAlert("Failed to update PO status. Please try again.", "error");
+            console.error("Error updating Tipe Perubahan:", error);
+            showCustomAlert("Failed to update Tipe Perubahan. Please try again.", "error");
         } finally {
             hideGlobalLoading();
         }
     }
 
-    // Open PO detail modal
-    function openPODetailModal(poId) {
-        const po = pos.find(p => p.id === poId);
-        if (!po) {
-            showCustomAlert("PO details not found.", "error");
+    function openChangeDetailModal(changeId) {
+        const change = changes.find(c => c.id === changeId);
+        if (!change) {
+            showCustomAlert("Detail perubahan tidak ditemukan.", "error");
             return;
         }
 
-        document.getElementById('poDetailTitle').textContent = po.documentNumber || 'PO Details';
-        document.getElementById('detailDocumentType').textContent = po.documentType || '-';
-        document.getElementById('detailDocumentNumber').textContent = po.documentNumber || '-';
-        document.getElementById('detailDocumentDate').textContent = po.documentDate ? formatDate(po.documentDate) : '-';
-        document.getElementById('detailDocumentDescription').textContent = po.documentDescription || '-';
-        document.getElementById('detailInitialPriceValue').textContent = po.initialPriceValue || '-';
-        document.getElementById('detailChangeDate').textContent = po.changeDate ? formatDate(po.changeDate) : '-';
-        document.getElementById('detailChangeType').textContent = po.changeType || '-';
-        document.getElementById('detailChangeDescription').textContent = po.changeDescription || '-';
-        document.getElementById('detailChangedPriceValue').textContent = po.changedPriceValue || '-';
+        document.getElementById('poDetailTitle').textContent = change.documentNumber || 'Detail Perubahan';
+        document.getElementById('detailDocumentType').textContent = change.documentType || '-';
+        document.getElementById('detailDocumentNumber').textContent = change.documentNumber || '-';
+        document.getElementById('detailDocumentDate').textContent = change.documentDate ? formatDate(change.documentDate) : '-';
+        document.getElementById('detailDescription').textContent = change.description || '-';
+        document.getElementById('detailInitialPriceValue').textContent = formatRupiah(change.initialPriceValue);
+        document.getElementById('detailChangeDate').textContent = change.changeDate ? formatDate(change.changeDate) : '-';
+        document.getElementById('detailChangeType').textContent = change.changeType || '-';
+        document.getElementById('detailChangeDescription').textContent = change.changeDescription || '-';
+        document.getElementById('detailChangedPriceValue').textContent = formatRupiah(change.changedPriceValue);
+
+        // Document Upload Links Section (Removed as upload document is removed)
+        // const linkPdfBefore = document.getElementById('linkPdfBefore');
+        // const linkPdfAfter = document.getElementById('linkPdfAfter');
+
+        // if (change.pdfBeforeChangeLink) {
+        //     linkPdfBefore.href = change.pdfBeforeChangeLink;
+        //     linkPdfBefore.classList.remove('hidden');
+        //     linkPdfBefore.textContent = 'Lihat Dokumen';
+        // } else {
+        //     linkPdfBefore.href = '#';
+        //     linkPdfBefore.classList.add('hidden');
+        //     linkPdfBefore.textContent = 'Tidak ada dokumen';
+        // }
+
+        // if (change.pdfAfterChangeLink) {
+        //     linkPdfAfter.href = change.pdfAfterChangeLink;
+        //     linkPdfAfter.classList.remove('hidden');
+        //     linkPdfAfter.textContent = 'Lihat Dokumen';
+        // } else {
+        //     linkPdfAfter.href = '#';
+        //     linkPdfAfter.classList.add('hidden');
+        //     linkPdfAfter.textContent = 'Tidak ada dokumen';
+        // }
 
         document.getElementById('poDetailModal').classList.remove('hidden');
     }
@@ -1450,6 +1841,8 @@
             console.log("Applying permissions for Role:", currentUserRole);
 
             const newPOBtn = document.getElementById('newPOBtn');
+            // Removed documentUploadBtn
+            // const documentUploadBtn = document.getElementById('documentUploadBtn');
             const exportExcelBtn = document.getElementById('exportExcelBtn');
             const searchInput = document.getElementById('searchPOs');
             const openFilterPanelBtn = document.getElementById('openFilterPanelBtn');
@@ -1457,8 +1850,9 @@
             const authButton = document.getElementById('authButton');
 
             if (newPOBtn) newPOBtn.classList.remove('hidden');
+            // if (documentUploadBtn) documentUploadBtn.classList.remove('hidden'); // Removed
             if (exportExcelBtn) exportExcelBtn.classList.remove('hidden');
-            if (backButton) backButton.classList.remove('hidden'); // Ensure back button is visible
+            if (backButton) backButton.classList.remove('hidden');
             if (authButton) authButton.classList.remove('hidden');
 
             if (searchInput) searchInput.classList.remove('hidden');
@@ -1484,10 +1878,21 @@
                 });
             }
 
+            // Removed documentUploadForm and related event listeners
+            // const documentUploadForm = document.getElementById('documentUploadForm');
+            // if (documentUploadForm) {
+            //     documentUploadForm.addEventListener('submit', function(e) {
+            //         e.preventDefault();
+            //         uploadDocuments();
+            //     });
+            // }
+
             const buttons = [
                 { id: 'newPOBtn', func: openPOModal },
+                // Removed documentUploadBtn
+                // { id: 'documentUploadBtn', func: openDocumentUploadModal },
                 { id: 'exportExcelBtn', func: exportToExcel },
-                { id: 'backButton', func: goToIndex }, // Re-add goToIndex for back button
+                { id: 'backButton', func: goToIndex },
                 { id: 'authButton', func: logout },
                 { id: 'openFilterPanelBtn', func: openFilterPanel }
             ];
@@ -1507,6 +1912,64 @@
                 searchInput.removeEventListener('keyup', filterPOs);
                 searchInput.addEventListener('keyup', filterPOs);
             }
+
+            // Removed loadDocumentForUploadBtn and related event listeners
+            // const loadDocumentForUploadBtn = document.getElementById('loadDocumentForUploadBtn');
+            // if (loadDocumentForUploadBtn) {
+            //     loadDocumentForUploadBtn.addEventListener('click', function() {
+            //         const changeId = document.getElementById('docUpload_changeId').value;
+            //         if (changeId) {
+            //             loadDocumentForUpload(changeId);
+            //         } else {
+            //             showCustomAlert("Please select a Document Number first.", "warning");
+            //         }
+            //     });
+            // }
+
+            // Removed File input change listeners
+            // document.getElementById('pdfBeforeChange').addEventListener('change', function() {
+            //     const fileName = this.files.length > 0 ? this.files[0].name : 'Tidak ada file dipilih';
+            //     document.getElementById('pdfBeforeFileName').textContent = fileName;
+            // });
+            // document.getElementById('pdfAfterChange').addEventListener('change', function() {
+            //     const fileName = this.files.length > 0 ? this.files[0].name : 'Tidak ada file dipilih';
+            //     document.getElementById('pdfAfterFileName').textContent = fileName;
+            // });
+
+            // Add event listeners for Rupiah formatting on input fields
+            const initialPriceValueInput = document.getElementById('initialPriceValue');
+            const changedPriceValueInput = document.getElementById('changedPriceValue');
+
+            if (initialPriceValueInput) {
+                initialPriceValueInput.addEventListener('input', function(e) {
+                    let value = e.target.value.replace(/[^0-9]/g, ''); // Remove non-numeric characters
+                    e.target.value = formatRupiah(value).replace('Rp ', ''); // Format and remove 'Rp ' for input display
+                });
+                initialPriceValueInput.addEventListener('focus', function(e) {
+                    // On focus, remove formatting to allow easier editing
+                    e.target.value = parseRupiah(e.target.value);
+                });
+                initialPriceValueInput.addEventListener('blur', function(e) {
+                    // On blur, apply formatting
+                    e.target.value = formatRupiah(e.target.value);
+                });
+            }
+
+            if (changedPriceValueInput) {
+                changedPriceValueInput.addEventListener('input', function(e) {
+                    let value = e.target.value.replace(/[^0-9]/g, ''); // Remove non-numeric characters
+                    e.target.value = formatRupiah(value).replace('Rp ', ''); // Format and remove 'Rp ' for input display
+                });
+                changedPriceValueInput.addEventListener('focus', function(e) {
+                    // On focus, remove formatting to allow easier editing
+                    e.target.value = parseRupiah(e.target.value);
+                });
+                changedPriceValueInput.addEventListener('blur', function(e) {
+                    // On blur, apply formatting
+                    e.target.value = formatRupiah(e.target.value);
+                });
+            }
+
 
         } catch (error) {
             console.error("Error initializing event listeners:", error);
@@ -1541,73 +2004,79 @@
             const searchTerm = document.getElementById('searchPOs').value.toLowerCase();
             const documentTypeFilter = document.getElementById('filterDocumentType').value;
             const changeTypeFilter = document.getElementById('filterChangeType').value;
-            const statusFilter = document.getElementById('filterStatus').value;
 
-            let basePOs = pos;
+            let baseChanges = changes;
 
-            const filteredPOs = basePOs.filter(po => {
+            const filteredChanges = baseChanges.filter(change => {
                 const matchesSearch =
-                    (po.documentNumber && po.documentNumber.toLowerCase().includes(searchTerm)) ||
-                    (po.documentType && po.documentType.toLowerCase().includes(searchTerm)) ||
-                    (po.documentDescription && po.documentDescription.toLowerCase().includes(searchTerm)) ||
-                    (po.changeType && po.changeType.toLowerCase().includes(searchTerm)) ||
-                    (po.changeDescription && po.changeDescription.toLowerCase().includes(searchTerm));
+                    (change.documentNumber && change.documentNumber.toLowerCase().includes(searchTerm)) ||
+                    (change.description && change.description.toLowerCase().includes(searchTerm)) ||
+                    (change.changeDescription && change.changeDescription.toLowerCase().includes(searchTerm));
 
                 const matchesDocumentType =
                     documentTypeFilter === 'all' ||
-                    (po.documentType && po.documentType === documentTypeFilter);
+                    (change.documentType && change.documentType === documentTypeFilter);
 
                 const matchesChangeType =
                     changeTypeFilter === 'all' ||
-                    (po.changeType && po.changeType === changeTypeFilter);
+                    (change.changeType && change.changeType === changeTypeFilter);
 
-                const matchesStatus =
-                    statusFilter === 'all' ||
-                    (po.status && po.status === statusFilter);
-
-                return matchesSearch && matchesDocumentType && matchesChangeType && matchesStatus;
+                return matchesSearch && matchesDocumentType && matchesChangeType;
             });
 
-            renderFilteredPOs(filteredPOs);
+            renderFilteredChanges(filteredChanges);
         } catch (error) {
-            console.error("Error filtering POs:", error);
+            console.error("Error filtering Changes:", error);
         }
     }
 
-    function renderFilteredPOs(filteredPOs) {
+    function renderFilteredChanges(filteredChanges) {
         const pipelineStage = document.getElementById('pos-stage');
         if (!pipelineStage) return;
 
         pipelineStage.innerHTML = '';
 
-        if (filteredPOs.length === 0) {
+        if (filteredChanges.length === 0) {
             pipelineStage.innerHTML = `
                 <div class="empty-state">
                     <i class="fas fa-search"></i>
-                    <p>No POs match the filter.</p>
+                    <p>No changes match the filter.</p>
                 </div>
             `;
             return;
         }
 
-        filteredPOs.forEach((po, index) => {
-            const poCard = renderPO(po, index);
-            pipelineStage.appendChild(poCard);
+        filteredChanges.forEach((change, index) => {
+            const changeCard = renderChangeCard(change, index);
+            pipelineStage.appendChild(changeCard);
             setTimeout(() => {
-                poCard.classList.add('show');
+                changeCard.classList.add('show');
             }, 50 * index);
         });
     }
 
     function logout() {
-        if (unsubscribeFromPOs) {
-            unsubscribeFromPOs();
-            unsubscribeFromPOs = null;
+        if (unsubscribeFromChanges) {
+            unsubscribeFromChanges();
+            unsubscribeFromChanges = null;
         }
+        // Removed unsubscribeFromDocumentTypes and unsubscribeFromChangeTypes
+        // if (unsubscribeFromDocumentTypes) {
+        //     unsubscribeFromDocumentTypes();
+        //     unsubscribeFromDocumentTypes = null;
+        // }
+        // if (unsubscribeFromChangeTypes) {
+        //     unsubscribeFromChangeTypes();
+        //     unsubscribeFromChangeTypes = null;
+        // }
         auth.signOut()
             .then(() => {
                 console.log("User logged out successfully");
-                pos = [];
+                changes = [];
+                // Removed documentTypesCatalog and changeTypesCatalog
+                // documentTypesCatalog = [];
+                // changeTypesCatalog = [];
+                googleAccessToken = null; // Clear Google token on logout
                 window.location.href = 'login.html';
             })
             .catch((error) => {
@@ -1617,7 +2086,6 @@
     }
 
     function goToIndex() {
-        // This function now correctly redirects to index.html
         window.location.href = 'index.html';
     }
 
@@ -1651,7 +2119,6 @@
     function resetFilters() {
         document.getElementById('filterDocumentType').value = 'all';
         document.getElementById('filterChangeType').value = 'all';
-        document.getElementById('filterStatus').value = 'all';
         document.getElementById('searchPOs').value = '';
         filterPOs();
     }
@@ -1662,72 +2129,319 @@
         deleteModal.classList.add('hidden');
     }
 
+    // ==================== DOCUMENT UPLOAD FUNCTIONS (Removed as upload document is removed) ====================
+
+    // async function openDocumentUploadModal() {
+    //     const documentUploadModal = document.getElementById('documentUploadModal');
+    //     if (documentUploadModal) {
+    //         document.getElementById('documentUploadForm').reset();
+    //         document.getElementById('docUpload_documentNumberSearch').value = '';
+    //         document.getElementById('docUpload_changeId').value = '';
+    //         document.getElementById('selectedDocumentUploadInfo').classList.add('hidden');
+    //         document.getElementById('selectedDocumentUploadNumberDisplay').textContent = '';
+    //         document.getElementById('uploadFieldsContainer').classList.add('hidden'); // Hide upload fields initially
+
+    //         // Reset file input displays
+    //         document.getElementById('pdfBeforeChange').value = ''; // Clear actual file input
+    //         document.getElementById('pdfAfterChange').value = ''; // Clear actual file input
+    //         document.getElementById('pdfBeforeFileName').textContent = 'Tidak ada file dipilih';
+    //         document.getElementById('pdfAfterFileName').textContent = 'Tidak ada file dipilih';
+    //         document.getElementById('pdfBeforeLink').classList.add('hidden');
+    //         document.getElementById('pdfAfterLink').classList.add('hidden');
+    //         document.getElementById('pdfBeforeLink').href = '#';
+    //         document.getElementById('pdfAfterLink').href = '#';
+
+    //         const documentNumberSearchInput = document.getElementById('docUpload_documentNumberSearch');
+    //         const changeIdHiddenInput = document.getElementById('docUpload_changeId');
+    //         const documentNumberSuggestionsDiv = document.getElementById('docUpload_documentNumberSuggestions');
+
+    //         const documentNumberData = changes.map(c => ({ documentNumber: c.documentNumber, id: c.id }));
+
+    //         setupSearchWithSuggestions(documentNumberSearchInput, changeIdHiddenInput, documentNumberSuggestionsDiv, documentNumberData, 'documentNumber', (selectedChange) => {
+    //             if (selectedChange) {
+    //                 changeIdHiddenInput.value = selectedChange.id;
+    //                 document.getElementById('selectedDocumentUploadNumberDisplay').textContent = selectedChange.documentNumber;
+    //                 document.getElementById('selectedDocumentUploadInfo').classList.remove('hidden');
+    //                 document.getElementById('uploadFieldsContainer').classList.remove('hidden'); // Show upload fields
+    //                 loadDocumentForUpload(selectedChange.id); // Load existing links
+    //             } else {
+    //                 changeIdHiddenInput.value = '';
+    //                 document.getElementById('selectedDocumentUploadInfo').classList.add('hidden');
+    //                 document.getElementById('uploadFieldsContainer').classList.add('hidden'); // Hide upload fields
+    //                 // Clear file input displays if no document is selected
+    //                 document.getElementById('pdfBeforeChange').value = '';
+    //                 document.getElementById('pdfAfterChange').value = '';
+    //                 document.getElementById('pdfBeforeFileName').textContent = 'Tidak ada file dipilih';
+    //                 document.getElementById('pdfAfterFileName').textContent = 'Tidak ada file dipilih';
+    //                 document.getElementById('pdfBeforeLink').classList.add('hidden');
+    //                 document.getElementById('pdfAfterLink').classList.add('hidden');
+    //             }
+    //         });
+
+    //         documentUploadModal.classList.remove('hidden');
+    //     }
+    // }
+
+    // function closeDocumentUploadModal() {
+    //     const documentUploadModal = document.getElementById('documentUploadModal');
+    //     if (documentUploadModal) {
+    //         documentUploadModal.classList.add('hidden');
+    //         closeAllAutocompleteSuggestions();
+    //     }
+    // }
+
+    // async function loadDocumentForUpload(changeId) {
+    //     showGlobalLoading();
+    //     try {
+    //         const changeDoc = await changesCollection.doc(changeId).get();
+    //         if (changeDoc.exists) {
+    //             const changeData = changeDoc.data();
+    //             // Display existing links
+    //             const pdfBeforeLink = document.getElementById('pdfBeforeLink');
+    //             const pdfAfterLink = document.getElementById('pdfAfterLink');
+
+    //             if (changeData.pdfBeforeChangeLink) {
+    //                 pdfBeforeLink.href = changeData.pdfBeforeChangeLink;
+    //                 pdfBeforeLink.classList.remove('hidden');
+    //                 document.getElementById('pdfBeforeFileName').textContent = 'Dokumen sudah diunggah';
+    //             } else {
+    //                 pdfBeforeLink.classList.add('hidden');
+    //                 document.getElementById('pdfBeforeFileName').textContent = 'Tidak ada file dipilih';
+    //             }
+
+    //             if (changeData.pdfAfterChangeLink) {
+    //                 pdfAfterLink.href = changeData.pdfAfterChangeLink;
+    //                 pdfAfterLink.classList.remove('hidden');
+    //                 document.getElementById('pdfAfterFileName').textContent = 'Dokumen sudah diunggah';
+    //             } else {
+    //                 pdfAfterLink.classList.add('hidden');
+    //                 document.getElementById('pdfAfterFileName').textContent = 'Tidak ada file dipilih';
+    //             }
+
+    //             document.getElementById('selectedDocumentUploadNumberDisplay').textContent = changeData.documentNumber;
+    //             document.getElementById('selectedDocumentUploadInfo').classList.remove('hidden');
+    //             document.getElementById('docUpload_changeId').value = changeId;
+    //             document.getElementById('docUpload_documentNumberSearch').value = changeData.documentNumber;
+    //             document.getElementById('uploadFieldsContainer').classList.remove('hidden');
+
+    //             showCustomAlert(`Dokumen untuk Nomor Dokumen ${changeData.documentNumber} dimuat.`, "info");
+    //         } else {
+    //             document.getElementById('documentUploadForm').reset();
+    //             document.getElementById('selectedDocumentUploadInfo').classList.add('hidden');
+    //             document.getElementById('uploadFieldsContainer').classList.add('hidden');
+    //             showCustomAlert("Dokumen tidak ditemukan untuk Nomor Dokumen ini.", "warning");
+    //         }
+    //     } catch (error) {
+    //         console.error("Error loading document for upload:", error);
+    //         showCustomAlert("Gagal memuat dokumen untuk upload. Silakan coba lagi.", "error");
+    //     } finally {
+    //         hideGlobalLoading();
+    //     }
+    // }
+
+    // async function uploadDocuments() {
+    //     const changeId = document.getElementById('docUpload_changeId').value;
+    //     const documentNumber = document.getElementById('selectedDocumentUploadNumberDisplay').textContent;
+
+    //     if (!changeId) {
+    //         showCustomAlert("Harap pilih Nomor Dokumen terlebih dahulu untuk mengunggah dokumen.", "error");
+    //         return;
+    //     }
+
+    //     const pdfBeforeFile = document.getElementById('pdfBeforeChange').files[0];
+    //     const pdfAfterFile = document.getElementById('pdfAfterChange').files[0];
+
+    //     if (!pdfBeforeFile && !pdfAfterFile) {
+    //         showCustomAlert("Harap pilih setidaknya satu file PDF untuk diunggah.", "warning");
+    //         return;
+    //     }
+
+    //     showGlobalLoading();
+    //     try {
+    //         const accessToken = await handleGoogleSignInForDrive();
+    //         if (!accessToken) {
+    //             throw new Error("Google Drive access not granted.");
+    //         }
+
+    //         const drive = gapi.client.drive;
+    //         const updateData = {};
+
+    //         // Find or create a dedicated folder for uploads
+    //         const folderName = "Accurate Changes Documents";
+    //         let folderId = await findOrCreateDriveFolder(folderName, accessToken);
+    //         if (!folderId) {
+    //             throw new Error("Failed to find or create Google Drive folder.");
+    //         }
+
+    //         if (pdfBeforeFile) {
+    //             const fileName = `Sebelum Perubahan - ${documentNumber} - ${pdfBeforeFile.name}`;
+    //             const fileLink = await uploadFileToDrive(pdfBeforeFile, fileName, folderId, accessToken);
+    //             if (fileLink) {
+    //                 updateData.pdfBeforeChangeLink = fileLink;
+    //             }
+    //         }
+
+    //         if (pdfAfterFile) {
+    //             const fileName = `Setelah Perubahan - ${documentNumber} - ${pdfAfterFile.name}`;
+    //             const fileLink = await uploadFileToDrive(pdfAfterFile, fileName, folderId, accessToken);
+    //             if (fileLink) {
+    //                 updateData.pdfAfterChangeLink = fileLink;
+    //             }
+    //         }
+
+    //         if (Object.keys(updateData).length > 0) {
+    //             updateData.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+    //             await changesCollection.doc(changeId).update(updateData);
+    //             showCustomAlert(`Dokumen untuk Nomor Dokumen ${documentNumber} berhasil diunggah!`, "success");
+    //             closeDocumentUploadModal();
+    //         } else {
+    //             showCustomAlert("Tidak ada dokumen yang berhasil diunggah.", "warning");
+    //         }
+
+    //     } catch (error) {
+    //         console.error("Error during document upload:", error);
+    //         showCustomAlert(`Gagal mengunggah dokumen: ${error.message || 'Terjadi kesalahan.'}`, "error");
+    //     } finally {
+    //         hideGlobalLoading();
+    //     }
+    // }
+
+    // async function findOrCreateDriveFolder(folderName, accessToken) {
+    //     const drive = gapi.client.drive;
+
+    //     // Search for the folder
+    //     const response = await drive.files.list({
+    //         q: `name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+    //         fields: 'files(id, name)',
+    //         spaces: 'drive',
+    //         access_token: accessToken
+    //     });
+
+    //     if (response.result.files.length > 0) {
+    //         return response.result.files[0].id; // Folder found
+    //     } else {
+    //         // Create the folder if not found
+    //         const fileMetadata = {
+    //             'name': folderName,
+    //             'mimeType': 'application/vnd.google-apps.folder'
+    //         };
+    //         const createResponse = await drive.files.create({
+    //             resource: fileMetadata,
+    //             fields: 'id',
+    //             access_token: accessToken
+    //         });
+    //         return createResponse.result.id;
+    //     }
+    // }
+
+    // async function uploadFileToDrive(file, fileName, parentFolderId, accessToken) {
+    //     const drive = gapi.client.drive;
+
+    //     const metadata = {
+    //         name: fileName,
+    //         mimeType: file.type,
+    //         parents: [parentFolderId]
+    //     };
+
+    //     const form = new FormData();
+    //     form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+    //     form.append('file', file);
+
+    //     try {
+    //         const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+    //             method: 'POST',
+    //             headers: {
+    //                 'Authorization': `Bearer ${accessToken}`
+    //             },
+    //             body: form
+    //         });
+
+    //         if (!response.ok) {
+    //             const errorText = await response.text();
+    //             throw new Error(`Google Drive API error: ${response.status} - ${errorText}`);
+    //         }
+
+    //         const result = await response.json();
+    //         console.log('File uploaded:', result);
+
+    //         // Get webViewLink for the uploaded file
+    //         const fileDetails = await drive.files.get({
+    //             fileId: result.id,
+    //             fields: 'webViewLink',
+    //             access_token: accessToken
+    //         });
+    //         return fileDetails.result.webViewLink;
+
+    //     } catch (error) {
+    //         console.error("Error uploading file to Google Drive:", error);
+    //         throw error;
+    //     }
+    // }
+
+
     // ==================== EXPORT TO EXCEL FUNCTION ====================
     function exportToExcel() {
         showGlobalLoading();
         try {
             const data = [];
             const headers = [
-                "No. Urut", "Tipe Dokumen", "Nomor Dokumen", "Tanggal Dokumen", "Deskripsi Dokumen",
+                "No. Urut", "Tipe Dokumen", "Nomor Dokumen", "Tanggal Dokumen", "Deskripsi",
                 "Nilai Harga Awal Perubahan", "Tanggal Perubahan", "Tipe Perubahan", "Deskripsi Perubahan", "Perubahan Nilai Harga",
-                "Status Order", "Dibuat Oleh", "Tanggal Dibuat"
+                // Removed PDF Document Links headers
+                // "PDF Dokumen Sebelum Perubahan Link", "PDF Dokumen Setelah Perubahan Link",
+                "Created By", "Created At"
             ];
             data.push(headers);
 
-            const currentPOs = pos.filter(po => {
+            const currentChanges = changes.filter(change => {
                 const searchTerm = document.getElementById('searchPOs').value.toLowerCase();
                 const documentTypeFilter = document.getElementById('filterDocumentType').value;
                 const changeTypeFilter = document.getElementById('filterChangeType').value;
-                const statusFilter = document.getElementById('filterStatus').value;
 
                 const matchesSearch =
-                    (po.documentNumber && po.documentNumber.toLowerCase().includes(searchTerm)) ||
-                    (po.documentType && po.documentType.toLowerCase().includes(searchTerm)) ||
-                    (po.documentDescription && po.documentDescription.toLowerCase().includes(searchTerm)) ||
-                    (po.changeType && po.changeType.toLowerCase().includes(searchTerm)) ||
-                    (po.changeDescription && po.changeDescription.toLowerCase().includes(searchTerm));
+                    (change.documentNumber && change.documentNumber.toLowerCase().includes(searchTerm)) ||
+                    (change.description && change.description.toLowerCase().includes(searchTerm)) ||
+                    (change.changeDescription && change.changeDescription.toLowerCase().includes(searchTerm));
 
                 const matchesDocumentType =
                     documentTypeFilter === 'all' ||
-                    (po.documentType && po.documentType === documentTypeFilter);
+                    (change.documentType && change.documentType === documentTypeFilter);
 
                 const matchesChangeType =
                     changeTypeFilter === 'all' ||
-                    (po.changeType && po.changeType === changeTypeFilter);
+                    (change.changeType && change.changeType === changeTypeFilter);
 
-                const matchesStatus =
-                    statusFilter === 'all' ||
-                    (po.status && po.status === statusFilter);
-
-                return matchesSearch && matchesDocumentType && matchesChangeType && matchesStatus;
+                return matchesSearch && matchesDocumentType && matchesChangeType;
             });
 
-            currentPOs.forEach((po, index) => {
+            currentChanges.forEach((change, index) => {
                 const row = [
                     index + 1,
-                    po.documentType || '',
-                    po.documentNumber || '',
-                    po.documentDate ? formatDate(po.documentDate) : '',
-                    po.documentDescription || '',
-                    po.initialPriceValue || '',
-                    po.changeDate ? formatDate(po.changeDate) : '',
-                    po.changeType || '',
-                    po.changeDescription || '',
-                    po.changedPriceValue || '',
-                    po.status ? po.status.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : '',
-                    po.createdBy || '',
-                    po.createdAt ? formatDateTime(po.createdAt) : ''
+                    change.documentType || '',
+                    change.documentNumber || '',
+                    change.documentDate ? formatDate(change.documentDate) : '',
+                    change.description || '',
+                    change.initialPriceValue || '', // Raw number for Excel
+                    change.changeDate ? formatDate(change.changeDate) : '',
+                    change.changeType || '',
+                    change.changeDescription || '',
+                    change.changedPriceValue || '', // Raw number for Excel
+                    // Removed PDF Document Links data
+                    // change.pdfBeforeChangeLink || '',
+                    // change.pdfAfterChangeLink || '',
+                    change.createdBy || '',
+                    change.createdAt ? formatDateTime(change.createdAt) : ''
                 ];
                 data.push(row);
             });
 
             const ws = XLSX.utils.aoa_to_sheet(data);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Purchase Orders");
+            XLSX.utils.book_append_sheet(wb, ws, "Monitoring Perubahan Accurate");
 
-            const fileName = `Purchase_Orders_${new Date().toISOString().slice(0,10)}.xlsx`;
+            const fileName = `Monitoring_Perubahan_Accurate_${new Date().toISOString().slice(0,10)}.xlsx`;
             XLSX.writeFile(wb, fileName);
-            showCustomAlert("Data PO berhasil diekspor ke Excel!", "success");
+            showCustomAlert("Data perubahan Accurate diekspor ke Excel berhasil!", "success");
 
         } catch (error) {
             console.error("Error exporting to Excel:", error);
@@ -1741,6 +2455,9 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         initSortable();
+        // Removed Google API client libraries loading
+        // gapi.load('client', gapiLoaded);
+        // google.accounts.oauth2.loadScript(gisLoaded);
     });
 </script>
 </body>
