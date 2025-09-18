@@ -1695,28 +1695,9 @@
                 await changesCollection.add(changeData);
                 showCustomAlert("New Perubahan added successfully!", "success");
             }
-
-            // Removed logic for adding new document type if it doesn't exist
-            // if (documentType && !documentTypesCatalog.some(dt => dt.name === documentType)) {
-            //     try {
-            //         await documentTypesCollection.add({ name: documentType, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-            //         console.log(`New Document Type "${documentType}" added to Firestore.`);
-            //     } catch (dtError) {
-            //         console.error("Error adding new Document Type to Firestore:", dtError);
-            //         // showCustomAlert(`Failed to save new Document Type "${documentType}".`, "error"); // Avoid multiple alerts
-            //     }
-            // }
-
-            // Removed logic for adding new change type if it doesn't exist
-            // if (changeType && !changeTypesCatalog.some(ct => ct.name === changeType)) {
-            //     try {
-            //         await changeTypesCollection.add({ name: changeType, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-            //         console.log(`New Change Type "${changeType}" added to Firestore.`);
-            //     } catch (ctError) {
-            //         console.error("Error adding new Change Type to Firestore:", ctError);
-            //         // showCustomAlert(`Failed to save new Change Type "${changeType}".`, "error"); // Avoid multiple alerts
-            //     }
-            // }
+            
+            // Panggil filterPOs untuk me-refresh tampilan setelah data disimpan
+            filterPOs(); // <--- Tambahkan baris ini
 
         } catch (error) {
             console.error("Error saving Perubahan:", error);
