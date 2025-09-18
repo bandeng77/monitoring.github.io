@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring Perubahan Accurate</title>
+    <title>Purchase Order Monitoring - Genetek</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -12,9 +12,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
     <!-- Library for Export Excel -->
     <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
-    <!-- Google API Loader (kept for other potential uses, but Drive specific functions removed) -->
-    <script src="https://apis.google.com/js/api.js"></script>
-    <script src="https://apis.google.com/js/platform.js" async defer></script>
 
     <style>
         /* New Color Palette */
@@ -376,8 +373,6 @@
         }
 
         /* Additional rules for dynamic content within the detail modal */
-        #detailDocumentChecklist p,
-        #detailDocumentChecklist span,
         #detailItemsList p,
         #detailItemsList span {
             color: #000000 !important; /* Ensure black for these sections, use !important if needed to override Tailwind */
@@ -656,7 +651,7 @@
         <header class="mb-8 bg-white p-6 rounded-lg shadow-md header">
             <div class="flex justify-between items-start">
                 <div>
-                    <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900">Monitoring Perubahan Accurate <i class="fas fa-box-open text-blue-600 ml-2"></i></h1>
+                    <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900">Purchase Order Monitoring <i class="fas fa-box-open text-blue-600 ml-2"></i></h1>
                 </div>
                 <div class="logout-btn-container">
                     <button id="authButton" onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
@@ -671,11 +666,6 @@
                     <i class="fas fa-plus-circle mr-2"></i> New
                 </button>
 
-                <!-- Removed Upload Dokumen Button -->
-                <!-- <button id="documentUploadBtn" onclick="openDocumentUploadModal()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
-                    <i class="fas fa-upload mr-2"></i> Upload Dokumen
-                </button> -->
-
                 <button id="exportExcelBtn" onclick="exportToExcel()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
                     <i class="fas fa-file-excel mr-2"></i> Export Excel
                 </button>
@@ -687,7 +677,7 @@
 
             <!-- Combined Filter Section -->
             <div class="mt-6 flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 items-center">
-                <input type="text" id="searchPOs" onkeyup="filterPOs()" placeholder="Search by document number, description..." class="w-full sm:w-1/2 p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                <input type="text" id="searchPOs" onkeyup="filterPOs()" placeholder="Search PO by number, vendor, item..." class="w-full sm:w-1/2 p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
 
                 <button id="openFilterPanelBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
                     <i class="fas fa-filter mr-2"></i> Filter
@@ -699,7 +689,7 @@
         <div class="grid grid-cols-1 gap-6 mb-10">
             <div class="pipeline-stage stage-main-pipeline">
                 <div class="pipeline-stage-header">
-                    <h3>Monitoring List</h3>
+                    <h3>PO List</h3>
                 </div>
                 <div id="pos-stage" class="pipeline-stage-content">
                     <!-- POs will be displayed here -->
@@ -713,18 +703,15 @@
         <!-- Add/Edit PO Modal -->
         <div id="poModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
             <div class="bg-white rounded-none p-8 w-full h-full shadow-2xl modal-content-enter" id="poModalContent">
-                <h2 class="text-xl sm:text-2xl font-bold mb-4 text-gray-900" id="modalTitle">Add New Perubahan</h2>
+                <h2 class="text-xl sm:text-2xl font-bold mb-4 text-gray-900" id="modalTitle">Add New PO</h2>
                 <form id="poForm" class="po-form-container">
                     <input type="hidden" id="poId">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-3 gap-y-2"> <!-- Changed to 2 columns -->
-                        <!-- Column 1 -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-2"> <!-- Changed to 2 columns -->
+                        <!-- Column 1: Document Details -->
                         <div>
                             <div class="mb-2">
                                 <label class="block text-gray-700 text-sm font-semibold mb-1" for="documentType">Tipe Dokumen <span class="text-red-500">*</span></label>
-                                <select id="documentType" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" required>
-                                    <option value="">Pilih Tipe Dokumen</option>
-                                    <!-- Options will be dynamically populated by JavaScript -->
-                                </select>
+                                <input type="text" id="documentType" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" required>
                             </div>
                             <div class="mb-2">
                                 <label class="block text-gray-700 text-sm font-semibold mb-1" for="documentNumber">Nomor Dokumen <span class="text-red-500">*</span></label>
@@ -735,15 +722,15 @@
                                 <input type="date" id="documentDate" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
                             </div>
                             <div class="mb-2">
-                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="description">Deskripsi</label>
-                                <textarea id="description" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" rows="4" placeholder="Deskripsi dokumen..."></textarea>
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="documentDescription">Deskripsi</label>
+                                <textarea id="documentDescription" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" rows="4" placeholder="Tambahkan deskripsi dokumen..."></textarea>
                             </div>
                         </div>
-                        <!-- Column 2 -->
+                        <!-- Column 2: Change Details -->
                         <div>
                             <div class="mb-2">
                                 <label class="block text-gray-700 text-sm font-semibold mb-1" for="initialPriceValue">Nilai Harga Awal Perubahan</label>
-                                <input type="text" id="initialPriceValue" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" inputmode="numeric">
+                                <input type="text" id="initialPriceValue" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" oninput="formatRupiah(this)">
                             </div>
                             <div class="mb-2">
                                 <label class="block text-gray-700 text-sm font-semibold mb-1" for="changeDate">Tanggal Perubahan</label>
@@ -751,30 +738,25 @@
                             </div>
                             <div class="mb-2">
                                 <label class="block text-gray-700 text-sm font-semibold mb-1" for="changeType">Tipe Perubahan</label>
-                                <select id="changeType" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
-                                    <option value="">Pilih Tipe Perubahan</option>
-                                    <option value="Penambahan">Penambahan</option>
-                                    <option value="Pengurangan">Pengurangan</option>
-                                    <option value="Koreksi">Koreksi</option>
-                                </select>
+                                <input type="text" id="changeType" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
                             </div>
                             <div class="mb-2">
                                 <label class="block text-gray-700 text-sm font-semibold mb-1" for="changeDescription">Deskripsi Perubahan</label>
-                                <textarea id="changeDescription" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" rows="4" placeholder="Deskripsi perubahan..."></textarea>
+                                <textarea id="changeDescription" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" rows="4" placeholder="Tambahkan deskripsi perubahan..."></textarea>
                             </div>
                             <div class="mb-2">
                                 <label class="block text-gray-700 text-sm font-semibold mb-1" for="changedPriceValue">Perubahan Nilai Harga</label>
-                                <input type="text" id="changedPriceValue" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" inputmode="numeric">
+                                <input type="text" id="changedPriceValue" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" oninput="formatRupiah(this)">
                             </div>
                         </div>
                     </div>
 
-                    <div class="flex justify-end space-x-3 mt-4">
+                    <div class="flex justify-end space-x-3 mt-4"> <!-- Smaller margin -->
                         <button type="button" onclick="closePOModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
                             Cancel
                         </button>
                         <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105 text-sm">
-                            Save Perubahan
+                            Save PO
                         </button>
                     </div>
                 </form>
@@ -783,11 +765,11 @@
 
         <!-- PO Detail Modal -->
         <div id="poDetailModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
-            <div class="bg-white rounded-xl p-8 w-full max-w-5xl shadow-2xl modal-content-enter overflow-y-auto" id="poDetailModalContent">
-                <h2 class="text-xl sm:text-2xl font-bold mb-6 text-gray-900" id="poDetailTitle">Detail Perubahan</h2>
+            <div class="bg-white rounded-xl p-8 w-full max-w-5xl shadow-2xl modal-content-enter overflow-y-auto" id="poDetailModalContent"> <!-- Larger max-width to accommodate 2 main columns -->
+                <h2 class="text-xl sm:text-2xl font-bold mb-6 text-gray-900" id="poDetailTitle">PO Details</h2>
                 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <!-- Left Column: Main PO Details -->
+                    <!-- Left Column: Document Details -->
                     <div>
                         <h3 class="text-lg font-bold text-gray-900 mb-4">Informasi Dokumen</h3>
                         <div class="detail-grid">
@@ -804,13 +786,13 @@
                                 <p id="detailDocumentDate"></p>
                             </div>
                             <div class="detail-item col-span-full">
-                                <p class="font-semibold">Deskripsi:</p>
-                                <p id="detailDescription"></p>
+                                <p class="font-semibold">Deskripsi Dokumen:</p>
+                                <p id="detailDocumentDescription"></p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Right Column: Document Checklist -->
+                    <!-- Right Column: Change Details -->
                     <div>
                         <h3 class="text-lg font-bold text-gray-900 mb-4">Informasi Perubahan</h3>
                         <div class="detail-grid">
@@ -835,15 +817,6 @@
                                 <p id="detailChangedPriceValue"></p>
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Document Upload Links Section (Kept for display, but upload functionality removed) -->
-                <div class="detail-item col-span-full border-t pt-4 mt-4 border-gray-200">
-                    <h3 class="text-lg font-bold text-gray-900 mb-2">Dokumen Terkait</h3>
-                    <div id="detailDocumentLinks" class="flex flex-col gap-2">
-                        <p><span class="font-semibold">PDF Dokumen Sebelum Perubahan:</span> <a id="linkPdfBefore" href="#" target="_blank" class="text-blue-600 hover:underline">Lihat Dokumen</a></p>
-                        <p><span class="font-semibold">PDF Dokumen Setelah Perubahan:</span> <a id="linkPdfAfter" href="#" target="_blank" class="text-blue-600 hover:underline">Lihat Dokumen</a></p>
                     </div>
                 </div>
 
@@ -875,13 +848,13 @@
         <div id="filterPanel" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
             <div class="bg-white rounded-xl p-8 w-full max-w-2xl shadow-2xl modal-content-enter" id="filterPanelContent">
                 <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900 flex items-center"><i class="fas fa-filter mr-3 text-gray-500"></i> Filter Perubahan</h2>
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900 flex items-center"><i class="fas fa-filter mr-3 text-gray-500"></i> Filter POs</h2>
                     <button onclick="closeFilterPanel()" class="text-gray-500 hover:text-gray-700 transition duration-200">
                         <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Filter: Tipe Dokumen -->
+                    <!-- Filter: Document Type -->
                     <div>
                         <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterDocumentType">Tipe Dokumen</label>
                         <select id="filterDocumentType" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
@@ -889,14 +862,27 @@
                             <!-- Options will be dynamically populated by JavaScript -->
                         </select>
                     </div>
-                    <!-- Filter: Tipe Perubahan -->
+                    <!-- Filter: Change Type -->
                     <div>
                         <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterChangeType">Tipe Perubahan</label>
                         <select id="filterChangeType" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
                             <option value="all">Semua Tipe Perubahan</option>
-                            <option value="Penambahan">Penambahan</option>
-                            <option value="Pengurangan">Pengurangan</option>
-                            <option value="Koreksi">Koreksi</option>
+                            <!-- Options populated dynamically -->
+                        </select>
+                    </div>
+                    <!-- Filter: Status -->
+                    <div>
+                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterStatus">Status Order</label>
+                        <select id="filterStatus" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            <option value="all">Semua Status</option>
+                            <option value="On Order">On Order</option>
+                            <option value="Waiting">Waiting</option>
+                            <option value="Picked Up">Picked Up</option>
+                            <option value="On Delivery">On Delivery</option>
+                            <option value="Delivered">Delivered</option>
+                            <option value="Partial Delivered">Partial Delivered</option>
+                            <option value="Delayed">Delayed</option>
+                            <option value="On Hold">On Hold</option>
                         </select>
                     </div>
                 </div>
@@ -911,67 +897,6 @@
             </div>
         </div>
 
-        <!-- Removed Document Upload Modal -->
-        <!-- <div id="documentUploadModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
-            <div class="bg-white rounded-xl p-8 w-full max-w-2xl shadow-2xl modal-content-enter" id="documentUploadModalContent">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900 flex items-center"><i class="fas fa-upload mr-3 text-gray-500"></i> Upload Dokumen</h2>
-                    <button onclick="closeDocumentUploadModal()" class="text-gray-500 hover:text-gray-700 transition duration-200">
-                        <i class="fas fa-times text-xl"></i>
-                    </button>
-                </div>
-                <form id="documentUploadForm">
-                    <div class="mb-6 border-b pb-4 border-gray-200">
-                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="docUpload_documentNumberSearch">Search Nomor Dokumen</label>
-                        <div class="relative flex items-center">
-                            <input type="text" id="docUpload_documentNumberSearch" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm pr-10" placeholder="Type Nomor Dokumen...">
-                            <input type="hidden" id="docUpload_changeId" value="">
-                            <div id="docUpload_documentNumberSuggestions" class="autocomplete-items suggestions-list"></div>
-                            <button type="button" id="loadDocumentForUploadBtn" class="absolute right-2 top-1/2 -translate-y-1/2 bg-blue-500 text-white rounded-md p-1 text-xs hover:bg-blue-600 transition duration-150">
-                                <i class="fas fa-search"></i>
-                            </button>
-                        </div>
-                        <p id="selectedDocumentUploadInfo" class="text-sm text-gray-600 mt-2 hidden">Selected Dokumen: <span class="font-medium" id="selectedDocumentUploadNumberDisplay"></span></p>
-                    </div>
-
-                    <div id="uploadFieldsContainer" class="hidden">
-                        <div class="mb-4">
-                            <label class="block text-gray-700 text-sm font-semibold mb-2">PDF Dokumen Sebelum Perubahan</label>
-                            <div class="flex items-center space-x-2">
-                                <input type="file" id="pdfBeforeChange" accept="application/pdf" class="hidden">
-                                <button type="button" onclick="document.getElementById('pdfBeforeChange').click()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out flex items-center text-sm">
-                                    <i class="fas fa-file-upload mr-2"></i> Pilih File
-                                </button>
-                                <span id="pdfBeforeFileName" class="text-sm text-gray-600 truncate max-w-[calc(100%-120px)]">Tidak ada file dipilih</span>
-                                <a id="pdfBeforeLink" href="#" target="_blank" class="text-blue-600 hover:underline text-sm hidden"><i class="fas fa-external-link-alt mr-1"></i> Lihat</a>
-                            </div>
-                        </div>
-
-                        <div class="mb-4">
-                            <label class="block text-gray-700 text-sm font-semibold mb-2">PDF Dokumen Setelah Perubahan</label>
-                            <div class="flex items-center space-x-2">
-                                <input type="file" id="pdfAfterChange" accept="application/pdf" class="hidden">
-                                <button type="button" onclick="document.getElementById('pdfAfterChange').click()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out flex items-center text-sm">
-                                    <i class="fas fa-file-upload mr-2"></i> Pilih File
-                                </button>
-                                <span id="pdfAfterFileName" class="text-sm text-gray-600 truncate max-w-[calc(100%-120px)]">Tidak ada file dipilih</span>
-                                <a id="pdfAfterLink" href="#" target="_blank" class="text-blue-600 hover:underline text-sm hidden"><i class="fas fa-external-link-alt mr-1"></i> Lihat</a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="flex justify-end space-x-3 mt-6">
-                        <button type="button" onclick="closeDocumentUploadModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
-                            Cancel
-                        </button>
-                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105 text-sm">
-                            Upload Dokumen
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div> -->
-
         <!-- Success Alert Modal (NEW) -->
         <div id="successAlertModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
             <div class="bg-white rounded-xl p-8 w-full max-w-sm text-center shadow-2xl modal-content-enter" id="successAlertModalContent">
@@ -979,7 +904,7 @@
                     <i class="fas fa-check-circle"></i>
                 </div>
                 <h2 class="text-2xl font-bold mb-4 text-gray-900">Success!</h2>
-                <p class="text-gray-700 mb-6" id="successAlertMessage">Perubahan saved successfully.</p>
+                <p class="text-gray-700 mb-6" id="successAlertMessage">PO saved successfully.</p>
                 <button type="button" onclick="closeSuccessAlertModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105">
                     OK
                 </button>
@@ -996,88 +921,32 @@
 <script>
     // Firebase configuration
     const firebaseConfig = {
-          apiKey: "AIzaSyDWgxJfYKksEoeUF2rK67rAH-arejKawJM",
-          authDomain: "monitoring-acc.firebaseapp.com",
-          projectId: "monitoring-acc",
-          storageBucket: "monitoring-acc.firebasestorage.app",
-          messagingSenderId: "898707897888",
-          appId: "1:898707897888:web:8cfe6f77cd784d8c1ec645"
-    };
-
-    // Google API configuration (kept for potential future use, but Drive specific functions removed)
-    const GOOGLE_API_CONFIG = {
-        clientId: "484546392348-f0spk1eghjepp9eiafs7n54gs1abqv6v.apps.googleusercontent.com",
-        scope: "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email", // drive.file for specific file access, userinfo.email for email
+        apiKey: "AIzaSyDWgxJfYKksEoeUF2rK67rAH-arejKawJM",
+        authDomain: "monitoring-acc.firebaseapp.com",
+        projectId: "monitoring-acc",
+        storageBucket: "monitoring-acc.firebasestorage.app",
+        messagingSenderId: "898707897888",
+        appId: "1:898707897888:web:8cfe6f77cd784d8c1ec645"
     };
 
     // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const auth = firebase.auth();
-    const changesCollection = db.collection('accurateChanges');
-    const usersCollection = db.collection('users');
-    const documentTypesCollection = db.collection('documentTypes');
-    const changeTypesCollection = db.collection('changeTypes');
+    const dealsCollection = db.collection('purchaseOrders'); // Collection name remains 'purchaseOrders'
 
-    let changes = [];
-    const DEFAULT_CHANGE_TYPE = 'Koreksi';
+    let pos = [];
+    const DEFAULT_STATUS = 'On Order';
     let currentUserRole = 'user';
-    let sortableInstances = {};
     let authInitialized = false;
-    let unsubscribeFromChanges = null;
-    let unsubscribeFromDocumentTypes = null;
-    let unsubscribeFromChangeTypes = null;
+    let unsubscribeFromPOs = null;
 
-    let documentCatalog = []; // This is not used directly for autocomplete anymore, but can be for other purposes
-    let documentTypesCatalog = [];
-    let changeTypesCatalog = [];
-
+    // Only store Sets for desired filters
     let uniqueDocumentTypes = new Set();
     let uniqueChangeTypes = new Set();
+    let uniqueStatuses = new Set();
 
-    const ADMIN_EMAIL = 'maida@genetek.co.id';
-
-    // Google API related variables (kept for potential future use, but Drive specific functions removed)
-    let gapiInited = false;
-    let gisInited = false;
-    let tokenClient;
-    let googleAccessToken = null;
-
-    // ==================== GOOGLE API INITIALIZATION (Simplified as Drive functions removed) ====================
-
-    function gapiLoaded() {
-        gapi.load('client', initializeGapiClient);
-    }
-
-    async function initializeGapiClient() {
-        await gapi.client.init({
-            // No API key needed if using OAuth for Drive
-        });
-        gapiInited = true;
-        // maybeInitGoogleAuth(); // No longer needed for Drive specific actions
-    }
-
-    function gisLoaded() {
-        tokenClient = google.accounts.oauth2.initTokenClient({
-            client_id: GOOGLE_API_CONFIG.clientId,
-            scope: GOOGLE_API_CONFIG.scope,
-            callback: (tokenResponse) => {
-                if (tokenResponse && tokenResponse.access_token) {
-                    googleAccessToken = tokenResponse.access_token;
-                    console.log("Google Access Token obtained:", googleAccessToken);
-                } else {
-                    console.error("Failed to obtain Google Access Token.");
-                    // showCustomAlert("Failed to connect to Google Drive. Please try again.", "error"); // Removed as Drive upload is gone
-                }
-            },
-        });
-        gisInited = true;
-        // maybeInitGoogleAuth(); // No longer needed for Drive specific actions
-    }
-
-    // Removed maybeInitGoogleAuth and handleGoogleSignInForDrive as Drive upload is removed.
-    // If Google APIs are needed for other purposes, these functions might need to be re-evaluated.
-
+    const ADMIN_EMAIL = 'maida@genetek.co.id'; // Keep admin email for authentication
 
     // ==================== MAIN FUNCTIONS ====================
 
@@ -1104,7 +973,8 @@
                 showGlobalLoading();
                 if (user.email === ADMIN_EMAIL) {
                     currentUserRole = 'admin';
-                    await usersCollection.doc(user.uid).set({
+                    // Ensure user role is set in Firestore if not already
+                    await db.collection('users').doc(user.uid).set({
                         role: 'admin',
                         email: user.email
                     }, { merge: true });
@@ -1116,12 +986,8 @@
                 }
 
                 console.log("Current role:", currentUserRole);
-                fetchDocumentCatalog(); // Still useful for general data fetching if needed
-                listenForDocumentTypes();
-                listenForChangeTypes();
-                listenForChanges();
+                listenForPOs();
                 initEventListeners();
-                // maybeInitGoogleAuth(); // Removed as Drive upload is removed
                 hideGlobalLoading();
             } catch (error) {
                 console.error("Error checking user role or loading data:", error);
@@ -1130,52 +996,6 @@
             }
         }
     });
-
-    async function fetchDocumentCatalog() {
-        console.log("Document catalog will be built from existing changes.");
-        // This function can be expanded if a separate document catalog is needed,
-        // but for now, document types are derived from existing changes and a dedicated collection.
-    }
-
-    function listenForDocumentTypes() {
-        console.log("Listening for Document Types list from Firestore (onSnapshot)...");
-        if (unsubscribeFromDocumentTypes) {
-            unsubscribeFromDocumentTypes();
-        }
-
-        unsubscribeFromDocumentTypes = documentTypesCollection.orderBy("name", "asc").onSnapshot(snapshot => {
-            documentTypesCatalog = [];
-            snapshot.forEach(doc => {
-                documentTypesCatalog.push({ id: doc.id, name: doc.data().name });
-            });
-            console.log("Document Types Catalog updated:", documentTypesCatalog.length, "items");
-            populateFilterDropdowns();
-            populateDocumentTypeDropdown(); // Populate the dropdown in the PO modal
-        }, (error) => {
-            console.error("Error listening to Document Types list:", error);
-            showCustomAlert("Failed to load Document Types list in real-time.", "error");
-        });
-    }
-
-    function listenForChangeTypes() {
-        console.log("Listening for Change Types list from Firestore (onSnapshot)...");
-        if (unsubscribeFromChangeTypes) {
-            unsubscribeFromChangeTypes();
-        }
-
-        unsubscribeFromChangeTypes = changeTypesCollection.orderBy("name", "asc").onSnapshot(snapshot => {
-            changeTypesCatalog = [];
-            snapshot.forEach(doc => {
-                changeTypesCatalog.push({ id: doc.id, name: doc.data().name });
-            });
-            console.log("Change Types Catalog updated:", changeTypesCatalog.length, "items");
-            populateFilterDropdowns();
-            populateChangeTypeDropdown(); // Populate the dropdown in the PO modal
-        }, (error) => {
-            console.error("Error listening to Change Types list:", error);
-            showCustomAlert("Failed to load Change Types list in real-time.", "error");
-        });
-    }
 
     // ==================== UTILITY FUNCTIONS ====================
 
@@ -1198,25 +1018,51 @@
         }
     }
 
-    function formatRupiah(num) {
-        if (num === null || num === undefined || isNaN(num)) {
-            return 'Rp 0';
+    function formatRupiah(inputElement) {
+        let value = inputElement.value.replace(/[^,\d]/g, '').toString();
+        let rupiah = '';
+        let parts = value.split(',');
+        let integerPart = parts[0];
+        let decimalPart = parts.length > 1 ? ',' + parts[1] : '';
+
+        let number_string = integerPart.replace(/[^,\d]/g, '').toString();
+        let split = number_string.split('.');
+        let sisa = split[0].length % 3;
+        rupiah = split[0].substr(0, sisa);
+        let ribuan = split[0].substr(sisa).match(/\d{3}/gi);
+
+        if (ribuan) {
+            let separator = sisa ? '.' : '';
+            rupiah += separator + ribuan.join('.');
         }
-        // Ensure num is a number before formatting
-        const number = parseFloat(num);
-        if (isNaN(number)) {
-            return 'Rp 0';
-        }
-        // Use id-ID for dot as thousands separator and 'Rp' currency currency symbol
-        return 'Rp ' + new Intl.NumberFormat('id-ID').format(number);
+
+        rupiah = rupiah ? 'Rp ' + rupiah : '';
+        inputElement.value = rupiah + decimalPart;
     }
 
-    // Function to parse Rupiah string back to a number
     function parseRupiah(rupiahString) {
         if (!rupiahString) return 0;
-        // Remove "Rp", dots, and commas, then parse as float
-        const cleanedString = rupiahString.replace(/Rp|\./g, '').replace(/,/g, '.').trim();
+        // Remove "Rp ", dots, and replace comma with dot for parsing
+        const cleanedString = rupiahString.replace(/Rp\s?|\./g, '').replace(',', '.');
         return parseFloat(cleanedString) || 0;
+    }
+
+    function formatNumberToRupiah(number) {
+        if (number === null || number === undefined || isNaN(number)) {
+            return 'Rp 0';
+        }
+        const parts = number.toFixed(0).toString().split('.'); // Ensure no decimal places for now
+        let integerPart = parts[0];
+        let rupiah = '';
+        let sisa = integerPart.length % 3;
+        rupiah = integerPart.substr(0, sisa);
+        let ribuan = integerPart.substr(sisa).match(/\d{3}/g);
+
+        if (ribuan) {
+            let separator = sisa ? '.' : '';
+            rupiah += separator + ribuan.join('.');
+        }
+        return 'Rp ' + rupiah;
     }
 
     function formatDate(timestamp) {
@@ -1267,10 +1113,10 @@
         document.getElementById('global-loading-overlay').classList.remove('show');
     }
 
-    // ==================== CHANGES FUNCTIONS ====================
+    // ==================== PO FUNCTIONS ====================
 
-    function listenForChanges() {
-        console.log("Listening for Accurate Changes from Firebase (onSnapshot)...");
+    function listenForPOs() {
+        console.log("Listening for POs from Firebase (onSnapshot)...");
         const pipelineStage = document.getElementById('pos-stage');
         const loadingSpinner = document.getElementById('loading-spinner');
         if (pipelineStage && loadingSpinner) {
@@ -1278,88 +1124,100 @@
             loadingSpinner.classList.remove('hidden');
         }
 
-        if (unsubscribeFromChanges) {
-            unsubscribeFromChanges();
+        if (unsubscribeFromPOs) {
+            unsubscribeFromPOs();
         }
 
-        changesCollection.orderBy("createdAt", "asc").onSnapshot(snapshot => {
-            changes = [];
+        dealsCollection.orderBy("createdAt", "asc").onSnapshot(snapshot => {
+            pos = [];
             uniqueDocumentTypes.clear();
             uniqueChangeTypes.clear();
+            uniqueStatuses.clear();
 
             snapshot.forEach((doc) => {
-                const changeData = doc.data();
-                changeData.createdAt = changeData.createdAt && typeof changeData.createdAt.toDate === 'function' ? changeData.createdAt.toDate() : null;
-                changeData.documentDate = changeData.documentDate && typeof changeData.documentDate.toDate === 'function' ? changeData.documentDate.toDate() : null;
-                changeData.changeDate = changeData.changeDate && typeof changeData.changeDate.toDate === 'function' ? changeData.changeDate.toDate() : null;
+                const poData = doc.data();
+                poData.createdAt = poData.createdAt && typeof poData.createdAt.toDate === 'function' ? poData.createdAt.toDate() : null;
+                poData.documentDate = poData.documentDate && typeof poData.documentDate.toDate === 'function' ? poData.documentDate.toDate() : null;
+                poData.changeDate = poData.changeDate && typeof poData.changeDate.toDate === 'function' ? poData.changeDate.toDate() : null;
 
-                changes.push({ id: doc.id, ...changeData });
+                pos.push({ id: doc.id, ...poData });
 
-                if (changeData.documentType) uniqueDocumentTypes.add(changeData.documentType);
-                if (changeData.changeType) uniqueChangeTypes.add(changeData.changeType);
+                if (poData.documentType) uniqueDocumentTypes.add(poData.documentType);
+                if (poData.changeType) uniqueChangeTypes.add(poData.changeType);
+                if (poData.status) uniqueStatuses.add(poData.status);
             });
-            console.log("Total Accurate Changes updated by onSnapshot:", changes.length);
+            console.log("Total POs updated by onSnapshot:", pos.length);
             populateFilterDropdowns();
             filterPOs();
             if (loadingSpinner) {
                 loadingSpinner.classList.add('hidden');
             }
         }, (error) => {
-            console.error("Error listening to Accurate Changes:", error);
-            showCustomAlert("Failed to load Accurate Changes data in real-time.", "error");
+            console.error("Error listening to POs:", error);
+            showCustomAlert("Failed to load PO data in real-time.", "error");
             if (loadingSpinner) {
                 loadingSpinner.classList.add('hidden');
             }
         });
     }
 
-    function renderChangeCard(change, index) {
-        const changeCard = document.createElement('div');
-        changeCard.className = 'deal-card';
-        changeCard.dataset.id = change.id;
+    function renderPO(po, index) {
+        const poCard = document.createElement('div');
+        poCard.className = 'deal-card';
+        poCard.dataset.id = po.id;
 
-        function getChangeTypeClass(changeType) {
-            switch (changeType) {
-                case 'Penambahan': return 'status-picked-up';
-                case 'Pengurangan': return 'status-delayed';
-                case 'Koreksi': return 'status-waiting';
+        function getStatusClass(status) {
+            switch (status) {
+                case 'On Order': return 'status-on-order';
+                case 'Waiting': return 'status-waiting';
+                case 'Picked Up': return 'status-picked-up';
+                case 'On Delivery': return 'status-on-delivery';
+                case 'Delivered': return 'status-delivered';
+                case 'Partial Delivered': return 'status-partial-delivered';
+                case 'Delayed': return 'status-delayed';
+                case 'On Hold': return 'status-on-hold';
                 default: return 'bg-gray-400 text-white';
             }
         }
 
-        changeCard.innerHTML = `
+        poCard.innerHTML = `
             <span class="po-card-number">${index + 1}</span>
             <div class="flex justify-between items-start">
-                <h3 class="font-bold text-gray-800">Nomor Dokumen: ${change.documentNumber || 'No Dokumen'}</h3>
+                <h3 class="font-bold text-gray-800">No. Dokumen: ${po.documentNumber || 'No Document'}</h3>
             </div>
             <div class="mt-1 text-sm text-gray-600 deal-details">
-                <p><i class="fas fa-file-alt"></i> Tipe Dokumen: ${change.documentType || '-'}</p>
-                <p><i class="fas fa-calendar-alt"></i> Tanggal Dokumen: ${change.documentDate ? formatDate(change.documentDate) : '-'}</p>
-                <p><i class="fas fa-tag"></i> Tipe Perubahan: ${change.changeType || '-'}</p>
+                <p><i class="fas fa-file-alt"></i> Tipe Dokumen: ${po.documentType || '-'}</p>
+                <p><i class="fas fa-calendar-alt"></i> Tanggal Dokumen: ${po.documentDate ? formatDate(po.documentDate) : '-'}</p>
+                <p><i class="fas fa-money-bill-wave"></i> Nilai Harga Awal: ${po.initialPriceValue || '-'}</p>
             </div>
             <div class="mt-2 flex justify-between items-center deal-footer">
                 <div class="relative">
-                    <select onchange="updateChangeType('${change.id}', this.value)" class="status-dropdown ${getChangeTypeClass(change.changeType)}">
-                        <option value="Penambahan" ${change.changeType === 'Penambahan' ? 'selected' : ''}>Penambahan</option>
-                        <option value="Pengurangan" ${change.changeType === 'Pengurangan' ? 'selected' : ''}>Pengurangan</option>
-                        <option value="Koreksi" ${change.changeType === 'Koreksi' ? 'selected' : ''}>Koreksi</option>
+                    <select onchange="updatePOStatus('${po.id}', this.value)" class="status-dropdown ${getStatusClass(po.status)}">
+                        <option value="On Order" ${po.status === 'On Order' ? 'selected' : ''}>On Order</option>
+                        <option value="Waiting" ${po.status === 'Waiting' ? 'selected' : ''}>Waiting</option>
+                        <option value="Picked Up" ${po.status === 'Picked Up' ? 'selected' : ''}>Picked Up</option>
+                        <option value="On Delivery" ${po.status === 'On Delivery' ? 'selected' : ''}>On Delivery</option>
+                        <option value="Delivered" ${po.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
+                        <option value="Partial Delivered" ${po.status === 'Partial Delivered' ? 'selected' : ''}>Partial Delivered</option>
+                        <option value="Delayed" ${po.status === 'Delayed' ? 'selected' : ''}>Delayed</option>
+                        <option value="On Hold" ${po.status === 'On Hold' ? 'selected' : ''}>On Hold</option>
                     </select>
                 </div>
                 <div class="flex space-x-1 deal-actions">
-                    <button onclick="openChangeDetailModal('${change.id}')" class="text-blue-600 hover:text-blue-800" title="View Details">
+                    <button onclick="openPODetailModal('${po.id}')" class="text-blue-600 hover:text-blue-800" title="View Details">
                         <i class="fas fa-eye"></i>
                     </button>
-                    <button onclick="prepareEditChange('${change.id}')" class="text-green-600 hover:text-green-800" title="Edit Perubahan">
+                    <button onclick="prepareEditPO('${po.id}')" class="text-green-600 hover:text-green-800" title="Edit PO">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button onclick="confirmDeleteChange('${change.id}', '${change.documentNumber}')" class="text-red-600 hover:text-red-800" title="Delete Perubahan">
+                    <button onclick="confirmDeletePO('${po.id}', '${po.documentNumber}')" class="text-red-600 hover:text-red-800" title="Delete PO">
                         <i class="fas fa-trash-alt"></i>
                     </button>
                 </div>
             </div>
         `;
 
-        return changeCard;
+        return poCard;
     }
 
     function populateDropdown(selectElementId, uniqueValues, selectedValue = 'all') {
@@ -1400,89 +1258,37 @@
     function populateFilterDropdowns() {
         populateDropdown('filterDocumentType', uniqueDocumentTypes, document.getElementById('filterDocumentType').value);
         populateDropdown('filterChangeType', uniqueChangeTypes, document.getElementById('filterChangeType').value);
+        populateDropdown('filterStatus', uniqueStatuses, document.getElementById('filterStatus').value);
     }
 
-    function populateDocumentTypeDropdown() {
-        const selectElement = document.getElementById('documentType');
-        if (!selectElement) return;
-
-        const currentSelectedValue = selectElement.value;
-        selectElement.innerHTML = '<option value="">Pilih Tipe Dokumen</option>';
-        documentTypesCatalog.forEach(type => {
-            const option = document.createElement('option');
-            option.value = type.name;
-            option.textContent = type.name;
-            selectElement.appendChild(option);
-        });
-        selectElement.value = currentSelectedValue;
-    }
-
-    function populateChangeTypeDropdown() {
-        const selectElement = document.getElementById('changeType');
-        if (!selectElement) return;
-
-        const currentSelectedValue = selectElement.value;
-        selectElement.innerHTML = '<option value="">Pilih Tipe Perubahan</option>';
-        changeTypesCatalog.forEach(type => {
-            const option = document.createElement('option');
-            option.value = type.name;
-            option.textContent = type.name;
-            selectElement.appendChild(option);
-        });
-        selectElement.value = currentSelectedValue;
-    }
-
-    // ==================== FUNCTIONS FOR ADDITIONAL FORMS WITH SEARCH (Generic Autocomplete) ====================
-
-    function debounce(func, delay) {
-        let timeout;
-        return function(...args) {
-            const context = this;
-            clearTimeout(timeout);
-            timeout = setTimeout(() => func.apply(context, args), delay);
-        };
-    }
-
-    // Removed setupSearchWithSuggestions, closeAllAutocompleteSuggestions, and document click listener for autocomplete
-    // as the document upload modal and its search functionality are removed.
-
-    async function openPOModal(changeId = null) {
+    // Open PO modal (for add or edit)
+    async function openPOModal(poId = null) {
         const poModal = document.getElementById('poModal');
         const modalTitle = document.getElementById('modalTitle');
         const poForm = document.getElementById('poForm');
 
         poForm.reset();
         document.getElementById('poId').value = '';
+        document.getElementById('status').value = DEFAULT_STATUS;
 
-        // Reset Rupiah inputs
-        document.getElementById('initialPriceValue').value = '';
-        document.getElementById('changedPriceValue').value = '';
-
-        populateDocumentTypeDropdown(); // Populate the document type dropdown
-        populateChangeTypeDropdown(); // Populate the change type dropdown
-
-        document.getElementById('changeType').value = DEFAULT_CHANGE_TYPE;
-
-        // closeAllAutocompleteSuggestions(); // Removed as autocomplete is gone
-
-        if (changeId) {
-            modalTitle.textContent = 'Edit Perubahan';
-            const change = changes.find(c => c.id === changeId);
-            if (change) {
-                document.getElementById('poId').value = change.id;
-                document.getElementById('documentType').value = change.documentType || '';
-                document.getElementById('documentNumber').value = change.documentNumber || '';
-                document.getElementById('documentDate').value = change.documentDate instanceof Date ? change.documentDate.toISOString().split('T')[0] : '';
-                document.getElementById('description').value = change.description || '';
-                // Format existing values to Rupiah for display
-                document.getElementById('initialPriceValue').value = formatRupiah(change.initialPriceValue);
-                document.getElementById('changeDate').value = change.changeDate instanceof Date ? change.changeDate.toISOString().split('T')[0] : '';
-                document.getElementById('changeType').value = change.changeType || DEFAULT_CHANGE_TYPE;
-                document.getElementById('changeDescription').value = change.changeDescription || '';
-                document.getElementById('changedPriceValue').value = formatRupiah(change.changedPriceValue);
+        if (poId) {
+            modalTitle.textContent = 'Edit PO';
+            const po = pos.find(p => p.id === poId);
+            if (po) {
+                document.getElementById('poId').value = po.id;
+                document.getElementById('documentType').value = po.documentType || '';
+                document.getElementById('documentNumber').value = po.documentNumber || '';
+                document.getElementById('documentDate').value = po.documentDate instanceof Date ? po.documentDate.toISOString().split('T')[0] : '';
+                document.getElementById('documentDescription').value = po.documentDescription || '';
+                document.getElementById('initialPriceValue').value = po.initialPriceValue || '';
+                document.getElementById('changeDate').value = po.changeDate instanceof Date ? po.changeDate.toISOString().split('T')[0] : '';
+                document.getElementById('changeType').value = po.changeType || '';
+                document.getElementById('changeDescription').value = po.changeDescription || '';
+                document.getElementById('changedPriceValue').value = po.changedPriceValue || '';
+                document.getElementById('status').value = po.status || DEFAULT_STATUS;
             }
         } else {
-            modalTitle.textContent = 'Add New Perubahan';
+            modalTitle.textContent = 'Add New PO';
         }
 
         poModal.classList.remove('hidden');
@@ -1492,177 +1298,128 @@
         const poModal = document.getElementById('poModal');
         if (!poModal) return;
         poModal.classList.add('hidden');
-        // closeAllAutocompleteSuggestions(); // Removed as autocomplete is gone
     }
 
+    // Save PO data to Firestore
     async function savePO() {
-        const changeId = document.getElementById('poId').value;
+        const poId = document.getElementById('poId').value;
+        const documentType = document.getElementById('documentType').value;
         const documentNumber = document.getElementById('documentNumber').value;
 
-        if (!documentNumber) {
-            showCustomAlert("Nomor Dokumen is required.", "error");
+        if (!documentType || !documentNumber) {
+            showCustomAlert("Tipe Dokumen dan Nomor Dokumen wajib diisi.", "error");
             return;
         }
-
-        // Parse Rupiah values back to numbers before saving
-        const initialPriceValueRaw = document.getElementById('initialPriceValue').value;
-        const changedPriceValueRaw = document.getElementById('changedPriceValue').value;
-
-        const initialPriceValue = parseRupiah(initialPriceValueRaw);
-        const changedPriceValue = parseRupiah(changedPriceValueRaw);
 
         closePOModal();
         showGlobalLoading();
 
-        const documentType = document.getElementById('documentType').value;
         const documentDate = document.getElementById('documentDate').value ? firebase.firestore.Timestamp.fromDate(new Date(document.getElementById('documentDate').value)) : null;
-        const description = document.getElementById('description').value;
+        const documentDescription = document.getElementById('documentDescription').value;
+        const initialPriceValue = document.getElementById('initialPriceValue').value;
         const changeDate = document.getElementById('changeDate').value ? firebase.firestore.Timestamp.fromDate(new Date(document.getElementById('changeDate').value)) : null;
         const changeType = document.getElementById('changeType').value;
         const changeDescription = document.getElementById('changeDescription').value;
+        const changedPriceValue = document.getElementById('changedPriceValue').value;
+        const status = document.getElementById('status').value;
 
-        const changeData = {
+        const poData = {
             documentType: documentType,
             documentNumber: documentNumber,
             documentDate: documentDate,
-            description: description,
-            initialPriceValue: initialPriceValue, // Use parsed number
+            documentDescription: documentDescription,
+            initialPriceValue: initialPriceValue,
             changeDate: changeDate,
             changeType: changeType,
             changeDescription: changeDescription,
-            changedPriceValue: changedPriceValue, // Use parsed number
+            changedPriceValue: changedPriceValue,
+            status: status,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
 
         try {
-            if (changeId) {
-                await changesCollection.doc(changeId).update(changeData);
-                showCustomAlert("Perubahan updated successfully!", "success");
+            if (poId) {
+                await dealsCollection.doc(poId).update(poData);
+                showCustomAlert("PO updated successfully!", "success");
             } else {
-                changeData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-                changeData.createdBy = auth.currentUser.email;
-                await changesCollection.add(changeData);
-                showCustomAlert("New Perubahan added successfully!", "success");
+                poData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                poData.createdBy = auth.currentUser.email;
+                await dealsCollection.add(poData);
+                showCustomAlert("New PO added successfully!", "success");
             }
-
-            // Add new document type if it doesn't exist
-            if (documentType && !documentTypesCatalog.some(dt => dt.name === documentType)) {
-                try {
-                    await documentTypesCollection.add({ name: documentType, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-                    console.log(`New Document Type "${documentType}" added to Firestore.`);
-                } catch (dtError) {
-                    console.error("Error adding new Document Type to Firestore:", dtError);
-                    // showCustomAlert(`Failed to save new Document Type "${documentType}".`, "error"); // Avoid multiple alerts
-                }
-            }
-
-            // Add new change type if it doesn't exist
-            if (changeType && !changeTypesCatalog.some(ct => ct.name === changeType)) {
-                try {
-                    await changeTypesCollection.add({ name: changeType, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-                    console.log(`New Change Type "${changeType}" added to Firestore.`);
-                } catch (ctError) {
-                    console.error("Error adding new Change Type to Firestore:", ctError);
-                    // showCustomAlert(`Failed to save new Change Type "${changeType}".`, "error"); // Avoid multiple alerts
-                }
-            }
-
         } catch (error) {
-            console.error("Error saving Perubahan:", error);
-            showCustomAlert("Failed to save Perubahan. Please try again.", "error");
+            console.error("Error saving PO:", error);
+            showCustomAlert("Failed to save PO. Please try again.", "error");
         } finally {
             hideGlobalLoading();
         }
     }
 
-    function prepareEditChange(changeId) {
-        openPOModal(changeId);
+    function prepareEditPO(poId) {
+        openPOModal(poId);
     }
 
-    let changeToDeleteId = null;
-    let changeToDeleteNumber = '';
+    let poToDeleteId = null;
+    let poToDeleteNo = '';
 
-    function confirmDeleteChange(changeId, documentNumber) {
-        changeToDeleteId = changeId;
-        changeToDeleteNumber = documentNumber;
-        document.getElementById('dealToDeleteName').textContent = documentNumber;
+    function confirmDeletePO(poId, poNo) {
+        poToDeleteId = poId;
+        poToDeleteNo = poNo;
+        document.getElementById('dealToDeleteName').textContent = poNo;
         document.getElementById('deleteModal').classList.remove('hidden');
     }
 
     async function deletePO() {
-        if (!changeToDeleteId) return;
+        if (!poToDeleteId) return;
 
         closeDeleteModal();
         showGlobalLoading();
 
         try {
-            await changesCollection.doc(changeToDeleteId).delete();
-            showCustomAlert(`Perubahan "${changeToDeleteNumber}" deleted successfully!`, "success");
+            await dealsCollection.doc(poToDeleteId).delete();
+            showCustomAlert(`PO "${poToDeleteNo}" deleted successfully!`, "success");
         } catch (error) {
-            console.error("Error deleting Perubahan:", error);
-            showCustomAlert("Failed to delete Perubahan. Please try again.", "error");
+            console.error("Error deleting PO:", error);
+            showCustomAlert("Failed to delete PO. Please try again.", "error");
         } finally {
             hideGlobalLoading();
         }
     }
 
-    async function updateChangeType(changeId, newChangeType) {
+    async function updatePOStatus(poId, newStatus) {
         showGlobalLoading();
         try {
-            await changesCollection.doc(changeId).update({
-                changeType: newChangeType,
+            await dealsCollection.doc(poId).update({
+                status: newStatus,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
-            showCustomAlert(`Tipe Perubahan updated to "${newChangeType}" successfully!`, "success");
+            showCustomAlert(`PO status updated to "${newStatus}" successfully!`, "success");
         } catch (error) {
-            console.error("Error updating Tipe Perubahan:", error);
-            showCustomAlert("Failed to update Tipe Perubahan. Please try again.", "error");
+            console.error("Error updating PO status:", error);
+            showCustomAlert("Failed to update PO status. Please try again.", "error");
         } finally {
             hideGlobalLoading();
         }
     }
 
-    function openChangeDetailModal(changeId) {
-        const change = changes.find(c => c.id === changeId);
-        if (!change) {
-            showCustomAlert("Detail perubahan tidak ditemukan.", "error");
+    // Open PO detail modal
+    function openPODetailModal(poId) {
+        const po = pos.find(p => p.id === poId);
+        if (!po) {
+            showCustomAlert("PO details not found.", "error");
             return;
         }
 
-        document.getElementById('poDetailTitle').textContent = change.documentNumber || 'Detail Perubahan';
-        document.getElementById('detailDocumentType').textContent = change.documentType || '-';
-        document.getElementById('detailDocumentNumber').textContent = change.documentNumber || '-';
-        document.getElementById('detailDocumentDate').textContent = change.documentDate ? formatDate(change.documentDate) : '-';
-        document.getElementById('detailDescription').textContent = change.description || '-';
-        document.getElementById('detailInitialPriceValue').textContent = formatRupiah(change.initialPriceValue);
-        document.getElementById('detailChangeDate').textContent = change.changeDate ? formatDate(change.changeDate) : '-';
-        document.getElementById('detailChangeType').textContent = change.changeType || '-';
-        document.getElementById('detailChangeDescription').textContent = change.changeDescription || '-';
-        document.getElementById('detailChangedPriceValue').textContent = formatRupiah(change.changedPriceValue);
-
-        // Document Upload Links Section (still displayed if links exist in data)
-        const linkPdfBefore = document.getElementById('linkPdfBefore');
-        const linkPdfAfter = document.getElementById('linkPdfAfter');
-
-        if (change.pdfBeforeChangeLink) {
-            linkPdfBefore.href = change.pdfBeforeChangeLink;
-            linkPdfBefore.classList.remove('hidden');
-            linkPdfBefore.textContent = 'Lihat Dokumen';
-        } else {
-            linkPdfBefore.href = '#';
-            linkPdfBefore.classList.add('hidden');
-            linkPdfBefore.textContent = 'Tidak ada dokumen';
-        }
-
-        if (change.pdfAfterChangeLink) {
-            linkPdfAfter.href = change.pdfAfterChangeLink;
-            linkPdfAfter.classList.remove('hidden');
-            linkPdfAfter.textContent = 'Lihat Dokumen';
-        } else {
-            linkPdfAfter.href = '#';
-            linkPdfAfter.classList.add('hidden');
-            linkPdfAfter.textContent = 'Tidak ada dokumen';
-        }
+        document.getElementById('poDetailTitle').textContent = po.documentNumber || 'PO Details';
+        document.getElementById('detailDocumentType').textContent = po.documentType || '-';
+        document.getElementById('detailDocumentNumber').textContent = po.documentNumber || '-';
+        document.getElementById('detailDocumentDate').textContent = po.documentDate ? formatDate(po.documentDate) : '-';
+        document.getElementById('detailDocumentDescription').textContent = po.documentDescription || '-';
+        document.getElementById('detailInitialPriceValue').textContent = po.initialPriceValue || '-';
+        document.getElementById('detailChangeDate').textContent = po.changeDate ? formatDate(po.changeDate) : '-';
+        document.getElementById('detailChangeType').textContent = po.changeType || '-';
+        document.getElementById('detailChangeDescription').textContent = po.changeDescription || '-';
+        document.getElementById('detailChangedPriceValue').textContent = po.changedPriceValue || '-';
 
         document.getElementById('poDetailModal').classList.remove('hidden');
     }
@@ -1690,7 +1447,6 @@
             console.log("Applying permissions for Role:", currentUserRole);
 
             const newPOBtn = document.getElementById('newPOBtn');
-            // const documentUploadBtn = document.getElementById('documentUploadBtn'); // Removed
             const exportExcelBtn = document.getElementById('exportExcelBtn');
             const searchInput = document.getElementById('searchPOs');
             const openFilterPanelBtn = document.getElementById('openFilterPanelBtn');
@@ -1698,7 +1454,6 @@
             const authButton = document.getElementById('authButton');
 
             if (newPOBtn) newPOBtn.classList.remove('hidden');
-            // if (documentUploadBtn) documentUploadBtn.classList.add('hidden'); // Ensure it's hidden if it somehow reappears
             if (exportExcelBtn) exportExcelBtn.classList.remove('hidden');
             if (backButton) backButton.classList.remove('hidden');
             if (authButton) authButton.classList.remove('hidden');
@@ -1726,11 +1481,8 @@
                 });
             }
 
-            // Removed documentUploadForm event listener as the form is removed.
-
             const buttons = [
                 { id: 'newPOBtn', func: openPOModal },
-                // { id: 'documentUploadBtn', func: openDocumentUploadModal }, // Removed
                 { id: 'exportExcelBtn', func: exportToExcel },
                 { id: 'backButton', func: goToIndex },
                 { id: 'authButton', func: logout },
@@ -1752,45 +1504,6 @@
                 searchInput.removeEventListener('keyup', filterPOs);
                 searchInput.addEventListener('keyup', filterPOs);
             }
-
-            // Removed loadDocumentForUploadBtn event listener as it's part of the removed upload modal.
-
-            // Removed File input change listeners as file upload is removed.
-
-            // Add event listeners for Rupiah formatting on input fields
-            const initialPriceValueInput = document.getElementById('initialPriceValue');
-            const changedPriceValueInput = document.getElementById('changedPriceValue');
-
-            if (initialPriceValueInput) {
-                initialPriceValueInput.addEventListener('input', function(e) {
-                    let value = e.target.value.replace(/[^0-9]/g, ''); // Remove non-numeric characters
-                    e.target.value = formatRupiah(value).replace('Rp ', ''); // Format and remove 'Rp ' for input display
-                });
-                initialPriceValueInput.addEventListener('focus', function(e) {
-                    // On focus, remove formatting to allow easier editing
-                    e.target.value = parseRupiah(e.target.value);
-                });
-                initialPriceValueInput.addEventListener('blur', function(e) {
-                    // On blur, apply formatting
-                    e.target.value = formatRupiah(e.target.value);
-                });
-            }
-
-            if (changedPriceValueInput) {
-                changedPriceValueInput.addEventListener('input', function(e) {
-                    let value = e.target.value.replace(/[^0-9]/g, ''); // Remove non-numeric characters
-                    e.target.value = formatRupiah(value).replace('Rp ', ''); // Format and remove 'Rp ' for input display
-                });
-                changedPriceValueInput.addEventListener('focus', function(e) {
-                    // On focus, remove formatting to allow easier editing
-                    e.target.value = parseRupiah(e.target.value);
-                });
-                changedPriceValueInput.addEventListener('blur', function(e) {
-                    // On blur, apply formatting
-                    e.target.value = formatRupiah(e.target.value);
-                });
-            }
-
 
         } catch (error) {
             console.error("Error initializing event listeners:", error);
@@ -1825,77 +1538,73 @@
             const searchTerm = document.getElementById('searchPOs').value.toLowerCase();
             const documentTypeFilter = document.getElementById('filterDocumentType').value;
             const changeTypeFilter = document.getElementById('filterChangeType').value;
+            const statusFilter = document.getElementById('filterStatus').value;
 
-            let baseChanges = changes;
+            let basePOs = pos;
 
-            const filteredChanges = baseChanges.filter(change => {
+            const filteredPOs = basePOs.filter(po => {
                 const matchesSearch =
-                    (change.documentNumber && change.documentNumber.toLowerCase().includes(searchTerm)) ||
-                    (change.description && change.description.toLowerCase().includes(searchTerm)) ||
-                    (change.changeDescription && change.changeDescription.toLowerCase().includes(searchTerm));
+                    (po.documentNumber && po.documentNumber.toLowerCase().includes(searchTerm)) ||
+                    (po.documentType && po.documentType.toLowerCase().includes(searchTerm)) ||
+                    (po.documentDescription && po.documentDescription.toLowerCase().includes(searchTerm)) ||
+                    (po.changeType && po.changeType.toLowerCase().includes(searchTerm)) ||
+                    (po.changeDescription && po.changeDescription.toLowerCase().includes(searchTerm));
 
                 const matchesDocumentType =
                     documentTypeFilter === 'all' ||
-                    (change.documentType && change.documentType === documentTypeFilter);
+                    (po.documentType && po.documentType === documentTypeFilter);
 
                 const matchesChangeType =
                     changeTypeFilter === 'all' ||
-                    (change.changeType && change.changeType === changeTypeFilter);
+                    (po.changeType && po.changeType === changeTypeFilter);
 
-                return matchesSearch && matchesDocumentType && matchesChangeType;
+                const matchesStatus =
+                    statusFilter === 'all' ||
+                    (po.status && po.status === statusFilter);
+
+                return matchesSearch && matchesDocumentType && matchesChangeType && matchesStatus;
             });
 
-            renderFilteredChanges(filteredChanges);
+            renderFilteredPOs(filteredPOs);
         } catch (error) {
-            console.error("Error filtering Changes:", error);
+            console.error("Error filtering POs:", error);
         }
     }
 
-    function renderFilteredChanges(filteredChanges) {
+    function renderFilteredPOs(filteredPOs) {
         const pipelineStage = document.getElementById('pos-stage');
         if (!pipelineStage) return;
 
         pipelineStage.innerHTML = '';
 
-        if (filteredChanges.length === 0) {
+        if (filteredPOs.length === 0) {
             pipelineStage.innerHTML = `
                 <div class="empty-state">
                     <i class="fas fa-search"></i>
-                    <p>No changes match the filter.</p>
+                    <p>No POs match the filter.</p>
                 </div>
             `;
             return;
         }
 
-        filteredChanges.forEach((change, index) => {
-            const changeCard = renderChangeCard(change, index);
-            pipelineStage.appendChild(changeCard);
+        filteredPOs.forEach((po, index) => {
+            const poCard = renderPO(po, index);
+            pipelineStage.appendChild(poCard);
             setTimeout(() => {
-                changeCard.classList.add('show');
+                poCard.classList.add('show');
             }, 50 * index);
         });
     }
 
     function logout() {
-        if (unsubscribeFromChanges) {
-            unsubscribeFromChanges();
-            unsubscribeFromChanges = null;
-        }
-        if (unsubscribeFromDocumentTypes) {
-            unsubscribeFromDocumentTypes();
-            unsubscribeFromDocumentTypes = null;
-        }
-        if (unsubscribeFromChangeTypes) {
-            unsubscribeFromChangeTypes();
-            unsubscribeFromChangeTypes = null;
+        if (unsubscribeFromPOs) {
+            unsubscribeFromPOs();
+            unsubscribeFromPOs = null;
         }
         auth.signOut()
             .then(() => {
                 console.log("User logged out successfully");
-                changes = [];
-                documentTypesCatalog = [];
-                changeTypesCatalog = [];
-                googleAccessToken = null; // Clear Google token on logout
+                pos = [];
                 window.location.href = 'login.html';
             })
             .catch((error) => {
@@ -1938,6 +1647,7 @@
     function resetFilters() {
         document.getElementById('filterDocumentType').value = 'all';
         document.getElementById('filterChangeType').value = 'all';
+        document.getElementById('filterStatus').value = 'all';
         document.getElementById('searchPOs').value = '';
         filterPOs();
     }
@@ -1948,71 +1658,72 @@
         deleteModal.classList.add('hidden');
     }
 
-    // ==================== DOCUMENT UPLOAD FUNCTIONS (REMOVED) ====================
-    // All functions related to document upload (openDocumentUploadModal, loadDocumentForUpload,
-    // uploadDocuments, findOrCreateDriveFolder, uploadFileToDrive) have been removed.
-
     // ==================== EXPORT TO EXCEL FUNCTION ====================
     function exportToExcel() {
         showGlobalLoading();
         try {
             const data = [];
             const headers = [
-                "No. Urut", "Tipe Dokumen", "Nomor Dokumen", "Tanggal Dokumen", "Deskripsi",
+                "No. Urut", "Tipe Dokumen", "Nomor Dokumen", "Tanggal Dokumen", "Deskripsi Dokumen",
                 "Nilai Harga Awal Perubahan", "Tanggal Perubahan", "Tipe Perubahan", "Deskripsi Perubahan", "Perubahan Nilai Harga",
-                "PDF Dokumen Sebelum Perubahan Link", "PDF Dokumen Setelah Perubahan Link", // New headers for links
-                "Created By", "Created At"
+                "Status Order", "Dibuat Oleh", "Tanggal Dibuat"
             ];
             data.push(headers);
 
-            const currentChanges = changes.filter(change => {
+            const currentPOs = pos.filter(po => {
                 const searchTerm = document.getElementById('searchPOs').value.toLowerCase();
                 const documentTypeFilter = document.getElementById('filterDocumentType').value;
                 const changeTypeFilter = document.getElementById('filterChangeType').value;
+                const statusFilter = document.getElementById('filterStatus').value;
 
                 const matchesSearch =
-                    (change.documentNumber && change.documentNumber.toLowerCase().includes(searchTerm)) ||
-                    (change.description && change.description.toLowerCase().includes(searchTerm)) ||
-                    (change.changeDescription && change.changeDescription.toLowerCase().includes(searchTerm));
+                    (po.documentNumber && po.documentNumber.toLowerCase().includes(searchTerm)) ||
+                    (po.documentType && po.documentType.toLowerCase().includes(searchTerm)) ||
+                    (po.documentDescription && po.documentDescription.toLowerCase().includes(searchTerm)) ||
+                    (po.changeType && po.changeType.toLowerCase().includes(searchTerm)) ||
+                    (po.changeDescription && po.changeDescription.toLowerCase().includes(searchTerm));
 
                 const matchesDocumentType =
                     documentTypeFilter === 'all' ||
-                    (change.documentType && change.documentType === documentTypeFilter);
+                    (po.documentType && po.documentType === documentTypeFilter);
 
                 const matchesChangeType =
                     changeTypeFilter === 'all' ||
-                    (change.changeType && change.changeType === changeTypeFilter);
+                    (po.changeType && po.changeType === changeTypeFilter);
 
-                return matchesSearch && matchesDocumentType && matchesChangeType;
+                const matchesStatus =
+                    statusFilter === 'all' ||
+                    (po.status && po.status === statusFilter);
+
+                return matchesSearch && matchesDocumentType && matchesChangeType && matchesStatus;
             });
 
-            currentChanges.forEach((change, index) => {
+            currentPOs.forEach((po, index) => {
                 const row = [
                     index + 1,
-                    change.documentType || '',
-                    change.documentNumber || '',
-                    change.documentDate ? formatDate(change.documentDate) : '',
-                    change.description || '',
-                    change.initialPriceValue || '', // Raw number for Excel
-                    change.changeDate ? formatDate(change.changeDate) : '',
-                    change.changeType || '',
-                    change.changeDescription || '',
-                    change.changedPriceValue || '', // Raw number for Excel
-                    change.pdfBeforeChangeLink || '', // New field
-                    change.pdfAfterChangeLink || '',  // New field
-                    change.createdBy || '',
-                    change.createdAt ? formatDateTime(change.createdAt) : ''
+                    po.documentType || '',
+                    po.documentNumber || '',
+                    po.documentDate ? formatDate(po.documentDate) : '',
+                    po.documentDescription || '',
+                    po.initialPriceValue || '',
+                    po.changeDate ? formatDate(po.changeDate) : '',
+                    po.changeType || '',
+                    po.changeDescription || '',
+                    po.changedPriceValue || '',
+                    po.status ? po.status.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : '',
+                    po.createdBy || '',
+                    po.createdAt ? formatDateTime(po.createdAt) : ''
                 ];
                 data.push(row);
             });
 
             const ws = XLSX.utils.aoa_to_sheet(data);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Monitoring Perubahan Accurate");
+            XLSX.utils.book_append_sheet(wb, ws, "Purchase Orders");
 
-            const fileName = `Monitoring_Perubahan_Accurate_${new Date().toISOString().slice(0,10)}.xlsx`;
+            const fileName = `Purchase_Orders_${new Date().toISOString().slice(0,10)}.xlsx`;
             XLSX.writeFile(wb, fileName);
-            showCustomAlert("Data perubahan Accurate diekspor ke Excel berhasil!", "success");
+            showCustomAlert("Data PO berhasil diekspor ke Excel!", "success");
 
         } catch (error) {
             console.error("Error exporting to Excel:", error);
@@ -2026,9 +1737,6 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         initSortable();
-        // Load Google API client libraries (kept for potential future use, but Drive specific functions removed)
-        gapi.load('client', gapiLoaded);
-        google.accounts.oauth2.loadScript(gisLoaded);
     });
 </script>
 </body>
