@@ -1458,7 +1458,7 @@
 
             if (newPOBtn) newPOBtn.classList.remove('hidden');
             if (exportExcelBtn) exportExcelBtn.classList.remove('hidden');
-            if (backButton) backButton.classList.remove('hidden');
+            if (backButton) backButton.classList.remove('hidden'); // Ensure back button is visible
             if (authButton) authButton.classList.remove('hidden');
 
             if (searchInput) searchInput.classList.remove('hidden');
@@ -1487,7 +1487,7 @@
             const buttons = [
                 { id: 'newPOBtn', func: openPOModal },
                 { id: 'exportExcelBtn', func: exportToExcel },
-                { id: 'backButton', func: goToIndex },
+                { id: 'backButton', func: goToIndex }, // Re-add goToIndex for back button
                 { id: 'authButton', func: logout },
                 { id: 'openFilterPanelBtn', func: openFilterPanel }
             ];
@@ -1617,6 +1617,7 @@
     }
 
     function goToIndex() {
+        // This function now correctly redirects to index.html
         window.location.href = 'index.html';
     }
 
