@@ -6,14 +6,11 @@
     <title>Monitoring Dokumen - Genetek</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- Library for Export Excel (optional, can be removed if not needed) -->
+    <!-- Library for Export Excel -->
     <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <!-- Supabase SDK -->
-    <!-- Pastikan ini dimuat sebelum skrip kustom Anda -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
         /* New Color Palette */
@@ -824,27 +821,6 @@
                     </div>
                 </div>
 
-                <!-- Document Uploads Section -->
-                <div class="mt-6">
-                    <h3 class="text-lg font-bold text-gray-900 mb-4">Dokumen Terkait</h3>
-                    <div class="detail-grid">
-                        <div class="detail-item col-span-full">
-                            <p class="font-semibold">PDF Sebelum Perubahan:</p>
-                            <p id="detailPdfBeforeChangeUrl">
-                                <a href="#" target="_blank" class="text-blue-600 hover:underline hidden" id="linkPdfBeforeChange">Lihat Dokumen</a>
-                                <span id="textPdfBeforeChange">N/A</span>
-                            </p>
-                        </div>
-                        <div class="detail-item col-span-full">
-                            <p class="font-semibold">PDF Setelah Perubahan:</p>
-                            <p id="detailPdfAfterChangeUrl">
-                                <a href="#" target="_blank" class="text-blue-600 hover:underline hidden" id="linkPdfAfterChange">Lihat Dokumen</a>
-                                <span id="textPdfAfterChange">N/A</span>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
                 <div class="flex justify-end space-x-3 mt-6">
                     <button type="button" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
                         Close
@@ -916,46 +892,44 @@
             </div>
         </div>
 
-        <!-- Upload Document Modal -->
+        <!-- Upload Document Modal (Simplified) -->
         <div id="uploadDocumentModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
-            <div class="bg-white rounded-xl p-8 w-full max-w-2xl shadow-2xl modal-content-enter" id="uploadDocumentModalContent">
+            <div class="bg-white rounded-xl p-8 w-full max-w-md shadow-2xl modal-content-enter" id="uploadDocumentModalContent">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-xl sm:text-2xl font-bold text-gray-900 flex items-center"><i class="fas fa-upload mr-3 text-gray-500"></i> Upload Document</h2>
-                    <button class="text-gray-500 hover:text-gray-700 transition duration-200" id="closeUploadDocumentModalBtn">
+                    <button type="button" class="text-gray-500 hover:text-gray-700 transition duration-200" id="closeUploadDocumentModalBtn">
                         <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
                 <form id="uploadDocumentForm">
-                    <!-- PO Number Search for Upload -->
+                    <!-- PO Number Search for Upload Document -->
                     <div class="mb-6 border-b pb-4 border-gray-200">
                         <label class="block text-gray-700 text-sm font-semibold mb-2" for="uploadDoc_poNumberSearch">Search PO Number</label>
-                        <div class="relative flex items-center">
-                            <input type="text" id="uploadDoc_poNumberSearch" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm pr-10" placeholder="Type PO Number...">
+                        <div class="relative">
+                            <input type="text" id="uploadDoc_poNumberSearch" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="Type PO Number...">
                             <input type="hidden" id="uploadDoc_poId" value="">
                             <div id="uploadDoc_poNumberSuggestions" class="autocomplete-items suggestions-list"></div>
-                            <button type="button" id="loadUploadDocBtn" class="absolute right-2 top-1/2 -translate-y-1/2 bg-blue-500 text-white rounded-md p-1 text-xs hover:bg-blue-600 transition duration-150">
-                                <i class="fas fa-search"></i>
-                            </button>
                         </div>
-                        <p id="selectedPoInfoUpload" class="text-sm text-gray-600 mt-2 hidden">Selected PO: <span class="font-medium" id="selectedPoNumberDisplayUpload"></span></p>
+                        <p id="selectedPoInfo" class="text-sm text-gray-600 mt-2 hidden">Selected PO: <span class="font-medium" id="selectedPoNumberDisplay"></span></p>
                     </div>
 
-                    <div class="grid grid-cols-1 gap-4">
-                        <div class="mb-4">
-                            <label class="block text-gray-700 text-sm font-semibold mb-2" for="pdfBeforeChange">PDF Dokumen Sebelum Perubahan</label>
-                            <input type="file" id="pdfBeforeChange" accept="application/pdf" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
-                        </div>
-                        <div class="mb-4">
-                            <label class="block text-gray-700 text-sm font-semibold mb-2" for="pdfAfterChange">PDF Dokumen Setelah Perubahan</label>
-                            <input type="file" id="pdfAfterChange" accept="application/pdf" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
-                        </div>
+                    <!-- Simplified Upload Document Status -->
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="uploadDoc_status">Document Status</label>
+                        <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="uploadDoc_status">
+                            <option value="">Select Status</option>
+                            <option value="Uploaded">Uploaded</option>
+                            <option value="Pending">Pending</option>
+                            <option value="N/A">N/A</option>
+                        </select>
                     </div>
+
                     <div class="flex justify-end space-x-3 mt-6">
                         <button type="button" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm" id="cancelUploadDocumentBtn">
                             Cancel
                         </button>
                         <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105 text-sm">
-                            Upload Documents
+                            Save Document Status
                         </button>
                     </div>
                 </form>
@@ -997,17 +971,9 @@
     // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    const monitoringsCollection = db.collection('monitorings'); // Collection for your monitoring data
-
-    // Supabase Configuration
-    const SUPABASE_URL = 'https://rmeoiuddtkerhagytisa.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJtZW9pdWRkdGtlcmhhZ3l0aXNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgyNTIzMzMsImV4cCI6MjA3MzgyODMzM30.OYsklW59sBG5xHP-oEVRu_6unxkuo0aTwJpp2RGUG-w';
-
-    // Initialize Supabase Client
-    // PERBAIKAN: Menggunakan destructuring untuk createClient
-    const { createClient } = Supabase;
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
+    const monitoringsCollection = db.collection('monitorings');
+    const purchaseOrdersCollection = db.collection('purchaseOrders'); // Assuming you have a 'purchaseOrders' collection
+    const documentUploadsCollection = db.collection('documentUploads'); // New collection for document upload status
 
     document.addEventListener('DOMContentLoaded', function() {
         // Generic function to toggle modal visibility
@@ -1024,7 +990,8 @@
 
         // --- Currency Formatting Functions ---
         function formatRupiah(angka, prefix) {
-            let number_string = angka.toString().replace(/[^,\d]/g, ''), // Ensure angka is string and remove non-numeric except comma
+            if (angka === null || angka === undefined || isNaN(angka)) return ''; // Handle null, undefined, NaN
+            let number_string = angka.toString().replace(/[^,\d]/g, ''),
                 split = number_string.split(','),
                 sisa = split[0].length % 3,
                 rupiah = split[0].substr(0, sisa),
@@ -1035,32 +1002,32 @@
                 rupiah += separator + ribuan.join('.');
             }
 
-            rupiah = split[1] != undefined ? rupiah + ',' + split[1] : rupiah;
-            return prefix == undefined ? rupiah : (rupiah ? 'Rp ' + rupiah : '');
+            rupiah = split[1] !== undefined ? rupiah + ',' + split[1] : rupiah;
+            return prefix === undefined ? rupiah : (rupiah ? 'Rp ' + rupiah : '');
         }
 
         function unformatRupiah(rupiah) {
-            // Remove "Rp ", dots, and replace comma with dot for proper parseInt/parseFloat
-            const cleaned = rupiah.replace(/Rp /g, '').replace(/\./g, '').replace(/,/g, '.');
-            return parseInt(cleaned) || 0; // Return 0 if parsing fails
+            if (!rupiah) return 0;
+            // Remove "Rp ", dots, and replace comma with dot for proper parsing
+            const cleaned = rupiah.replace('Rp ', '').replace(/\./g, '').replace(/,/g, '.');
+            return parseFloat(cleaned) || 0; // Use parseFloat for decimal values if needed, otherwise parseInt
         }
 
         // Apply currency formatting to inputs
         document.querySelectorAll('.currency-input').forEach(input => {
             input.addEventListener('keyup', function(e) {
-                this.value = formatRupiah(this.value, 'Rp ');
+                this.value = formatRupiah(unformatRupiah(this.value), 'Rp ');
             });
             input.addEventListener('blur', function() {
-                if (this.value === 'Rp ' || this.value === '') { // If only "Rp " remains, clear it
+                if (this.value === 'Rp ' || this.value === '') {
                     this.value = '';
                 } else {
-                    // Re-format on blur to ensure consistency even if user types quickly
-                    this.value = formatRupiah(unformatRupiah(this.value).toString(), 'Rp ');
+                    this.value = formatRupiah(unformatRupiah(this.value), 'Rp ');
                 }
             });
             // Initial format if there's a value on load
             if (input.value) {
-                input.value = formatRupiah(input.value, 'Rp ');
+                input.value = formatRupiah(unformatRupiah(input.value), 'Rp ');
             }
         });
 
@@ -1117,12 +1084,12 @@
             }
         });
 
-        // Upload Document Button
+        // Upload Document Button (formerly Document Checklist)
         document.getElementById('uploadDocumentBtn').addEventListener('click', () => {
-            document.getElementById('uploadDocumentForm').reset(); // Clear form fields
+            document.getElementById('uploadDocumentForm').reset();
             document.getElementById('uploadDoc_poId').value = '';
-            document.getElementById('selectedPoInfoUpload').classList.add('hidden');
-            document.getElementById('selectedPoNumberDisplayUpload').textContent = '';
+            document.getElementById('selectedPoInfo').classList.add('hidden');
+            document.getElementById('uploadDoc_poNumberSuggestions').innerHTML = ''; // Clear suggestions
             toggleModal('uploadDocumentModal', true);
         });
 
@@ -1130,162 +1097,126 @@
         document.getElementById('closeUploadDocumentModalBtn').addEventListener('click', () => toggleModal('uploadDocumentModal', false));
         document.getElementById('cancelUploadDocumentBtn').addEventListener('click', () => toggleModal('uploadDocumentModal', false));
 
-        // Autocomplete for PO Number Search in Upload Document Modal
-        const uploadDocPoNumberSearchInput = document.getElementById('uploadDoc_poNumberSearch');
-        const uploadDocPoNumberSuggestionsDiv = document.getElementById('uploadDoc_poNumberSuggestions');
-        let currentUploadDocPoNumbers = []; // To store PO numbers for autocomplete
-
-        uploadDocPoNumberSearchInput.addEventListener('input', async function() {
-            const searchTerm = this.value.toLowerCase();
-            uploadDocPoNumberSuggestionsDiv.innerHTML = ''; // Clear previous suggestions
-
-            if (searchTerm.length > 0) {
-                const snapshot = await monitoringsCollection.orderBy('documentNumber').startAt(searchTerm).endAt(searchTerm + '\uf8ff').get();
-                currentUploadDocPoNumbers = [];
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    if (data.documentNumber && data.documentNumber.toLowerCase().includes(searchTerm)) {
-                        currentUploadDocPoNumbers.push({ id: doc.id, documentNumber: data.documentNumber });
-                    }
-                });
-
-                currentUploadDocPoNumbers.forEach(po => {
-                    const div = document.createElement('div');
-                    div.textContent = po.documentNumber;
-                    div.addEventListener('click', () => {
-                        uploadDocPoNumberSearchInput.value = po.documentNumber;
-                        document.getElementById('uploadDoc_poId').value = po.id;
-                        document.getElementById('selectedPoNumberDisplayUpload').textContent = po.documentNumber;
-                        document.getElementById('selectedPoInfoUpload').classList.remove('hidden');
-                        uploadDocPoNumberSuggestionsDiv.innerHTML = ''; // Clear suggestions
-                    });
-                    uploadDocPoNumberSuggestionsDiv.appendChild(div);
-                });
-            }
-        });
-
-        // Handle click outside suggestions to close
-        document.addEventListener('click', function(e) {
-            if (!uploadDocPoNumberSearchInput.contains(e.target) && !uploadDocPoNumberSuggestionsDiv.contains(e.target)) {
-                uploadDocPoNumberSuggestionsDiv.innerHTML = '';
-            }
-        });
-
-        // Load PO details when search button is clicked (or if a PO is selected via autocomplete)
-        document.getElementById('loadUploadDocBtn').addEventListener('click', async () => {
-            const poNumber = uploadDocPoNumberSearchInput.value;
-            const poId = document.getElementById('uploadDoc_poId').value;
-
-            if (!poId && poNumber) {
-                // If PO ID is not set but number is typed, try to find it
-                const snapshot = await monitoringsCollection.where('documentNumber', '==', poNumber).limit(1).get();
-                if (!snapshot.empty) {
-                    const doc = snapshot.docs[0];
-                    document.getElementById('uploadDoc_poId').value = doc.id;
-                    document.getElementById('selectedPoNumberDisplayUpload').textContent = doc.data().documentNumber;
-                    document.getElementById('selectedPoInfoUpload').classList.remove('hidden');
-                } else {
-                    alert('PO Number not found. Please select from suggestions or enter a valid PO Number.');
-                    document.getElementById('uploadDoc_poId').value = '';
-                    document.getElementById('selectedPoInfoUpload').classList.add('hidden');
-                    return;
-                }
-            } else if (!poId) {
-                alert('Please search and select a PO Number first.');
-                return;
-            }
-
-            // Here you would load existing document URLs if any, to display them or allow replacement
-            // For now, we just confirm the PO is selected.
-            alert(`PO Number ${document.getElementById('selectedPoNumberDisplayUpload').textContent} selected for upload.`);
-        });
-
-
-        // Submit Upload Document Form
+        // Upload Document Form Submission
         document.getElementById('uploadDocumentForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             showGlobalLoading();
 
             const poId = document.getElementById('uploadDoc_poId').value;
+            const poNumber = document.getElementById('uploadDoc_poNumberSearch').value;
+            const status = document.getElementById('uploadDoc_status').value;
+
             if (!poId) {
-                alert('Please select a PO Number before uploading documents.');
+                alert('Please select a valid PO Number from the suggestions.');
                 hideGlobalLoading();
                 return;
             }
 
-            const pdfBeforeFile = document.getElementById('pdfBeforeChange').files[0];
-            const pdfAfterFile = document.getElementById('pdfAfterChange').files[0];
-
-            let uploadedBeforeUrl = '';
-            let uploadedAfterUrl = '';
+            if (!status) {
+                alert('Please select a document status.');
+                hideGlobalLoading();
+                return;
+            }
 
             try {
-                // Upload PDF Dokumen Sebelum Perubahan
-                if (pdfBeforeFile) {
-                    const { data, error } = await supabase.storage
-                        .from('monitoring-acc') // PERBAIKAN: Menggunakan nama bucket 'monitoring-acc'
-                        .upload(`before_change/${poId}_${Date.now()}_${pdfBeforeFile.name}`, pdfBeforeFile, {
-                            cacheControl: '3600',
-                            upsert: false
-                        });
+                // Store document upload status in 'documentUploads' collection
+                const uploadRef = documentUploadsCollection.doc(poId);
+                await uploadRef.set({
+                    poNumber: poNumber,
+                    status: status,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true }); // Use merge to update existing fields or create if not exists
 
-                    if (error) throw error;
-                    uploadedBeforeUrl = supabase.storage.from('monitoring-acc').getPublicUrl(data.path).data.publicUrl; // PERBAIKAN: Menggunakan nama bucket 'monitoring-acc'
-                }
-
-                // Upload PDF Dokumen Setelah Perubahan
-                if (pdfAfterFile) {
-                    const { data, error } = await supabase.storage
-                        .from('monitoring-acc') // PERBAIKAN: Menggunakan nama bucket 'monitoring-acc'
-                        .upload(`after_change/${poId}_${Date.now()}_${pdfAfterFile.name}`, pdfAfterFile, {
-                            cacheControl: '3600',
-                            upsert: false
-                        });
-
-                    if (error) throw error;
-                    uploadedAfterUrl = supabase.storage.from('monitoring-acc').getPublicUrl(data.path).data.publicUrl; // PERBAIKAN: Menggunakan nama bucket 'monitoring-acc'
-                }
-
-                // Update Firestore with the new PDF URLs
-                const updateData = {};
-                if (uploadedBeforeUrl) updateData.pdfBeforeChangeUrl = uploadedBeforeUrl;
-                if (uploadedAfterUrl) updateData.pdfAfterChangeUrl = uploadedAfterUrl;
-                updateData.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
-
-                if (Object.keys(updateData).length > 0) {
-                    await monitoringsCollection.doc(poId).update(updateData);
-                    document.getElementById('successAlertMessage').textContent = 'Documents uploaded and linked successfully!';
-                } else {
-                    document.getElementById('successAlertMessage').textContent = 'No new documents selected for upload.';
-                }
-
+                document.getElementById('successAlertMessage').textContent = `Document status for PO ${poNumber} saved successfully!`;
                 toggleModal('uploadDocumentModal', false);
                 toggleModal('successAlertModal', true);
-                loadMonitorings(); // Reload list if needed
             } catch (error) {
-                console.error("Error uploading documents: ", error);
-                alert(`Failed to upload documents: ${error.message}. Please try again.`);
+                console.error("Error saving document upload status: ", error);
+                alert("Failed to save document upload status. Please try again.");
             } finally {
                 hideGlobalLoading();
             }
         });
 
+        // Autocomplete for PO Number Search in Upload Document
+        let currentPoSuggestions = [];
+        document.getElementById('uploadDoc_poNumberSearch').addEventListener('input', async function() {
+            const searchTerm = this.value.toLowerCase();
+            const suggestionsContainer = document.getElementById('uploadDoc_poNumberSuggestions');
+            suggestionsContainer.innerHTML = '';
+            document.getElementById('selectedPoInfo').classList.add('hidden');
+            document.getElementById('uploadDoc_poId').value = '';
+
+            if (searchTerm.length < 2) { // Only search if at least 2 characters are typed
+                return;
+            }
+
+            try {
+                // Assuming 'purchaseOrders' collection has a 'poNumber' field
+                const snapshot = await purchaseOrdersCollection
+                    .where('poNumber', '>=', searchTerm)
+                    .where('poNumber', '<=', searchTerm + '\uf8ff')
+                    .limit(10)
+                    .get();
+
+                currentPoSuggestions = [];
+                snapshot.forEach(doc => {
+                    const poData = doc.data();
+                    currentPoSuggestions.push({ id: doc.id, poNumber: poData.poNumber });
+                    const div = document.createElement('div');
+                    div.textContent = poData.poNumber;
+                    div.addEventListener('click', () => {
+                        document.getElementById('uploadDoc_poNumberSearch').value = poData.poNumber;
+                        document.getElementById('uploadDoc_poId').value = doc.id;
+                        document.getElementById('selectedPoNumberDisplay').textContent = poData.poNumber;
+                        document.getElementById('selectedPoInfo').classList.remove('hidden');
+                        suggestionsContainer.innerHTML = ''; // Clear suggestions after selection
+                        loadUploadDocumentStatus(doc.id); // Load existing status for this PO
+                    });
+                    suggestionsContainer.appendChild(div);
+                });
+            } catch (error) {
+                console.error("Error fetching PO suggestions: ", error);
+            }
+        });
+
+        // Function to load existing upload document status for a selected PO
+        async function loadUploadDocumentStatus(poId) {
+            try {
+                const uploadDoc = await documentUploadsCollection.doc(poId).get();
+                if (uploadDoc.exists) {
+                    const data = uploadDoc.data();
+                    document.getElementById('uploadDoc_status').value = data.status || '';
+                } else {
+                    document.getElementById('uploadDoc_status').value = ''; // Reset if no status exists
+                }
+            } catch (error) {
+                console.error("Error loading document upload status: ", error);
+            }
+        }
+
+
         // Filter Panel Button
         document.getElementById('openFilterPanelBtn').addEventListener('click', () => toggleModal('filterPanel', true));
         document.querySelector('#filterPanelContent button.text-gray-500').addEventListener('click', () => toggleModal('filterPanel', false));
         document.querySelector('#filterPanelContent button.bg-blue-600').addEventListener('click', () => {
-            alert('Filters applied! (No actual filter functionality in this template)');
-            toggleModal('filterPanel', false);
+            // Save current filter values before applying
+            document.getElementById('filterDocumentType').dataset.currentValue = document.getElementById('filterDocumentType').value;
+            document.getElementById('filterDocumentNumber').dataset.currentValue = document.getElementById('filterDocumentNumber').value;
             loadMonitorings(); // Reload with filters
+            toggleModal('filterPanel', false);
         });
         document.querySelector('#filterPanelContent button.text-gray-600').addEventListener('click', () => {
-            alert('Filters reset! (No actual reset functionality in this template)');
-            // Reset filter dropdowns here if needed
+            // Reset filter dropdowns
             document.getElementById('filterDocumentType').value = 'all';
             document.getElementById('filterDocumentNumber').value = 'all';
             document.getElementById('filterStartDate').value = '';
             document.getElementById('filterEndDate').value = '';
+            // Clear stored current values
+            delete document.getElementById('filterDocumentType').dataset.currentValue;
+            delete document.getElementById('filterDocumentNumber').dataset.currentValue;
             loadMonitorings(); // Reload without filters
+            toggleModal('filterPanel', false);
         });
 
         // Close Success Alert Modal
@@ -1323,14 +1254,53 @@
         });
 
         // --- Placeholder for other buttons ---
-        document.getElementById('backButton').addEventListener('click', () => {
-            // Contoh: Kembali ke halaman sebelumnya
-            // window.history.back();
-            alert('Fitur Back diaktifkan kembali!');
-            // Anda bisa menambahkan logika navigasi yang lebih kompleks di sini
-        });
         document.getElementById('authButton').addEventListener('click', () => alert('Logout button clicked!'));
-        document.getElementById('exportExcelBtn').addEventListener('click', () => alert('Export Excel button clicked!'));
+        document.getElementById('backButton').addEventListener('click', () => alert('Back button clicked!'));
+
+        // --- Export Excel Functionality ---
+        document.getElementById('exportExcelBtn').addEventListener('click', async () => {
+            showGlobalLoading();
+            try {
+                const snapshot = await monitoringsCollection.orderBy('createdAt', 'desc').get();
+                const dataToExport = [];
+
+                snapshot.forEach(doc => {
+                    const monitoring = doc.data();
+                    dataToExport.push({
+                        'Document Type': monitoring.documentType || '',
+                        'Document Number': monitoring.documentNumber || '',
+                        'Document Date': monitoring.documentDate || '',
+                        'Document Description': monitoring.documentDescription || '',
+                        'Initial Value (Rp)': formatRupiah(monitoring.initialValue, ''),
+                        'Change Date': monitoring.changeDate || '',
+                        'Change Description': monitoring.changeDescription || '',
+                        'Changed Value (Rp)': formatRupiah(monitoring.changedValue, ''),
+                        'Created At': monitoring.createdAt ? new Date(monitoring.createdAt.toDate()).toLocaleString() : '',
+                        'Updated At': monitoring.updatedAt ? new Date(monitoring.updatedAt.toDate()).toLocaleString() : ''
+                    });
+                });
+
+                if (dataToExport.length === 0) {
+                    alert('No data to export.');
+                    return;
+                }
+
+                const ws = XLSX.utils.json_to_sheet(dataToExport);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Monitoring Data");
+                XLSX.writeFile(wb, "Monitoring_Dokumen.xlsx");
+
+                document.getElementById('successAlertMessage').textContent = 'Data exported to Excel successfully!';
+                toggleModal('successAlertModal', true);
+
+            } catch (error) {
+                console.error("Error exporting data to Excel: ", error);
+                alert("Failed to export data to Excel. Please try again.");
+            } finally {
+                hideGlobalLoading();
+            }
+        });
+
 
         // --- Functions for Monitoring List and Details ---
 
@@ -1340,9 +1310,8 @@
             monitoringsStage.innerHTML = ''; // Clear current list
 
             try {
-                let query = monitoringsCollection.orderBy('createdAt', 'desc'); // Order by creation date
+                let query = monitoringsCollection.orderBy('createdAt', 'desc');
 
-                // Apply filters (example, you'll need to implement actual filtering logic)
                 const filterDocType = document.getElementById('filterDocumentType').value;
                 const filterDocNumber = document.getElementById('filterDocumentNumber').value;
                 const filterStartDate = document.getElementById('filterStartDate').value;
@@ -1355,8 +1324,6 @@
                 if (filterDocNumber !== 'all') {
                     query = query.where('documentNumber', '==', filterDocNumber);
                 }
-                // Date filtering would require more complex queries or client-side filtering
-                // For simplicity, search term will be client-side filtered
 
                 const snapshot = await query.get();
                 const monitorings = [];
@@ -1366,12 +1333,13 @@
 
                 const filteredMonitorings = monitorings.filter(monitoring => {
                     const matchesSearch = searchTerm === '' ||
-                                          monitoring.documentType.toLowerCase().includes(searchTerm) ||
-                                          monitoring.documentNumber.toLowerCase().includes(searchTerm) ||
-                                          monitoring.documentDescription.toLowerCase().includes(searchTerm);
+                                          (monitoring.documentType && monitoring.documentType.toLowerCase().includes(searchTerm)) ||
+                                          (monitoring.documentNumber && monitoring.documentNumber.toLowerCase().includes(searchTerm)) ||
+                                          (monitoring.documentDescription && monitoring.documentDescription.toLowerCase().includes(searchTerm));
 
-                    const matchesDate = (!filterStartDate || monitoring.documentDate >= filterStartDate) &&
-                                        (!filterEndDate || monitoring.documentDate <= filterEndDate);
+                    const docDate = monitoring.documentDate;
+                    const matchesDate = (!filterStartDate || (docDate && docDate >= filterStartDate)) &&
+                                        (!filterEndDate || (docDate && docDate <= filterEndDate));
 
                     return matchesSearch && matchesDate;
                 });
@@ -1413,12 +1381,12 @@
             card.className = 'deal-card relative w-full sm:w-1/2 lg:w-1/4'; // Adjust width for responsiveness
             card.setAttribute('data-id', monitoring.id);
 
-            const formattedInitialValue = formatRupiah(monitoring.initialValue.toString(), 'Rp ');
-            const formattedChangedValue = formatRupiah(monitoring.changedValue.toString(), 'Rp ');
+            const formattedInitialValue = formatRupiah(monitoring.initialValue, 'Rp ');
+            const formattedChangedValue = formatRupiah(monitoring.changedValue, 'Rp ');
 
             card.innerHTML = `
-                <span class="monitoring-card-number">${monitoring.documentNumber}</span>
-                <h3 class="text-lg font-bold text-gray-900 mb-2">${monitoring.documentType}</h3>
+                <span class="monitoring-card-number">${monitoring.documentNumber || 'N/A'}</span>
+                <h3 class="text-lg font-bold text-gray-900 mb-2">${monitoring.documentType || 'N/A'}</h3>
                 <div class="deal-details">
                     <p><i class="fas fa-calendar-alt"></i> ${monitoring.documentDate || 'N/A'}</p>
                     <p><i class="fas fa-money-bill-wave"></i> Nilai Awal: ${formattedInitialValue || 'Rp 0'}</p>
@@ -1457,35 +1425,10 @@
                     document.getElementById('detailDocumentNumber').textContent = data.documentNumber || '-';
                     document.getElementById('detailDocumentDate').textContent = data.documentDate || '-';
                     document.getElementById('detailDocumentDescription').textContent = data.documentDescription || '-';
-                    document.getElementById('detailInitialValue').textContent = formatRupiah(data.initialValue.toString(), 'Rp ') || 'Rp 0';
+                    document.getElementById('detailInitialValue').textContent = formatRupiah(data.initialValue, 'Rp ') || 'Rp 0';
                     document.getElementById('detailChangeDate').textContent = data.changeDate || '-';
                     document.getElementById('detailChangeDescription').textContent = data.changeDescription || '-';
-                    document.getElementById('detailChangedValue').textContent = formatRupiah(data.changedValue.toString(), 'Rp ') || 'Rp 0';
-
-                    // Update document links
-                    const linkPdfBeforeChange = document.getElementById('linkPdfBeforeChange');
-                    const textPdfBeforeChange = document.getElementById('textPdfBeforeChange');
-                    if (data.pdfBeforeChangeUrl) {
-                        linkPdfBeforeChange.href = data.pdfBeforeChangeUrl;
-                        linkPdfBeforeChange.classList.remove('hidden');
-                        textPdfBeforeChange.classList.add('hidden');
-                    } else {
-                        linkPdfBeforeChange.classList.add('hidden');
-                        textPdfBeforeChange.classList.remove('hidden');
-                        textPdfBeforeChange.textContent = 'N/A';
-                    }
-
-                    const linkPdfAfterChange = document.getElementById('linkPdfAfterChange');
-                    const textPdfAfterChange = document.getElementById('textPdfAfterChange');
-                    if (data.pdfAfterChangeUrl) {
-                        linkPdfAfterChange.href = data.pdfAfterChangeUrl;
-                        linkPdfAfterChange.classList.remove('hidden');
-                        textPdfAfterChange.classList.add('hidden');
-                    } else {
-                        linkPdfAfterChange.classList.add('hidden');
-                        textPdfAfterChange.classList.remove('hidden');
-                        textPdfAfterChange.textContent = 'N/A';
-                    }
+                    document.getElementById('detailChangedValue').textContent = formatRupiah(data.changedValue, 'Rp ') || 'Rp 0';
 
                     toggleModal('monitoringDetailModal', true);
                 } else {
@@ -1511,10 +1454,10 @@
                     document.getElementById('documentNumber').value = data.documentNumber || '';
                     document.getElementById('documentDate').value = data.documentDate || '';
                     document.getElementById('documentDescription').value = data.documentDescription || '';
-                    document.getElementById('initialValue').value = formatRupiah(data.initialValue.toString(), 'Rp ') || '';
+                    document.getElementById('initialValue').value = formatRupiah(data.initialValue, 'Rp ') || '';
                     document.getElementById('changeDate').value = data.changeDate || '';
                     document.getElementById('changeDescription').value = data.changeDescription || '';
-                    document.getElementById('changedValue').value = formatRupiah(data.changedValue.toString(), 'Rp ') || '';
+                    document.getElementById('changedValue').value = formatRupiah(data.changedValue, 'Rp ') || '';
 
                     toggleModal('monitoringModal', true);
                 } else {
@@ -1561,6 +1504,10 @@
             const filterDocumentTypeSelect = document.getElementById('filterDocumentType');
             const filterDocumentNumberSelect = document.getElementById('filterDocumentNumber');
 
+            // Store current selected values
+            const currentFilterDocType = filterDocumentTypeSelect.value;
+            const currentFilterDocNumber = filterDocumentNumberSelect.value;
+
             // Clear existing options (except "All")
             filterDocumentTypeSelect.innerHTML = '<option value="all">Semua Tipe Dokumen</option>';
             filterDocumentNumberSelect.innerHTML = '<option value="all">Semua Nomor Dokumen</option>';
@@ -1573,25 +1520,27 @@
                 if (m.documentNumber) documentNumbers.add(m.documentNumber);
             });
 
-            documentTypes.forEach(type => {
+            Array.from(documentTypes).sort().forEach(type => {
                 const option = document.createElement('option');
                 option.value = type;
                 option.textContent = type;
                 filterDocumentTypeSelect.appendChild(option);
             });
 
-            documentNumbers.forEach(number => {
+            Array.from(documentNumbers).sort().forEach(number => {
                 const option = document.createElement('option');
                 option.value = number;
                 option.textContent = number;
                 filterDocumentNumberSelect.appendChild(option);
             });
 
-            // Restore selected filter values if any
-            const currentFilterDocType = filterDocumentTypeSelect.dataset.currentValue;
-            const currentFilterDocNumber = filterDocumentNumberSelect.dataset.currentValue;
-            if (currentFilterDocType) filterDocumentTypeSelect.value = currentFilterDocType;
-            if (currentFilterDocNumber) filterDocumentNumberSelect.value = currentFilterDocNumber;
+            // Restore selected filter values
+            if (currentFilterDocType && Array.from(documentTypes).includes(currentFilterDocType)) {
+                filterDocumentTypeSelect.value = currentFilterDocType;
+            }
+            if (currentFilterDocNumber && Array.from(documentNumbers).includes(currentFilterDocNumber)) {
+                filterDocumentNumberSelect.value = currentFilterDocNumber;
+            }
         }
 
         // Initial load of monitorings
@@ -1603,14 +1552,6 @@
         document.getElementById('filterDocumentNumber').addEventListener('change', loadMonitorings);
         document.getElementById('filterStartDate').addEventListener('change', loadMonitorings);
         document.getElementById('filterEndDate').addEventListener('change', loadMonitorings);
-
-        // Store current filter values before reloading options
-        document.getElementById('filterDocumentType').addEventListener('focus', function() {
-            this.dataset.currentValue = this.value;
-        });
-        document.getElementById('filterDocumentNumber').addEventListener('focus', function() {
-            this.dataset.currentValue = this.value;
-        });
     });
 </script>
 </body>
