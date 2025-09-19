@@ -11,6 +11,8 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
         /* New Color Palette */
@@ -277,7 +279,7 @@
         .modal-content-enter-active, .modal-content-leave-active {
             /* transition: opacity 0.15s cubic-bezier(0.25, 0.8, 0.25, 1), transform 0.15s cubic-bezier(0.25, 0.8, 0.25, 1); */
         }
-        #monitoringModalContent, #monitoringDetailModalContent, #deleteModalContent, #filterPanelContent, #successAlertModalContent, #documentChecklistModalContent {
+        #monitoringModalContent, #monitoringDetailModalContent, #deleteModalContent, #filterPanelContent, #successAlertModalContent, #uploadDocumentModalContent {
             background-color: #ffffff;
             border-radius: 1rem;
             box-shadow: 0 20px 50px var(--shadow-strong);
@@ -318,24 +320,24 @@
         }
 
 
-        #monitoringModalContent h2, #monitoringDetailModalContent h2, #deleteModalContent h2, #filterPanelContent h2, #successAlertModalContent h2, #documentChecklistModalContent h2 {
+        #monitoringModalContent h2, #monitoringDetailModalContent h2, #deleteModalContent h2, #filterPanelContent h2, #successAlertModalContent h2, #uploadDocumentModalContent h2 {
             color: var(--text-dark);
             font-weight: 800;
             font-size: 1.75rem; /* Smaller */
             margin-bottom: 1rem; /* Smaller */
         }
-        #monitoringForm label, #documentChecklistForm label {
+        #monitoringForm label, #uploadDocumentForm label {
             color: var(--text-dark);
             font-weight: 600;
             font-size: 0.75rem; /* Smaller */
             margin-bottom: 0.25rem; /* Smaller */
         }
-        #monitoringForm input, #monitoringForm select, #monitoringForm textarea, #documentChecklistForm input, #documentChecklistForm select, #documentChecklistForm textarea {
+        #monitoringForm input, #monitoringForm select, #monitoringForm textarea, #uploadDocumentForm input, #uploadDocumentForm select, #uploadDocumentForm textarea {
             border-radius: 0.5rem;
             padding: 0.5rem 0.75rem; /* Smaller */
             font-size: 0.85rem; /* Smaller */
         }
-        #monitoringForm textarea, #documentChecklistForm textarea { height: 80px; } /* Slightly shorter */
+        #monitoringForm textarea, #uploadDocumentForm textarea { height: 80px; } /* Slightly shorter */
 
         /* Detail Grid */
         #monitoringDetailModalContent .detail-grid {
@@ -667,8 +669,8 @@
                     <i class="fas fa-plus-circle mr-2"></i> Add Monitoring
                 </button>
 
-                <button id="documentChecklistBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
-                    <i class="fas fa-clipboard-list mr-2"></i> Document Checklist
+                <button id="uploadDocumentBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
+                    <i class="fas fa-upload mr-2"></i> Upload Document
                 </button>
 
                 <button id="exportExcelBtn" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
@@ -821,6 +823,27 @@
                     </div>
                 </div>
 
+                <!-- Document Uploads Section -->
+                <div class="mt-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">Dokumen Terkait</h3>
+                    <div class="detail-grid">
+                        <div class="detail-item col-span-full">
+                            <p class="font-semibold">PDF Sebelum Perubahan:</p>
+                            <p id="detailPdfBeforeChangeUrl">
+                                <a href="#" target="_blank" class="text-blue-600 hover:underline hidden" id="linkPdfBeforeChange">Lihat Dokumen</a>
+                                <span id="textPdfBeforeChange">N/A</span>
+                            </p>
+                        </div>
+                        <div class="detail-item col-span-full">
+                            <p class="font-semibold">PDF Setelah Perubahan:</p>
+                            <p id="detailPdfAfterChangeUrl">
+                                <a href="#" target="_blank" class="text-blue-600 hover:underline hidden" id="linkPdfAfterChange">Lihat Dokumen</a>
+                                <span id="textPdfAfterChange">N/A</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="flex justify-end space-x-3 mt-6">
                     <button type="button" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
                         Close
@@ -892,153 +915,46 @@
             </div>
         </div>
 
-        <!-- Document Checklist Modal (unchanged as per request) -->
-        <div id="documentChecklistModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
-            <div class="bg-white rounded-xl p-8 w-full max-w-2xl shadow-2xl modal-content-enter" id="documentChecklistModalContent">
+        <!-- Upload Document Modal -->
+        <div id="uploadDocumentModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+            <div class="bg-white rounded-xl p-8 w-full max-w-2xl shadow-2xl modal-content-enter" id="uploadDocumentModalContent">
                 <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900 flex items-center"><i class="fas fa-clipboard-check mr-3 text-gray-500"></i> Document Checklist</h2>
-                    <button class="text-gray-500 hover:text-gray-700 transition duration-200">
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900 flex items-center"><i class="fas fa-upload mr-3 text-gray-500"></i> Upload Document</h2>
+                    <button class="text-gray-500 hover:text-gray-700 transition duration-200" id="closeUploadDocumentModalBtn">
                         <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
-                <form id="documentChecklistForm">
-                    <!-- PO Number Search for Checklist -->
+                <form id="uploadDocumentForm">
+                    <!-- PO Number Search for Upload -->
                     <div class="mb-6 border-b pb-4 border-gray-200">
-                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="docChecklist_poNumberSearch">Search PO Number</label>
+                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="uploadDoc_poNumberSearch">Search PO Number</label>
                         <div class="relative flex items-center">
-                            <input type="text" id="docChecklist_poNumberSearch" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm pr-10" placeholder="Type PO Number...">
-                            <input type="hidden" id="docChecklist_poId" value="">
-                            <div id="docChecklist_poNumberSuggestions" class="autocomplete-items suggestions-list"></div>
-                            <button type="button" id="loadChecklistBtn" class="absolute right-2 top-1/2 -translate-y-1/2 bg-blue-500 text-white rounded-md p-1 text-xs hover:bg-blue-600 transition duration-150">
+                            <input type="text" id="uploadDoc_poNumberSearch" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm pr-10" placeholder="Type PO Number...">
+                            <input type="hidden" id="uploadDoc_poId" value="">
+                            <div id="uploadDoc_poNumberSuggestions" class="autocomplete-items suggestions-list"></div>
+                            <button type="button" id="loadUploadDocBtn" class="absolute right-2 top-1/2 -translate-y-1/2 bg-blue-500 text-white rounded-md p-1 text-xs hover:bg-blue-600 transition duration-150">
                                 <i class="fas fa-search"></i>
                             </button>
                         </div>
-                        <p id="selectedPoInfo" class="text-sm text-gray-600 mt-2 hidden">Selected PO: <span class="font-medium" id="selectedPoNumberDisplay"></span></p>
+                        <p id="selectedPoInfoUpload" class="text-sm text-gray-600 mt-2 hidden">Selected PO: <span class="font-medium" id="selectedPoNumberDisplayUpload"></span></p>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <!-- Column 1: Documents -->
-                        <div>
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-2">OC/OA</label>
-                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_OC_OA">
-                                    <option value="">Select Status</option>
-                                    <option value="Download">Download</option>
-                                    <option value="Printed">Printed</option>
-                                    <option value="Waiting">Waiting</option>
-                                </select>
-                            </div>
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-2">PI</label>
-                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_PI">
-                                    <option value="">Select Status</option>
-                                    <option value="Download">Download</option>
-                                    <option value="Printed">Printed</option>
-                                    <option value="Waiting">Waiting</option>
-                                </select>
-                            </div>
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-2">CI</label>
-                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_CI">
-                                    <option value="">Select Status</option>
-                                    <option value="Download">Download</option>
-                                    <option value="Printed">Printed</option>
-                                    <option value="Waiting">Waiting</option>
-                                </select>
-                            </div>
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-2">PL</label>
-                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_PL">
-                                    <option value="">Select Status</option>
-                                    <option value="Download">Download</option>
-                                    <option value="Printed">Printed</option>
-                                    <option value="Waiting">Waiting</option>
-                                </select>
-                            </div>
+                    <div class="grid grid-cols-1 gap-4">
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-semibold mb-2" for="pdfBeforeChange">PDF Dokumen Sebelum Perubahan</label>
+                            <input type="file" id="pdfBeforeChange" accept="application/pdf" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
                         </div>
-                        <!-- Column 2: COO, COC, PIB, SPPB -->
-                        <div>
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-2">COO</label>
-                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_COO">
-                                    <option value="">Select Status</option>
-                                    <option value="Download">Download</option>
-                                    <option value="Printed">Printed</option>
-                                    <option value="Waiting">Waiting</option>
-                                </select>
-                            </div>
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-2">COC</label>
-                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_COC">
-                                    <option value="">Select Status</option>
-                                    <option value="Download">Download</option>
-                                    <option value="Printed">Printed</option>
-                                    <option value="Waiting">Waiting</option>
-                                </select>
-                            </div>
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-2">PIB</label>
-                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_PIB">
-                                    <option value="">Select Status</option>
-                                    <option value="Download">Download</option>
-                                    <option value="Printed">Printed</option>
-                                    <option value="Waiting">Waiting</option>
-                                </select>
-                            </div>
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-2">SPPB</label>
-                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_SPPB">
-                                    <option value="">Select Status</option>
-                                    <option value="Download">Download</option>
-                                    <option value="Printed">Printed</option>
-                                    <option value="Waiting">Waiting</option>
-                                </select>
-                            </div>
-                        </div>
-                        <!-- Column 3: Hardcopy, Softcopy, Prepared By, Order By -->
-                        <div>
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-2">Hardcopy</label>
-                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_Hardcopy">
-                                    <option value="">Select Status</option>
-                                    <option value="Printed">Printed</option>
-                                    <option value="Signed">Signed</option>
-                                    <option value="Waiting">Waiting</option>
-                                </select>
-                            </div>
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-2">Softcopy</label>
-                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_Softcopy">
-                                    <option value="">Select Status</option>
-                                    <option value="Printed">Printed</option>
-                                    <option value="Signed">Signed</option>
-                                    <option value="Waiting">Waiting</option>
-                                </select>
-                            </div>
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-2">Prepared By</label>
-                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_PreparedBy">
-                                    <option value="">Select Name</option>
-                                    <option value="Maida">Maida</option>
-                                    <option value="Rossiana">Rossiana</option>
-                                </select>
-                            </div>
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-2">Order By</label>
-                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_OrderBy">
-                                    <option value="">Select Name</option>
-                                    <option value="Maida">Maida</option>
-                                    <option value="Rossiana">Rossiana</option>
-                                </select>
-                            </div>
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-semibold mb-2" for="pdfAfterChange">PDF Dokumen Setelah Perubahan</label>
+                            <input type="file" id="pdfAfterChange" accept="application/pdf" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
                         </div>
                     </div>
                     <div class="flex justify-end space-x-3 mt-6">
-                        <button type="button" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
+                        <button type="button" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm" id="cancelUploadDocumentBtn">
                             Cancel
                         </button>
                         <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105 text-sm">
-                            Save Checklist
+                            Upload Documents
                         </button>
                     </div>
                 </form>
@@ -1082,6 +998,13 @@
     const db = firebase.firestore();
     const monitoringsCollection = db.collection('monitorings'); // Collection for your monitoring data
 
+    // Supabase Configuration
+    const SUPABASE_URL = 'https://rmeoiuddtkerhagytisa.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJtZW9pdWRkdGtlcmhhZ3l0aXNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgyNTIzMzMsImV4cCI6MjA3MzgyODMzM30.OYsklW59sBG5xHP-oEVRu_6unxkuo0aTwJpp2RGUG-w';
+
+    const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+
     document.addEventListener('DOMContentLoaded', function() {
         // Generic function to toggle modal visibility
         function toggleModal(modalId, show) {
@@ -1097,7 +1020,7 @@
 
         // --- Currency Formatting Functions ---
         function formatRupiah(angka, prefix) {
-            let number_string = angka.replace(/[^,\d]/g, '').toString(),
+            let number_string = angka.toString().replace(/[^,\d]/g, ''), // Ensure angka is string and remove non-numeric except comma
                 split = number_string.split(','),
                 sisa = split[0].length % 3,
                 rupiah = split[0].substr(0, sisa),
@@ -1113,7 +1036,9 @@
         }
 
         function unformatRupiah(rupiah) {
-            return parseInt(rupiah.replace(/[^,\d]/g, '').replace(/\./g, ''));
+            // Remove "Rp ", dots, and replace comma with dot for proper parseInt/parseFloat
+            const cleaned = rupiah.replace(/Rp /g, '').replace(/\./g, '').replace(/,/g, '.');
+            return parseInt(cleaned) || 0; // Return 0 if parsing fails
         }
 
         // Apply currency formatting to inputs
@@ -1122,8 +1047,11 @@
                 this.value = formatRupiah(this.value, 'Rp ');
             });
             input.addEventListener('blur', function() {
-                if (this.value === 'Rp ') { // If only "Rp " remains, clear it
+                if (this.value === 'Rp ' || this.value === '') { // If only "Rp " remains, clear it
                     this.value = '';
+                } else {
+                    // Re-format on blur to ensure consistency even if user types quickly
+                    this.value = formatRupiah(unformatRupiah(this.value).toString(), 'Rp ');
                 }
             });
             // Initial format if there's a value on load
@@ -1185,15 +1113,157 @@
             }
         });
 
-        // Document Checklist Button (unchanged functionality)
-        document.getElementById('documentChecklistBtn').addEventListener('click', () => toggleModal('documentChecklistModal', true));
-        document.querySelector('#documentChecklistModalContent button[type="button"]').addEventListener('click', () => toggleModal('documentChecklistModal', false));
-        document.getElementById('documentChecklistForm').addEventListener('submit', (e) => {
+        // Upload Document Button
+        document.getElementById('uploadDocumentBtn').addEventListener('click', () => {
+            document.getElementById('uploadDocumentForm').reset(); // Clear form fields
+            document.getElementById('uploadDoc_poId').value = '';
+            document.getElementById('selectedPoInfoUpload').classList.add('hidden');
+            document.getElementById('selectedPoNumberDisplayUpload').textContent = '';
+            toggleModal('uploadDocumentModal', true);
+        });
+
+        // Close Upload Document Modal
+        document.getElementById('closeUploadDocumentModalBtn').addEventListener('click', () => toggleModal('uploadDocumentModal', false));
+        document.getElementById('cancelUploadDocumentBtn').addEventListener('click', () => toggleModal('uploadDocumentModal', false));
+
+        // Autocomplete for PO Number Search in Upload Document Modal
+        const uploadDocPoNumberSearchInput = document.getElementById('uploadDoc_poNumberSearch');
+        const uploadDocPoNumberSuggestionsDiv = document.getElementById('uploadDoc_poNumberSuggestions');
+        let currentUploadDocPoNumbers = []; // To store PO numbers for autocomplete
+
+        uploadDocPoNumberSearchInput.addEventListener('input', async function() {
+            const searchTerm = this.value.toLowerCase();
+            uploadDocPoNumberSuggestionsDiv.innerHTML = ''; // Clear previous suggestions
+
+            if (searchTerm.length > 0) {
+                const snapshot = await monitoringsCollection.orderBy('documentNumber').startAt(searchTerm).endAt(searchTerm + '\uf8ff').get();
+                currentUploadDocPoNumbers = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (data.documentNumber && data.documentNumber.toLowerCase().includes(searchTerm)) {
+                        currentUploadDocPoNumbers.push({ id: doc.id, documentNumber: data.documentNumber });
+                    }
+                });
+
+                currentUploadDocPoNumbers.forEach(po => {
+                    const div = document.createElement('div');
+                    div.textContent = po.documentNumber;
+                    div.addEventListener('click', () => {
+                        uploadDocPoNumberSearchInput.value = po.documentNumber;
+                        document.getElementById('uploadDoc_poId').value = po.id;
+                        document.getElementById('selectedPoNumberDisplayUpload').textContent = po.documentNumber;
+                        document.getElementById('selectedPoInfoUpload').classList.remove('hidden');
+                        uploadDocPoNumberSuggestionsDiv.innerHTML = ''; // Clear suggestions
+                    });
+                    uploadDocPoNumberSuggestionsDiv.appendChild(div);
+                });
+            }
+        });
+
+        // Handle click outside suggestions to close
+        document.addEventListener('click', function(e) {
+            if (!uploadDocPoNumberSearchInput.contains(e.target) && !uploadDocPoNumberSuggestionsDiv.contains(e.target)) {
+                uploadDocPoNumberSuggestionsDiv.innerHTML = '';
+            }
+        });
+
+        // Load PO details when search button is clicked (or if a PO is selected via autocomplete)
+        document.getElementById('loadUploadDocBtn').addEventListener('click', async () => {
+            const poNumber = uploadDocPoNumberSearchInput.value;
+            const poId = document.getElementById('uploadDoc_poId').value;
+
+            if (!poId && poNumber) {
+                // If PO ID is not set but number is typed, try to find it
+                const snapshot = await monitoringsCollection.where('documentNumber', '==', poNumber).limit(1).get();
+                if (!snapshot.empty) {
+                    const doc = snapshot.docs[0];
+                    document.getElementById('uploadDoc_poId').value = doc.id;
+                    document.getElementById('selectedPoNumberDisplayUpload').textContent = doc.data().documentNumber;
+                    document.getElementById('selectedPoInfoUpload').classList.remove('hidden');
+                } else {
+                    alert('PO Number not found. Please select from suggestions or enter a valid PO Number.');
+                    document.getElementById('uploadDoc_poId').value = '';
+                    document.getElementById('selectedPoInfoUpload').classList.add('hidden');
+                    return;
+                }
+            } else if (!poId) {
+                alert('Please search and select a PO Number first.');
+                return;
+            }
+
+            // Here you would load existing document URLs if any, to display them or allow replacement
+            // For now, we just confirm the PO is selected.
+            alert(`PO Number ${document.getElementById('selectedPoNumberDisplayUpload').textContent} selected for upload.`);
+        });
+
+
+        // Submit Upload Document Form
+        document.getElementById('uploadDocumentForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            alert('Document Checklist submitted! (No actual save functionality in this template)');
-            toggleModal('documentChecklistModal', false);
-            toggleModal('successAlertModal', true);
-            document.getElementById('successAlertMessage').textContent = 'Document Checklist submitted successfully!';
+            showGlobalLoading();
+
+            const poId = document.getElementById('uploadDoc_poId').value;
+            if (!poId) {
+                alert('Please select a PO Number before uploading documents.');
+                hideGlobalLoading();
+                return;
+            }
+
+            const pdfBeforeFile = document.getElementById('pdfBeforeChange').files[0];
+            const pdfAfterFile = document.getElementById('pdfAfterChange').files[0];
+
+            let uploadedBeforeUrl = '';
+            let uploadedAfterUrl = '';
+
+            try {
+                // Upload PDF Dokumen Sebelum Perubahan
+                if (pdfBeforeFile) {
+                    const { data, error } = await supabase.storage
+                        .from('document-pdfs') // Ganti dengan nama bucket Supabase Storage Anda
+                        .upload(`before_change/${poId}_${Date.now()}_${pdfBeforeFile.name}`, pdfBeforeFile, {
+                            cacheControl: '3600',
+                            upsert: false
+                        });
+
+                    if (error) throw error;
+                    uploadedBeforeUrl = supabase.storage.from('document-pdfs').getPublicUrl(data.path).data.publicUrl;
+                }
+
+                // Upload PDF Dokumen Setelah Perubahan
+                if (pdfAfterFile) {
+                    const { data, error } = await supabase.storage
+                        .from('document-pdfs') // Ganti dengan nama bucket Supabase Storage Anda
+                        .upload(`after_change/${poId}_${Date.now()}_${pdfAfterFile.name}`, pdfAfterFile, {
+                            cacheControl: '3600',
+                            upsert: false
+                        });
+
+                    if (error) throw error;
+                    uploadedAfterUrl = supabase.storage.from('document-pdfs').getPublicUrl(data.path).data.publicUrl;
+                }
+
+                // Update Firestore with the new PDF URLs
+                const updateData = {};
+                if (uploadedBeforeUrl) updateData.pdfBeforeChangeUrl = uploadedBeforeUrl;
+                if (uploadedAfterUrl) updateData.pdfAfterChangeUrl = uploadedAfterUrl;
+                updateData.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+
+                if (Object.keys(updateData).length > 0) {
+                    await monitoringsCollection.doc(poId).update(updateData);
+                    document.getElementById('successAlertMessage').textContent = 'Documents uploaded and linked successfully!';
+                } else {
+                    document.getElementById('successAlertMessage').textContent = 'No new documents selected for upload.';
+                }
+
+                toggleModal('uploadDocumentModal', false);
+                toggleModal('successAlertModal', true);
+                loadMonitorings(); // Reload list if needed
+            } catch (error) {
+                console.error("Error uploading documents: ", error);
+                alert(`Failed to upload documents: ${error.message}. Please try again.`);
+            } finally {
+                hideGlobalLoading();
+            }
         });
 
         // Filter Panel Button
@@ -1249,7 +1319,12 @@
         });
 
         // --- Placeholder for other buttons ---
-        document.getElementById('backButton').addEventListener('click', () => alert('Back button clicked!'));
+        document.getElementById('backButton').addEventListener('click', () => {
+            // Contoh: Kembali ke halaman sebelumnya
+            // window.history.back();
+            alert('Fitur Back diaktifkan kembali!');
+            // Anda bisa menambahkan logika navigasi yang lebih kompleks di sini
+        });
         document.getElementById('authButton').addEventListener('click', () => alert('Logout button clicked!'));
         document.getElementById('exportExcelBtn').addEventListener('click', () => alert('Export Excel button clicked!'));
 
@@ -1382,6 +1457,31 @@
                     document.getElementById('detailChangeDate').textContent = data.changeDate || '-';
                     document.getElementById('detailChangeDescription').textContent = data.changeDescription || '-';
                     document.getElementById('detailChangedValue').textContent = formatRupiah(data.changedValue.toString(), 'Rp ') || 'Rp 0';
+
+                    // Update document links
+                    const linkPdfBeforeChange = document.getElementById('linkPdfBeforeChange');
+                    const textPdfBeforeChange = document.getElementById('textPdfBeforeChange');
+                    if (data.pdfBeforeChangeUrl) {
+                        linkPdfBeforeChange.href = data.pdfBeforeChangeUrl;
+                        linkPdfBeforeChange.classList.remove('hidden');
+                        textPdfBeforeChange.classList.add('hidden');
+                    } else {
+                        linkPdfBeforeChange.classList.add('hidden');
+                        textPdfBeforeChange.classList.remove('hidden');
+                        textPdfBeforeChange.textContent = 'N/A';
+                    }
+
+                    const linkPdfAfterChange = document.getElementById('linkPdfAfterChange');
+                    const textPdfAfterChange = document.getElementById('textPdfAfterChange');
+                    if (data.pdfAfterChangeUrl) {
+                        linkPdfAfterChange.href = data.pdfAfterChangeUrl;
+                        linkPdfAfterChange.classList.remove('hidden');
+                        textPdfAfterChange.classList.add('hidden');
+                    } else {
+                        linkPdfAfterChange.classList.add('hidden');
+                        textPdfAfterChange.classList.remove('hidden');
+                        textPdfAfterChange.textContent = 'N/A';
+                    }
 
                     toggleModal('monitoringDetailModal', true);
                 } else {
