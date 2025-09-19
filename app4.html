@@ -1108,6 +1108,7 @@
                 toggleModal('monitoringModal', false);
                 toggleModal('successAlertModal', true);
                 loadMonitorings(); // Reload list after save
+                fetchAllDocumentNumbers(); // Re-fetch document numbers for autocomplete
             } catch (error) {
                 console.error("Error saving monitoring: ", error);
                 alert("Failed to save monitoring. Please try again.");
@@ -1225,8 +1226,9 @@
         let allDocumentNumbers = []; // Cache all document numbers for client-side filtering
         async function fetchAllDocumentNumbers() {
             try {
-                const snapshot = await monitoringsCollection.select('documentNumber').get(); // Only fetch documentNumber field
+                const snapshot = await monitoringsCollection.get(); // Fetch all documents
                 allDocumentNumbers = snapshot.docs.map(doc => ({ id: doc.id, documentNumber: doc.data().documentNumber }));
+                console.log("Fetched all document numbers:", allDocumentNumbers); // Debugging line
             } catch (error) {
                 console.error("Error fetching all document numbers for search: ", error);
             }
@@ -1242,7 +1244,7 @@
             document.getElementById('selectedMonitoringInfo').classList.add('hidden');
             document.getElementById('uploadDoc_monitoringId').value = '';
 
-            if (searchTerm.length < 2) {
+            if (searchTerm.length < 1) { // Allow search with 1 character
                 return;
             }
 
@@ -1620,6 +1622,7 @@
                     toggleModal('successAlertModal', true);
                     document.getElementById('successAlertMessage').textContent = 'Monitoring deleted successfully!';
                     loadMonitorings(); // Reload list after deletion
+                    fetchAllDocumentNumbers(); // Re-fetch document numbers for autocomplete
                 } catch (error) {
                     console.error("Error deleting monitoring: ", error);
                     alert("Failed to delete monitoring. Please try again.");
