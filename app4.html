@@ -14,13 +14,17 @@
     <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <!-- Supabase Client Initialization (Moved here to ensure Supabase is defined) -->
+    <!-- Supabase Client Initialization (Moved to be executed after Supabase SDK is loaded) -->
     <script>
+        // Supabase Configuration
         const SUPABASE_URL = 'https://rmeoiuddtkerhagytisa.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJtZW9pdWRkdGtlcmhhZ3l0aXNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgyNTIzMzMsImV4cCI6MjA3MzgyODMzM30.OYsklW59sBG5xHP-oEVRu_6unxkuo0aTwJpp2RGUG-w';
         const SUPABASE_BUCKET_NAME = 'monitoring-acc';
         const SUPABASE_STORAGE_URL = 'https://rmeoiuddtkerhagytisa.supabase.co/storage/v1/object/public/monitoring-acc/';
 
+        // Initialize Supabase client globally, but ensure it's after the SDK script tag.
+        // For safety, it's often best to put this inside DOMContentLoaded or immediately after the SDK script.
+        // Here, we place it directly after the SDK script tag.
         const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     </script>
 
@@ -1217,46 +1221,48 @@
             }
         });
 
-        // Autocomplete for Document Number Search in Upload Document (Modified)
-        let currentDocumentSuggestions = []; // Changed from currentPoSuggestions
-        document.getElementById('uploadDoc_documentNumberSearch').addEventListener('input', async function() { // Changed ID
-            const searchTerm = this.value.toLowerCase();
-            const suggestionsContainer = document.getElementById('uploadDoc_documentNumberSuggestions'); // Changed ID
-            suggestionsContainer.innerHTML = '';
-            document.getElementById('selectedMonitoringInfo').classList.add('hidden'); // Changed ID
-            document.getElementById('uploadDoc_monitoringId').value = ''; // Changed ID
+        // Autocomplete for Document Number Search in Upload Document (Modified for substring search)
+        let allDocumentNumbers = []; // Cache all document numbers for client-side filtering
+        async function fetchAllDocumentNumbers() {
+            try {
+                const snapshot = await monitoringsCollection.select('documentNumber').get(); // Only fetch documentNumber field
+                allDocumentNumbers = snapshot.docs.map(doc => ({ id: doc.id, documentNumber: doc.data().documentNumber }));
+            } catch (error) {
+                console.error("Error fetching all document numbers for search: ", error);
+            }
+        }
 
-            if (searchTerm.length < 2) { // Only search if at least 2 characters are typed
+        // Call this once on page load
+        fetchAllDocumentNumbers();
+
+        document.getElementById('uploadDoc_documentNumberSearch').addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const suggestionsContainer = document.getElementById('uploadDoc_documentNumberSuggestions');
+            suggestionsContainer.innerHTML = '';
+            document.getElementById('selectedMonitoringInfo').classList.add('hidden');
+            document.getElementById('uploadDoc_monitoringId').value = '';
+
+            if (searchTerm.length < 2) {
                 return;
             }
 
-            try {
-                // Search in 'monitorings' collection for 'documentNumber'
-                const snapshot = await monitoringsCollection
-                    .where('documentNumber', '>=', searchTerm)
-                    .where('documentNumber', '<=', searchTerm + '\uf8ff')
-                    .limit(10)
-                    .get();
+            const filteredSuggestions = allDocumentNumbers.filter(doc =>
+                doc.documentNumber && doc.documentNumber.toLowerCase().includes(searchTerm)
+            ).slice(0, 10); // Limit to 10 suggestions
 
-                currentDocumentSuggestions = []; // Changed
-                snapshot.forEach(doc => {
-                    const monitoringData = doc.data();
-                    currentDocumentSuggestions.push({ id: doc.id, documentNumber: monitoringData.documentNumber }); // Changed
-                    const div = document.createElement('div');
-                    div.textContent = monitoringData.documentNumber;
-                    div.addEventListener('click', () => {
-                        document.getElementById('uploadDoc_documentNumberSearch').value = monitoringData.documentNumber; // Changed
-                        document.getElementById('uploadDoc_monitoringId').value = doc.id; // Changed
-                        document.getElementById('selectedDocumentNumberDisplay').textContent = monitoringData.documentNumber; // Changed
-                        document.getElementById('selectedMonitoringInfo').classList.remove('hidden'); // Changed
-                        suggestionsContainer.innerHTML = ''; // Clear suggestions after selection
-                        loadUploadDocumentStatus(doc.id); // Load existing status for this Monitoring
-                    });
-                    suggestionsContainer.appendChild(div);
+            filteredSuggestions.forEach(doc => {
+                const div = document.createElement('div');
+                div.textContent = doc.documentNumber;
+                div.addEventListener('click', () => {
+                    document.getElementById('uploadDoc_documentNumberSearch').value = doc.documentNumber;
+                    document.getElementById('uploadDoc_monitoringId').value = doc.id;
+                    document.getElementById('selectedDocumentNumberDisplay').textContent = doc.documentNumber;
+                    document.getElementById('selectedMonitoringInfo').classList.remove('hidden');
+                    suggestionsContainer.innerHTML = ''; // Clear suggestions after selection
+                    loadUploadDocumentStatus(doc.id); // Load existing status for this Monitoring
                 });
-            } catch (error) {
-                console.error("Error fetching document number suggestions: ", error); // Changed
-            }
+                suggestionsContainer.appendChild(div);
+            });
         });
 
         // Function to load existing upload document status for a selected Monitoring (Modified)
