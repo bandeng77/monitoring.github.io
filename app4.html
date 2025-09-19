@@ -757,7 +757,7 @@
                     </div>
 
                     <div class="flex justify-end space-x-3 mt-6">
-                        <button type="button" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
+                        <button type="button" id="cancelMonitoringBtn" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
                             Cancel
                         </button>
                         <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105 text-sm">
@@ -822,7 +822,7 @@
                 </div>
 
                 <div class="flex justify-end space-x-3 mt-6">
-                    <button type="button" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
+                    <button type="button" id="closeMonitoringDetailBtn" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
                         Close
                     </button>
                 </div>
@@ -835,7 +835,7 @@
                 <h2 class="text-xl font-bold mb-4 text-gray-900">Delete Confirmation</h2>
                 <p class="text-gray-700 mb-6 text-sm">Are you sure you want to delete "<span id="dealToDeleteName" class="font-semibold"></span>"? This action cannot be undone.</p>
                 <div class="flex justify-end space-x-3">
-                    <button type="button" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
+                    <button type="button" id="cancelDeleteBtn" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
                         Cancel
                     </button>
                     <button type="button" id="confirmDeleteBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105 text-sm">
@@ -850,7 +850,7 @@
             <div class="bg-white rounded-xl p-8 w-full max-w-2xl shadow-2xl modal-content-enter" id="filterPanelContent">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-xl sm:text-2xl font-bold text-gray-900 flex items-center"><i class="fas fa-filter mr-3 text-gray-500"></i> Filter Monitorings</h2>
-                    <button class="text-gray-500 hover:text-gray-700 transition duration-200">
+                    <button type="button" id="closeFilterPanelBtn" class="text-gray-500 hover:text-gray-700 transition duration-200">
                         <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
@@ -882,10 +882,10 @@
                     </div>
                 </div>
                 <div class="flex justify-end space-x-3 mt-6">
-                    <button type="button" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
+                    <button type="button" id="resetFiltersBtn" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
                         Reset Filters
                     </button>
-                    <button type="button" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105 text-sm">
+                    <button type="button" id="applyFiltersBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105 text-sm">
                         Apply Filters
                     </button>
                 </div>
@@ -944,7 +944,7 @@
                 </div>
                 <h2 class="text-2xl font-bold mb-4 text-gray-900">Success!</h2>
                 <p class="text-gray-700 mb-6" id="successAlertMessage">Operation completed successfully.</p>
-                <button type="button" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105">
+                <button type="button" id="closeSuccessAlertBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105">
                     OK
                 </button>
             </div>
@@ -1041,8 +1041,8 @@
             toggleModal('monitoringModal', true);
         });
 
-        // Close Add/Edit Monitoring Modal
-        document.querySelector('#monitoringModalContent button[type="button"]').addEventListener('click', () => toggleModal('monitoringModal', false));
+        // Close Add/Edit Monitoring Modal (using new ID for cancel button)
+        document.getElementById('cancelMonitoringBtn').addEventListener('click', () => toggleModal('monitoringModal', false));
 
         // Submit Monitoring Form
         document.getElementById('monitoringForm').addEventListener('submit', async (e) => {
@@ -1198,15 +1198,15 @@
 
         // Filter Panel Button
         document.getElementById('openFilterPanelBtn').addEventListener('click', () => toggleModal('filterPanel', true));
-        document.querySelector('#filterPanelContent button.text-gray-500').addEventListener('click', () => toggleModal('filterPanel', false));
-        document.querySelector('#filterPanelContent button.bg-blue-600').addEventListener('click', () => {
+        document.getElementById('closeFilterPanelBtn').addEventListener('click', () => toggleModal('filterPanel', false)); // Added ID for close button
+        document.getElementById('applyFiltersBtn').addEventListener('click', () => { // Added ID for apply button
             // Save current filter values before applying
             document.getElementById('filterDocumentType').dataset.currentValue = document.getElementById('filterDocumentType').value;
             document.getElementById('filterDocumentNumber').dataset.currentValue = document.getElementById('filterDocumentNumber').value;
             loadMonitorings(); // Reload with filters
             toggleModal('filterPanel', false);
         });
-        document.querySelector('#filterPanelContent button.text-gray-600').addEventListener('click', () => {
+        document.getElementById('resetFiltersBtn').addEventListener('click', () => { // Added ID for reset button
             // Reset filter dropdowns
             document.getElementById('filterDocumentType').value = 'all';
             document.getElementById('filterDocumentNumber').value = 'all';
@@ -1220,7 +1220,7 @@
         });
 
         // Close Success Alert Modal
-        document.querySelector('#successAlertModalContent button').addEventListener('click', () => toggleModal('successAlertModal', false));
+        document.getElementById('closeSuccessAlertBtn').addEventListener('click', () => toggleModal('successAlertModal', false)); // Added ID for close button
 
         // --- Global Loading Overlay ---
         function showGlobalLoading() {
@@ -1255,7 +1255,10 @@
 
         // --- Placeholder for other buttons ---
         document.getElementById('authButton').addEventListener('click', () => alert('Logout button clicked!'));
-        document.getElementById('backButton').addEventListener('click', () => alert('Back button clicked!'));
+        // Updated Back button functionality
+        document.getElementById('backButton').addEventListener('click', () => {
+            window.location.href = 'index.html'; // Redirect to index.html
+        });
 
         // --- Export Excel Functionality ---
         document.getElementById('exportExcelBtn').addEventListener('click', async () => {
@@ -1496,7 +1499,7 @@
                 }
             }
         });
-        document.querySelector('#deleteModalContent button.text-gray-600').addEventListener('click', () => toggleModal('deleteModal', false));
+        document.getElementById('cancelDeleteBtn').addEventListener('click', () => toggleModal('deleteModal', false)); // Added ID for cancel button
 
 
         // Function to populate filter dropdowns
