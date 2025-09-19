@@ -994,16 +994,19 @@
     const purchaseOrdersCollection = db.collection('purchaseOrders'); // Assuming you have a 'purchaseOrders' collection
     const documentUploadsCollection = db.collection('documentUploads'); // New collection for document upload status
 
-    // Supabase Configuration
+    // Supabase Configuration (tetap di luar DOMContentLoaded agar variabel global)
     const SUPABASE_URL = 'https://rmeoiuddtkerhagytisa.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJtZW9pdWRkdGtlcmhhZ3l0aXNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgyNTIzMzMsImV4cCI6MjA3MzgyODMzM30.OYsklW59sBG5xHP-oEVRu_6unxkuo0aTwJpp2RGUG-w';
     const SUPABASE_BUCKET_NAME = 'monitoring-acc';
     const SUPABASE_STORAGE_URL = 'https://rmeoiuddtkerhagytisa.supabase.co/storage/v1/object/public/monitoring-acc/';
 
-    const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
+    // Deklarasikan variabel supabase di scope global, tapi inisialisasi di dalam DOMContentLoaded
+    let supabase;
 
     document.addEventListener('DOMContentLoaded', function() {
+        // Inisialisasi Supabase client di sini
+        supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
         // Generic function to toggle modal visibility
         function toggleModal(modalId, show) {
             const modal = document.getElementById(modalId);
