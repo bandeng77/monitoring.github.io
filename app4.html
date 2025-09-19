@@ -1565,6 +1565,10 @@
             }
         }
 
+        // FIX: Add event listener for closeMonitoringDetailBtn
+        document.getElementById('closeMonitoringDetailBtn').addEventListener('click', () => toggleModal('monitoringDetailModal', false));
+
+
         async function editMonitoring(id) {
             showGlobalLoading();
             try {
