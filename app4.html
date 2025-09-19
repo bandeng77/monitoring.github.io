@@ -11,6 +11,8 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
         /* New Color Palette */
@@ -913,15 +915,32 @@
                         <p id="selectedPoInfo" class="text-sm text-gray-600 mt-2 hidden">Selected PO: <span class="font-medium" id="selectedPoNumberDisplay"></span></p>
                     </div>
 
-                    <!-- Simplified Upload Document Status -->
+                    <!-- Document Upload 1 -->
                     <div class="mb-4">
-                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="uploadDoc_status">Document Status</label>
-                        <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="uploadDoc_status">
+                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="uploadDoc_document1">Document Upload 1 (PDF)</label>
+                        <input type="file" id="uploadDoc_document1" accept=".pdf" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                        <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm mt-2" id="uploadDoc_status1">
                             <option value="">Select Status</option>
                             <option value="Uploaded">Uploaded</option>
                             <option value="Pending">Pending</option>
                             <option value="N/A">N/A</option>
                         </select>
+                        <p id="document1FileName" class="text-sm text-gray-600 mt-1 hidden"></p>
+                        <a id="document1DownloadLink" href="#" target="_blank" class="text-blue-600 hover:underline text-sm mt-1 hidden">View Document 1</a>
+                    </div>
+
+                    <!-- Document Upload 2 -->
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="uploadDoc_document2">Document Upload 2 (PDF)</label>
+                        <input type="file" id="uploadDoc_document2" accept=".pdf" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                        <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm mt-2" id="uploadDoc_status2">
+                            <option value="">Select Status</option>
+                            <option value="Uploaded">Uploaded</option>
+                            <option value="Pending">Pending</option>
+                            <option value="N/A">N/A</option>
+                        </select>
+                        <p id="document2FileName" class="text-sm text-gray-600 mt-1 hidden"></p>
+                        <a id="document2DownloadLink" href="#" target="_blank" class="text-blue-600 hover:underline text-sm mt-1 hidden">View Document 2</a>
                     </div>
 
                     <div class="flex justify-end space-x-3 mt-6">
@@ -974,6 +993,15 @@
     const monitoringsCollection = db.collection('monitorings');
     const purchaseOrdersCollection = db.collection('purchaseOrders'); // Assuming you have a 'purchaseOrders' collection
     const documentUploadsCollection = db.collection('documentUploads'); // New collection for document upload status
+
+    // Supabase Configuration
+    const SUPABASE_URL = 'https://rmeoiuddtkerhagytisa.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJtZW9pdWRkdGtlcmhhZ3l0aXNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgyNTIzMzMsImV4cCI6MjA3MzgyODMzM30.OYsklW59sBG5xHP-oEVRu_6unxkuo0aTwJpp2RGUG-w';
+    const SUPABASE_BUCKET_NAME = 'monitoring-acc';
+    const SUPABASE_STORAGE_URL = 'https://rmeoiuddtkerhagytisa.supabase.co/storage/v1/object/public/monitoring-acc/';
+
+    const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 
     document.addEventListener('DOMContentLoaded', function() {
         // Generic function to toggle modal visibility
@@ -1090,6 +1118,12 @@
             document.getElementById('uploadDoc_poId').value = '';
             document.getElementById('selectedPoInfo').classList.add('hidden');
             document.getElementById('uploadDoc_poNumberSuggestions').innerHTML = ''; // Clear suggestions
+            document.getElementById('uploadDoc_document1').value = ''; // Clear file input
+            document.getElementById('uploadDoc_document2').value = ''; // Clear file input
+            document.getElementById('document1FileName').classList.add('hidden');
+            document.getElementById('document1DownloadLink').classList.add('hidden');
+            document.getElementById('document2FileName').classList.add('hidden');
+            document.getElementById('document2DownloadLink').classList.add('hidden');
             toggleModal('uploadDocumentModal', true);
         });
 
@@ -1104,7 +1138,10 @@
 
             const poId = document.getElementById('uploadDoc_poId').value;
             const poNumber = document.getElementById('uploadDoc_poNumberSearch').value;
-            const status = document.getElementById('uploadDoc_status').value;
+            const status1 = document.getElementById('uploadDoc_status1').value; // Changed ID
+            const status2 = document.getElementById('uploadDoc_status2').value; // New ID
+            const document1File = document.getElementById('uploadDoc_document1').files[0]; // Get file 1
+            const document2File = document.getElementById('uploadDoc_document2').files[0]; // Get file 2
 
             if (!poId) {
                 alert('Please select a valid PO Number from the suggestions.');
@@ -1112,27 +1149,72 @@
                 return;
             }
 
-            if (!status) {
-                alert('Please select a document status.');
+            if (!status1 && !status2 && !document1File && !document2File) {
+                alert('Please select at least one document status or upload a document.');
                 hideGlobalLoading();
                 return;
             }
 
-            try {
-                // Store document upload status in 'documentUploads' collection
-                const uploadRef = documentUploadsCollection.doc(poId);
-                await uploadRef.set({
-                    poNumber: poNumber,
-                    status: status,
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                }, { merge: true }); // Use merge to update existing fields or create if not exists
+            let document1Url = '';
+            let document2Url = '';
 
-                document.getElementById('successAlertMessage').textContent = `Document status for PO ${poNumber} saved successfully!`;
+            try {
+                // Upload Document 1
+                if (document1File) {
+                    const filePath = `${poId}/document1_${Date.now()}_${document1File.name}`;
+                    const { data, error } = await supabase.storage
+                        .from(SUPABASE_BUCKET_NAME)
+                        .upload(filePath, document1File, {
+                            cacheControl: '3600',
+                            upsert: false
+                        });
+
+                    if (error) {
+                        throw error;
+                    }
+                    document1Url = SUPABASE_STORAGE_URL + filePath;
+                }
+
+                // Upload Document 2
+                if (document2File) {
+                    const filePath = `${poId}/document2_${Date.now()}_${document2File.name}`;
+                    const { data, error } = await supabase.storage
+                        .from(SUPABASE_BUCKET_NAME)
+                        .upload(filePath, document2File, {
+                            cacheControl: '3600',
+                            upsert: false
+                        });
+
+                    if (error) {
+                        throw error;
+                    }
+                    document2Url = SUPABASE_STORAGE_URL + filePath;
+                }
+
+                // Store document upload status and URLs in 'documentUploads' collection
+                const uploadRef = documentUploadsCollection.doc(poId);
+                const updateData = {
+                    poNumber: poNumber,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                if (status1) updateData.status1 = status1;
+                if (document1Url) updateData.document1Url = document1Url;
+                if (document1File) updateData.document1FileName = document1File.name;
+
+                if (status2) updateData.status2 = status2;
+                if (document2Url) updateData.document2Url = document2Url;
+                if (document2File) updateData.document2FileName = document2File.name;
+
+
+                await uploadRef.set(updateData, { merge: true });
+
+                document.getElementById('successAlertMessage').textContent = `Document status and files for PO ${poNumber} saved successfully!`;
                 toggleModal('uploadDocumentModal', false);
                 toggleModal('successAlertModal', true);
             } catch (error) {
-                console.error("Error saving document upload status: ", error);
-                alert("Failed to save document upload status. Please try again.");
+                console.error("Error saving document upload status or uploading files: ", error);
+                alert(`Failed to save document upload status or upload files. Error: ${error.message}. Please try again.`);
             } finally {
                 hideGlobalLoading();
             }
@@ -1184,11 +1266,53 @@
         async function loadUploadDocumentStatus(poId) {
             try {
                 const uploadDoc = await documentUploadsCollection.doc(poId).get();
+                const uploadDoc_status1 = document.getElementById('uploadDoc_status1');
+                const uploadDoc_status2 = document.getElementById('uploadDoc_status2');
+                const document1FileNameDisplay = document.getElementById('document1FileName');
+                const document1DownloadLink = document.getElementById('document1DownloadLink');
+                const document2FileNameDisplay = document.getElementById('document2FileName');
+                const document2DownloadLink = document.getElementById('document2DownloadLink');
+
                 if (uploadDoc.exists) {
                     const data = uploadDoc.data();
-                    document.getElementById('uploadDoc_status').value = data.status || '';
+                    uploadDoc_status1.value = data.status1 || '';
+                    uploadDoc_status2.value = data.status2 || '';
+
+                    // Document 1
+                    if (data.document1FileName) {
+                        document1FileNameDisplay.textContent = `File: ${data.document1FileName}`;
+                        document1FileNameDisplay.classList.remove('hidden');
+                    } else {
+                        document1FileNameDisplay.classList.add('hidden');
+                    }
+                    if (data.document1Url) {
+                        document1DownloadLink.href = data.document1Url;
+                        document1DownloadLink.classList.remove('hidden');
+                    } else {
+                        document1DownloadLink.classList.add('hidden');
+                    }
+
+                    // Document 2
+                    if (data.document2FileName) {
+                        document2FileNameDisplay.textContent = `File: ${data.document2FileName}`;
+                        document2FileNameDisplay.classList.remove('hidden');
+                    } else {
+                        document2FileNameDisplay.classList.add('hidden');
+                    }
+                    if (data.document2Url) {
+                        document2DownloadLink.href = data.document2Url;
+                        document2DownloadLink.classList.remove('hidden');
+                    } else {
+                        document2DownloadLink.classList.add('hidden');
+                    }
+
                 } else {
-                    document.getElementById('uploadDoc_status').value = ''; // Reset if no status exists
+                    uploadDoc_status1.value = '';
+                    uploadDoc_status2.value = '';
+                    document1FileNameDisplay.classList.add('hidden');
+                    document1DownloadLink.classList.add('hidden');
+                    document2FileNameDisplay.classList.add('hidden');
+                    document2DownloadLink.classList.add('hidden');
                 }
             } catch (error) {
                 console.error("Error loading document upload status: ", error);
