@@ -1,6 +1,0 @@
-{
-  "rewrites": [
-    { "source": "/upload-to-drive", "destination": "/api/upload-to-drive" },
-    { "source": "/upload-to-drive/exchange-code", "destination": "/api/exchange-code" }
-  ]
-}
