@@ -12,6 +12,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <!-- Supabase SDK -->
+    <!-- Pastikan ini dimuat sebelum skrip kustom Anda -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
@@ -1002,7 +1003,10 @@
     const SUPABASE_URL = 'https://rmeoiuddtkerhagytisa.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJtZW9pdWRkdGtlcmhhZ3l0aXNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgyNTIzMzMsImV4cCI6MjA3MzgyODMzM30.OYsklW59sBG5xHP-oEVRu_6unxkuo0aTwJpp2RGUG-w';
 
-    const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Initialize Supabase Client
+    // PERBAIKAN: Menggunakan destructuring untuk createClient
+    const { createClient } = Supabase;
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -1219,27 +1223,27 @@
                 // Upload PDF Dokumen Sebelum Perubahan
                 if (pdfBeforeFile) {
                     const { data, error } = await supabase.storage
-                        .from('monitoring-acc') // Ganti dengan nama bucket Supabase Storage Anda
+                        .from('monitoring-acc') // PERBAIKAN: Menggunakan nama bucket 'monitoring-acc'
                         .upload(`before_change/${poId}_${Date.now()}_${pdfBeforeFile.name}`, pdfBeforeFile, {
                             cacheControl: '3600',
                             upsert: false
                         });
 
                     if (error) throw error;
-                    uploadedBeforeUrl = supabase.storage.from('monitoring-acc').getPublicUrl(data.path).data.publicUrl;
+                    uploadedBeforeUrl = supabase.storage.from('monitoring-acc').getPublicUrl(data.path).data.publicUrl; // PERBAIKAN: Menggunakan nama bucket 'monitoring-acc'
                 }
 
                 // Upload PDF Dokumen Setelah Perubahan
                 if (pdfAfterFile) {
                     const { data, error } = await supabase.storage
-                        .from('monitoring-acc') // Ganti dengan nama bucket Supabase Storage Anda
+                        .from('monitoring-acc') // PERBAIKAN: Menggunakan nama bucket 'monitoring-acc'
                         .upload(`after_change/${poId}_${Date.now()}_${pdfAfterFile.name}`, pdfAfterFile, {
                             cacheControl: '3600',
                             upsert: false
                         });
 
                     if (error) throw error;
-                    uploadedAfterUrl = supabase.storage.from('monitoring-acc').getPublicUrl(data.path).data.publicUrl;
+                    uploadedAfterUrl = supabase.storage.from('monitoring-acc').getPublicUrl(data.path).data.publicUrl; // PERBAIKAN: Menggunakan nama bucket 'monitoring-acc'
                 }
 
                 // Update Firestore with the new PDF URLs
