@@ -11,8 +11,9 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <!-- Google API Client Library (tetap diperlukan jika Anda ingin menggunakan gapi.client untuk hal lain, tapi tidak untuk otentikasi upload) -->
-    <!-- <script src="https://apis.google.com/js/api.js"></script> -->
+    <!-- Google API Client Library & Google Identity Services SDK -->
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://accounts.google.com/gsi/client"></script>
 
     <style>
         /* New Color Palette */
@@ -279,7 +280,7 @@
         .modal-content-enter-active, .modal-content-leave-active {
             /* transition: opacity 0.15s cubic-bezier(0.25, 0.8, 0.25, 1), transform 0.15s cubic-bezier(0.25, 0.8, 0.25, 1); */
         }
-        #monitoringModalContent, #monitoringDetailModalContent, #deleteModalContent, #filterPanelContent, #documentUploadModalContent, #successAlertModalContent {
+        #monitoringModalContent, #monitoringDetailModalContent, #deleteModalContent, #filterPanelContent, #documentUploadModalContent, #successAlertModalContent, #googleAuthModalContent {
             background-color: #ffffff;
             border-radius: 1rem;
             box-shadow: 0 20px 50px var(--shadow-strong);
@@ -320,7 +321,7 @@
         }
 
 
-        #monitoringModalContent h2, #monitoringDetailModalContent h2, #deleteModalContent h2, #filterPanelContent h2, #documentUploadModalContent h2, #successAlertModalContent h2 {
+        #monitoringModalContent h2, #monitoringDetailModalContent h2, #deleteModalContent h2, #filterPanelContent h2, #documentUploadModalContent h2, #successAlertModalContent h2, #googleAuthModal h2 {
             color: var(--text-dark);
             font-weight: 800;
             font-size: 1.75rem; /* Smaller */
@@ -916,6 +917,20 @@
             </div>
         </div>
 
+        <!-- Google Auth Modal -->
+        <div id="googleAuthModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+            <div class="bg-white rounded-xl p-8 w-full max-w-md text-center shadow-2xl modal-content-enter">
+                <h2 class="text-2xl font-bold mb-4 text-gray-900">Google Drive Authorization</h2>
+                <p class="text-gray-700 mb-6">Please authorize your Google account to upload documents to Google Drive.</p>
+                <button id="authorizeGoogleBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105">
+                    Authorize with Google
+                </button>
+                <button type="button" class="mt-4 px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm" onclick="toggleModal('googleAuthModal', false)">
+                    Cancel
+                </button>
+            </div>
+        </div>
+
         <!-- Global Loading Overlay -->
         <div id="global-loading-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-[9999] hidden">
             <div class="spinner"></div>
@@ -936,14 +951,11 @@
 
     // Google Drive API Configuration (Frontend-safe version)
     const GOOGLE_API_CONFIG = {
-        // clientId is still needed for frontend OAuth flow
-        clientId: "484546392348-f0spk1eghjepp9eiafs7n54gs1abqv6v.apps.googleusercontent.com",
-        // clientSecret is REMOVED from frontend
-        // apiKey: "YOUR_GOOGLE_API_KEY", // If you have a separate API key for general Google API access
-        // folderId is still needed to tell the backend where to upload
-        folderId: "1kW04Ox3a7U1JU2zi4UHg_YGeRaQ2ImAK",
-        // Backend URL for upload
-        backendUploadUrl: "http://localhost:3000/upload-to-drive" // Ganti dengan URL backend Anda
+        clientId: "484546392348-f0spk1eghjepp9eiafs7n54gs1abqv6v.apps.googleusercontent.com", // Ganti dengan Client ID Anda dari Google Cloud Console
+        folderId: "1kW04Ox3a7U1JU2zi4UHg_YGeRaQ2ImAK", // Ganti dengan ID folder Google Drive Anda
+        backendUploadUrl: "https://monitoring-github-io-rho.vercel.app/upload-to-drive", // URL endpoint upload di Vercel
+        scopes: 'https://www.googleapis.com/auth/drive.file', // Scope yang dibutuhkan
+        redirectUri: 'https://monitoring-github-io-rho.vercel.app/app4.html' // URL domain Vercel Anda + nama file HTML
     };
 
     // Initialize Firebase
@@ -1031,8 +1043,10 @@
                 changeDescription: document.getElementById('changeDescription').value,
                 changedValue: unformatRupiah(document.getElementById('changedValue').value),
                 // PDF links will be updated separately via the upload modal
-                pdfBeforeChangeLink: document.getElementById('detailPdfBeforeChangeLink').querySelector('a')?.href || '',
-                pdfAfterChangeLink: document.getElementById('detailPdfAfterChangeLink').querySelector('a')?.href || '',
+                // These fields are not directly set by the monitoring form, but by the upload modal
+                // We ensure they exist to prevent errors if not explicitly set during initial creation
+                pdfBeforeChangeLink: '', // Will be updated by upload function
+                pdfAfterChangeLink: '',  // Will be updated by upload function
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
@@ -1058,7 +1072,7 @@
             }
         });
 
-        // Document Upload Button
+        // --- Document Upload Button (di header app4.html) ---
         document.getElementById('documentUploadBtn').addEventListener('click', () => {
             document.getElementById('documentUploadForm').reset();
             document.getElementById('docUpload_monitoringId').value = '';
@@ -1078,13 +1092,12 @@
         document.getElementById('openFilterPanelBtn').addEventListener('click', () => toggleModal('filterPanel', true));
         document.querySelector('#filterPanelContent button.text-gray-500').addEventListener('click', () => toggleModal('filterPanel', false));
         document.querySelector('#filterPanelContent button.bg-blue-600').addEventListener('click', () => {
-            alert('Filters applied! (No actual filter functionality in this template)');
+            // Implement actual filter logic here if needed
             toggleModal('filterPanel', false);
             loadMonitorings(); // Reload with filters
         });
         document.querySelector('#filterPanelContent button.text-gray-600').addEventListener('click', () => {
-            alert('Filters reset! (No actual reset functionality in this template)');
-            // Reset filter dropdowns here if needed
+            // Reset filter dropdowns here
             document.getElementById('filterDocumentType').value = 'all';
             document.getElementById('filterDocumentNumber').value = 'all';
             document.getElementById('filterStartDate').value = '';
@@ -1094,6 +1107,10 @@
 
         // Close Success Alert Modal
         document.querySelector('#successAlertModalContent button').addEventListener('click', () => toggleModal('successAlertModal', false));
+
+        // Close Google Auth Modal (via Cancel button)
+        document.querySelector('#googleAuthModal button[onclick="toggleModal(\'googleAuthModal\', false)"]').addEventListener('click', () => toggleModal('googleAuthModal', false));
+
 
         // --- Global Loading Overlay ---
         function showGlobalLoading() {
@@ -1141,7 +1158,7 @@
             try {
                 let query = monitoringsCollection.orderBy('createdAt', 'desc'); // Order by creation date
 
-                // Apply filters (example, you'll need to implement actual filtering logic)
+                // Apply filters
                 const filterDocType = document.getElementById('filterDocumentType').value;
                 const filterDocNumber = document.getElementById('filterDocumentNumber').value;
                 const filterStartDate = document.getElementById('filterStartDate').value;
@@ -1213,7 +1230,6 @@
             card.setAttribute('data-id', monitoring.id);
 
             const formattedInitialValue = formatRupiah(monitoring.initialValue ? monitoring.initialValue.toString() : '0', 'Rp ');
-            // const formattedChangedValue = formatRupiah(monitoring.changedValue ? monitoring.changedValue.toString() : '0', 'Rp '); // Not displayed on card
 
             card.innerHTML = `
                 <span class="monitoring-card-number">${monitoring.documentNumber || 'N/A'}</span>
@@ -1269,7 +1285,7 @@
                     } else {
                         pdfBeforeLinkElement.textContent = 'Tidak Ada';
                         pdfBeforeLinkElement.removeAttribute('href');
-                        pdfBeforeLinkElement.classList.add('hidden'); // Sembunyikan jika tidak ada link
+                        pdfBeforeLinkElement.classList.add('hidden');
                     }
 
                     const pdfAfterLinkElement = document.getElementById('detailPdfAfterChangeLink').querySelector('a');
@@ -1280,9 +1296,8 @@
                     } else {
                         pdfAfterLinkElement.textContent = 'Tidak Ada';
                         pdfAfterLinkElement.removeAttribute('href');
-                        pdfAfterLinkElement.classList.add('hidden'); // Sembunyikan jika tidak ada link
+                        pdfAfterLinkElement.classList.add('hidden');
                     }
-
 
                     toggleModal('monitoringDetailModal', true);
                 } else {
@@ -1312,14 +1327,6 @@
                     document.getElementById('changeDate').value = data.changeDate || '';
                     document.getElementById('changeDescription').value = data.changeDescription || '';
                     document.getElementById('changedValue').value = formatRupiah(data.changedValue ? data.changedValue.toString() : '0', 'Rp ') || '';
-
-                    // Set PDF links in the upload modal if editing
-                    // This part is tricky because the upload modal is separate.
-                    // For simplicity, we'll just ensure the links are loaded when the upload modal is opened
-                    // after selecting the document.
-                    // If you want to pre-fill the upload modal with current links, you'd need to
-                    // call loadDocumentLinksForUpload(id) when opening the edit modal,
-                    // but that might be confusing as the upload modal is for *new* uploads.
 
                     toggleModal('monitoringModal', true);
                 } else {
@@ -1399,7 +1406,68 @@
             if (currentFilterDocNumber) filterDocumentNumberSelect.value = currentFilterDocNumber;
         }
 
-        // --- Document Upload Modal Logic ---
+        // --- Google Identity Services (GSI) Client Initialization ---
+        let client; // Google Identity Services client
+
+        function initializeGsiClient() {
+            client = google.accounts.oauth2.initCodeClient({
+                client_id: GOOGLE_API_CONFIG.clientId,
+                scope: GOOGLE_API_CONFIG.scopes,
+                redirect_uri: GOOGLE_API_CONFIG.redirectUri,
+                ux_mode: 'popup', // Menggunakan pop-up untuk otorisasi
+                callback: (response) => {
+                    if (response.error) {
+                        console.error('Google OAuth error:', response.error);
+                        alert('Google authorization failed: ' + response.error);
+                        hideGlobalLoading();
+                        toggleModal('googleAuthModal', false);
+                        return;
+                    }
+                    console.log('Authorization code received:', response.code);
+                    sendCodeToBackendForTokenExchange(response.code);
+                },
+                enable_granular_consent: true,
+            });
+        }
+
+        async function sendCodeToBackendForTokenExchange(code) {
+            try {
+                showGlobalLoading();
+                const exchangeEndpoint = `https://monitoring-github-io-rho.vercel.app/upload-to-drive/exchange-code`;
+
+                const response = await fetch(exchangeEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ code, redirectUri: GOOGLE_API_CONFIG.redirectUri })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`Backend token exchange error: ${response.status} - ${errorData.message || 'Unknown error'}`);
+                }
+
+                const result = await response.json();
+                console.log('Tokens exchanged by backend:', result);
+                alert('Google Drive authorized successfully! You can now upload documents.');
+                toggleModal('googleAuthModal', false);
+
+            } catch (error) {
+                console.error("Error exchanging code with backend: ", error);
+                alert("Failed to authorize Google Drive. Please try again.");
+            } finally {
+                hideGlobalLoading();
+            }
+        }
+
+        // Event listener untuk tombol "Authorize with Google" di modal
+        document.getElementById('authorizeGoogleBtn').addEventListener('click', () => {
+            showGlobalLoading();
+            client.requestCode(); // Memulai alur OAuth
+        });
+
+        // --- Document Upload Modal Logic (Autocomplete & Link Loading) ---
         let selectedMonitoringForUpload = null; // This will store the full monitoring object
 
         // Autocomplete for Document Number Search in Upload Modal
@@ -1484,7 +1552,7 @@
             closeAllAutocompleteLists(e.target);
         });
 
-        // Load Document Links when a document is selected
+        // Load Document Links when a document is selected in the upload modal
         async function loadDocumentLinksForUpload(monitoringId, monitoringData) {
             document.getElementById('docUpload_monitoringId').value = monitoringId;
             document.getElementById('selectedDocumentNumberDisplay').textContent = monitoringData.documentNumber;
@@ -1516,30 +1584,6 @@
                 document.getElementById('statusAfterChange').textContent = 'Belum ada file diupload.';
             }
         }
-
-        document.getElementById('loadDocumentUploadBtn').addEventListener('click', async () => {
-            const monitoringId = document.getElementById('docUpload_monitoringId').value;
-            if (monitoringId) {
-                showGlobalLoading();
-                try {
-                    const doc = await monitoringsCollection.doc(monitoringId).get();
-                    if (doc.exists) {
-                        selectedMonitoringForUpload = doc.data();
-                        loadDocumentLinksForUpload(monitoringId, selectedMonitoringForUpload);
-                    } else {
-                        alert('Monitoring not found.');
-                        document.getElementById('selectedDocumentInfo').classList.add('hidden');
-                    }
-                } catch (error) {
-                    console.error("Error loading monitoring for upload: ", error);
-                    alert("Failed to load monitoring for upload.");
-                } finally {
-                    hideGlobalLoading();
-                }
-            } else {
-                alert('Please select a document number first.');
-            }
-        });
 
         // --- Google Drive Upload Logic (calling backend) ---
         async function uploadFileToDrive(file, type) { // type: 'before' or 'after'
@@ -1576,6 +1620,10 @@
 
                 if (!response.ok) {
                     const errorData = await response.json();
+                    if (response.status === 401 || response.status === 403) {
+                        alert('Google Drive authorization required. Please authorize your account.');
+                        toggleModal('googleAuthModal', true); // Tampilkan modal otorisasi
+                    }
                     throw new Error(`Backend upload error: ${response.status} - ${errorData.message || 'Unknown error'}`);
                 }
 
@@ -1599,6 +1647,12 @@
 
                 toggleModal('successAlertModal', true);
                 document.getElementById('successAlertMessage').textContent = `Dokumen ${type === 'before' ? 'Sebelum Perubahan' : 'Setelah Perubahan'} berhasil diupload!`;
+
+                // Refresh the selected monitoring data in the upload modal after successful upload
+                // This ensures the links are updated if the user uploads another file for the same monitoring
+                selectedMonitoringForUpload = { ...selectedMonitoringForUpload, ...updateData };
+                loadDocumentLinksForUpload(monitoringId, selectedMonitoringForUpload);
+
 
             } catch (error) {
                 console.error("Error uploading file: ", error);
@@ -1637,6 +1691,9 @@
         document.getElementById('filterDocumentNumber').addEventListener('focus', function() {
             this.dataset.currentValue = this.value;
         });
+
+        // Panggil inisialisasi GSI saat DOMContentLoaded
+        initializeGsiClient();
     });
 </script>
 </body>
