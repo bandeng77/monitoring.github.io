@@ -11,9 +11,6 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <!-- Google API Client Library & Google Identity Services SDK -->
-    <script src="https://apis.google.com/js/api.js"></script>
-    <script src="https://accounts.google.com/gsi/client"></script>
 
     <style>
         /* New Color Palette */
@@ -280,7 +277,7 @@
         .modal-content-enter-active, .modal-content-leave-active {
             /* transition: opacity 0.15s cubic-bezier(0.25, 0.8, 0.25, 1), transform 0.15s cubic-bezier(0.25, 0.8, 0.25, 1); */
         }
-        #monitoringModalContent, #monitoringDetailModalContent, #deleteModalContent, #filterPanelContent, #documentUploadModalContent, #successAlertModalContent, #googleAuthModalContent {
+        #monitoringModalContent, #monitoringDetailModalContent, #deleteModalContent, #filterPanelContent, #successAlertModalContent, #documentChecklistModalContent {
             background-color: #ffffff;
             border-radius: 1rem;
             box-shadow: 0 20px 50px var(--shadow-strong);
@@ -321,24 +318,24 @@
         }
 
 
-        #monitoringModalContent h2, #monitoringDetailModalContent h2, #deleteModalContent h2, #filterPanelContent h2, #documentUploadModalContent h2, #successAlertModalContent h2, #googleAuthModal h2 {
+        #monitoringModalContent h2, #monitoringDetailModalContent h2, #deleteModalContent h2, #filterPanelContent h2, #successAlertModalContent h2, #documentChecklistModalContent h2 {
             color: var(--text-dark);
             font-weight: 800;
             font-size: 1.75rem; /* Smaller */
             margin-bottom: 1rem; /* Smaller */
         }
-        #monitoringForm label, #documentUploadForm label {
+        #monitoringForm label, #documentChecklistForm label {
             color: var(--text-dark);
             font-weight: 600;
             font-size: 0.75rem; /* Smaller */
             margin-bottom: 0.25rem; /* Smaller */
         }
-        #monitoringForm input, #monitoringForm select, #monitoringForm textarea, #documentUploadForm input, #documentUploadForm select, #documentUploadForm textarea {
+        #monitoringForm input, #monitoringForm select, #monitoringForm textarea, #documentChecklistForm input, #documentChecklistForm select, #documentChecklistForm textarea {
             border-radius: 0.5rem;
             padding: 0.5rem 0.75rem; /* Smaller */
             font-size: 0.85rem; /* Smaller */
         }
-        #monitoringForm textarea, #documentUploadForm textarea { height: 80px; } /* Slightly shorter */
+        #monitoringForm textarea, #documentChecklistForm textarea { height: 80px; } /* Slightly shorter */
 
         /* Detail Grid */
         #monitoringDetailModalContent .detail-grid {
@@ -670,8 +667,8 @@
                     <i class="fas fa-plus-circle mr-2"></i> Add Monitoring
                 </button>
 
-                <button id="documentUploadBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
-                    <i class="fas fa-upload mr-2"></i> Upload Dokumen
+                <button id="documentChecklistBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
+                    <i class="fas fa-clipboard-list mr-2"></i> Document Checklist
                 </button>
 
                 <button id="exportExcelBtn" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
@@ -820,14 +817,6 @@
                                 <p class="font-semibold">Perubahan Nilai Harga:</p>
                                 <p id="detailChangedValue">-</p>
                             </div>
-                            <div class="detail-item">
-                                <p class="font-semibold">PDF Sebelum:</p>
-                                <p id="detailPdfBeforeChangeLink"><a href="#" target="_blank" class="text-blue-600 hover:underline">Lihat</a></p>
-                            </div>
-                            <div class="detail-item">
-                                <p class="font-semibold">PDF Setelah:</p>
-                                <p id="detailPdfAfterChangeLink"><a href="#" target="_blank" class="text-blue-600 hover:underline">Lihat</a></p>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -903,6 +892,159 @@
             </div>
         </div>
 
+        <!-- Document Checklist Modal (unchanged as per request) -->
+        <div id="documentChecklistModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+            <div class="bg-white rounded-xl p-8 w-full max-w-2xl shadow-2xl modal-content-enter" id="documentChecklistModalContent">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900 flex items-center"><i class="fas fa-clipboard-check mr-3 text-gray-500"></i> Document Checklist</h2>
+                    <button class="text-gray-500 hover:text-gray-700 transition duration-200">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <form id="documentChecklistForm">
+                    <!-- PO Number Search for Checklist -->
+                    <div class="mb-6 border-b pb-4 border-gray-200">
+                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="docChecklist_poNumberSearch">Search PO Number</label>
+                        <div class="relative flex items-center">
+                            <input type="text" id="docChecklist_poNumberSearch" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm pr-10" placeholder="Type PO Number...">
+                            <input type="hidden" id="docChecklist_poId" value="">
+                            <div id="docChecklist_poNumberSuggestions" class="autocomplete-items suggestions-list"></div>
+                            <button type="button" id="loadChecklistBtn" class="absolute right-2 top-1/2 -translate-y-1/2 bg-blue-500 text-white rounded-md p-1 text-xs hover:bg-blue-600 transition duration-150">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                        <p id="selectedPoInfo" class="text-sm text-gray-600 mt-2 hidden">Selected PO: <span class="font-medium" id="selectedPoNumberDisplay"></span></p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- Column 1: Documents -->
+                        <div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">OC/OA</label>
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_OC_OA">
+                                    <option value="">Select Status</option>
+                                    <option value="Download">Download</option>
+                                    <option value="Printed">Printed</option>
+                                    <option value="Waiting">Waiting</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">PI</label>
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_PI">
+                                    <option value="">Select Status</option>
+                                    <option value="Download">Download</option>
+                                    <option value="Printed">Printed</option>
+                                    <option value="Waiting">Waiting</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">CI</label>
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_CI">
+                                    <option value="">Select Status</option>
+                                    <option value="Download">Download</option>
+                                    <option value="Printed">Printed</option>
+                                    <option value="Waiting">Waiting</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">PL</label>
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_PL">
+                                    <option value="">Select Status</option>
+                                    <option value="Download">Download</option>
+                                    <option value="Printed">Printed</option>
+                                    <option value="Waiting">Waiting</option>
+                                </select>
+                            </div>
+                        </div>
+                        <!-- Column 2: COO, COC, PIB, SPPB -->
+                        <div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">COO</label>
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_COO">
+                                    <option value="">Select Status</option>
+                                    <option value="Download">Download</option>
+                                    <option value="Printed">Printed</option>
+                                    <option value="Waiting">Waiting</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">COC</label>
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_COC">
+                                    <option value="">Select Status</option>
+                                    <option value="Download">Download</option>
+                                    <option value="Printed">Printed</option>
+                                    <option value="Waiting">Waiting</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">PIB</label>
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_PIB">
+                                    <option value="">Select Status</option>
+                                    <option value="Download">Download</option>
+                                    <option value="Printed">Printed</option>
+                                    <option value="Waiting">Waiting</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">SPPB</label>
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_SPPB">
+                                    <option value="">Select Status</option>
+                                    <option value="Download">Download</option>
+                                    <option value="Printed">Printed</option>
+                                    <option value="Waiting">Waiting</option>
+                                </select>
+                            </div>
+                        </div>
+                        <!-- Column 3: Hardcopy, Softcopy, Prepared By, Order By -->
+                        <div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">Hardcopy</label>
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_Hardcopy">
+                                    <option value="">Select Status</option>
+                                    <option value="Printed">Printed</option>
+                                    <option value="Signed">Signed</option>
+                                    <option value="Waiting">Waiting</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">Softcopy</label>
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_Softcopy">
+                                    <option value="">Select Status</option>
+                                    <option value="Printed">Printed</option>
+                                    <option value="Signed">Signed</option>
+                                    <option value="Waiting">Waiting</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">Prepared By</label>
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_PreparedBy">
+                                    <option value="">Select Name</option>
+                                    <option value="Maida">Maida</option>
+                                    <option value="Rossiana">Rossiana</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-2">Order By</label>
+                                <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" id="docChecklist_OrderBy">
+                                    <option value="">Select Name</option>
+                                    <option value="Maida">Maida</option>
+                                    <option value="Rossiana">Rossiana</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button type="button" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
+                            Cancel
+                        </button>
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105 text-sm">
+                            Save Checklist
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <!-- Success Alert Modal -->
         <div id="successAlertModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
             <div class="bg-white rounded-xl p-8 w-full max-w-sm text-center shadow-2xl modal-content-enter" id="successAlertModalContent">
@@ -913,20 +1055,6 @@
                 <p class="text-gray-700 mb-6" id="successAlertMessage">Operation completed successfully.</p>
                 <button type="button" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105">
                     OK
-                </button>
-            </div>
-        </div>
-
-        <!-- Google Auth Modal -->
-        <div id="googleAuthModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
-            <div class="bg-white rounded-xl p-8 w-full max-w-md text-center shadow-2xl modal-content-enter">
-                <h2 class="text-2xl font-bold mb-4 text-gray-900">Google Drive Authorization</h2>
-                <p class="text-gray-700 mb-6">Please authorize your Google account to upload documents to Google Drive.</p>
-                <button id="authorizeGoogleBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105">
-                    Authorize with Google
-                </button>
-                <button type="button" class="mt-4 px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm" onclick="toggleModal('googleAuthModal', false)">
-                    Cancel
                 </button>
             </div>
         </div>
@@ -949,15 +1077,6 @@
         appId: "1:898707897888:web:8cfe6f77cd784d8c1ec645"
     };
 
-    // Google Drive API Configuration (Frontend-safe version)
-    const GOOGLE_API_CONFIG = {
-        clientId: "484546392348-f0spk1eghjepp9eiafs7n54gs1abqv6v.apps.googleusercontent.com", // Ganti dengan Client ID Anda dari Google Cloud Console
-        folderId: "1kW04Ox3a7U1JU2zi4UHg_YGeRaQ2ImAK", // Ganti dengan ID folder Google Drive Anda
-        backendUploadUrl: "https://monitoring-github-io-rho.vercel.app/upload-to-drive", // URL endpoint upload di Vercel
-        scopes: 'https://www.googleapis.com/auth/drive.file', // Scope yang dibutuhkan
-        redirectUri: 'https://monitoring-github-io-rho.vercel.app/app4.html' // URL domain Vercel Anda + nama file HTML
-    };
-
     // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
@@ -978,7 +1097,7 @@
 
         // --- Currency Formatting Functions ---
         function formatRupiah(angka, prefix) {
-            let number_string = angka.toString().replace(/[^,\d]/g, ''),
+            let number_string = angka.replace(/[^,\d]/g, '').toString(),
                 split = number_string.split(','),
                 sisa = split[0].length % 3,
                 rupiah = split[0].substr(0, sisa),
@@ -994,7 +1113,6 @@
         }
 
         function unformatRupiah(rupiah) {
-            if (!rupiah) return 0;
             return parseInt(rupiah.replace(/[^,\d]/g, '').replace(/\./g, ''));
         }
 
@@ -1042,11 +1160,6 @@
                 changeDate: document.getElementById('changeDate').value,
                 changeDescription: document.getElementById('changeDescription').value,
                 changedValue: unformatRupiah(document.getElementById('changedValue').value),
-                // PDF links will be updated separately via the upload modal
-                // These fields are not directly set by the monitoring form, but by the upload modal
-                // We ensure they exist to prevent errors if not explicitly set during initial creation
-                pdfBeforeChangeLink: '', // Will be updated by upload function
-                pdfAfterChangeLink: '',  // Will be updated by upload function
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
@@ -1072,32 +1185,28 @@
             }
         });
 
-        // --- Document Upload Button (di header app4.html) ---
-        document.getElementById('documentUploadBtn').addEventListener('click', () => {
-            document.getElementById('documentUploadForm').reset();
-            document.getElementById('docUpload_monitoringId').value = '';
-            document.getElementById('selectedDocumentInfo').classList.add('hidden');
-            document.getElementById('selectedDocumentNumberDisplay').textContent = '';
-            document.getElementById('statusBeforeChange').textContent = '';
-            document.getElementById('statusAfterChange').textContent = '';
-            document.getElementById('linkBeforeChange').classList.add('hidden');
-            document.getElementById('linkAfterChange').classList.add('hidden');
-            toggleModal('documentUploadModal', true);
+        // Document Checklist Button (unchanged functionality)
+        document.getElementById('documentChecklistBtn').addEventListener('click', () => toggleModal('documentChecklistModal', true));
+        document.querySelector('#documentChecklistModalContent button[type="button"]').addEventListener('click', () => toggleModal('documentChecklistModal', false));
+        document.getElementById('documentChecklistForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            alert('Document Checklist submitted! (No actual save functionality in this template)');
+            toggleModal('documentChecklistModal', false);
+            toggleModal('successAlertModal', true);
+            document.getElementById('successAlertMessage').textContent = 'Document Checklist submitted successfully!';
         });
-
-        // Close Document Upload Modal
-        document.querySelector('#documentUploadModalContent button[type="button"]').addEventListener('click', () => toggleModal('documentUploadModal', false));
 
         // Filter Panel Button
         document.getElementById('openFilterPanelBtn').addEventListener('click', () => toggleModal('filterPanel', true));
         document.querySelector('#filterPanelContent button.text-gray-500').addEventListener('click', () => toggleModal('filterPanel', false));
         document.querySelector('#filterPanelContent button.bg-blue-600').addEventListener('click', () => {
-            // Implement actual filter logic here if needed
+            alert('Filters applied! (No actual filter functionality in this template)');
             toggleModal('filterPanel', false);
             loadMonitorings(); // Reload with filters
         });
         document.querySelector('#filterPanelContent button.text-gray-600').addEventListener('click', () => {
-            // Reset filter dropdowns here
+            alert('Filters reset! (No actual reset functionality in this template)');
+            // Reset filter dropdowns here if needed
             document.getElementById('filterDocumentType').value = 'all';
             document.getElementById('filterDocumentNumber').value = 'all';
             document.getElementById('filterStartDate').value = '';
@@ -1107,10 +1216,6 @@
 
         // Close Success Alert Modal
         document.querySelector('#successAlertModalContent button').addEventListener('click', () => toggleModal('successAlertModal', false));
-
-        // Close Google Auth Modal (via Cancel button)
-        document.querySelector('#googleAuthModal button[onclick="toggleModal(\'googleAuthModal\', false)"]').addEventListener('click', () => toggleModal('googleAuthModal', false));
-
 
         // --- Global Loading Overlay ---
         function showGlobalLoading() {
@@ -1158,7 +1263,7 @@
             try {
                 let query = monitoringsCollection.orderBy('createdAt', 'desc'); // Order by creation date
 
-                // Apply filters
+                // Apply filters (example, you'll need to implement actual filtering logic)
                 const filterDocType = document.getElementById('filterDocumentType').value;
                 const filterDocNumber = document.getElementById('filterDocumentNumber').value;
                 const filterStartDate = document.getElementById('filterStartDate').value;
@@ -1182,12 +1287,12 @@
 
                 const filteredMonitorings = monitorings.filter(monitoring => {
                     const matchesSearch = searchTerm === '' ||
-                                          (monitoring.documentType && monitoring.documentType.toLowerCase().includes(searchTerm)) ||
-                                          (monitoring.documentNumber && monitoring.documentNumber.toLowerCase().includes(searchTerm)) ||
-                                          (monitoring.documentDescription && monitoring.documentDescription.toLowerCase().includes(searchTerm));
+                                          monitoring.documentType.toLowerCase().includes(searchTerm) ||
+                                          monitoring.documentNumber.toLowerCase().includes(searchTerm) ||
+                                          monitoring.documentDescription.toLowerCase().includes(searchTerm);
 
-                    const matchesDate = (!filterStartDate || (monitoring.documentDate && monitoring.documentDate >= filterStartDate)) &&
-                                        (!filterEndDate || (monitoring.documentDate && monitoring.documentDate <= filterEndDate));
+                    const matchesDate = (!filterStartDate || monitoring.documentDate >= filterStartDate) &&
+                                        (!filterEndDate || monitoring.documentDate <= filterEndDate);
 
                     return matchesSearch && matchesDate;
                 });
@@ -1229,14 +1334,15 @@
             card.className = 'deal-card relative w-full sm:w-1/2 lg:w-1/4'; // Adjust width for responsiveness
             card.setAttribute('data-id', monitoring.id);
 
-            const formattedInitialValue = formatRupiah(monitoring.initialValue ? monitoring.initialValue.toString() : '0', 'Rp ');
+            const formattedInitialValue = formatRupiah(monitoring.initialValue.toString(), 'Rp ');
+            const formattedChangedValue = formatRupiah(monitoring.changedValue.toString(), 'Rp ');
 
             card.innerHTML = `
-                <span class="monitoring-card-number">${monitoring.documentNumber || 'N/A'}</span>
-                <h3 class="text-lg font-bold text-gray-900 mb-2">${monitoring.documentType || 'N/A'}</h3>
+                <span class="monitoring-card-number">${monitoring.documentNumber}</span>
+                <h3 class="text-lg font-bold text-gray-900 mb-2">${monitoring.documentType}</h3>
                 <div class="deal-details">
                     <p><i class="fas fa-calendar-alt"></i> ${monitoring.documentDate || 'N/A'}</p>
-                    <p><i class="fas fa-money-bill-wave"></i> Nilai Awal: ${formattedInitialValue}</p>
+                    <p><i class="fas fa-money-bill-wave"></i> Nilai Awal: ${formattedInitialValue || 'Rp 0'}</p>
                     <p><i class="fas fa-file-alt"></i> Deskripsi: ${monitoring.documentDescription || 'N/A'}</p>
                 </div>
                 <div class="deal-footer">
@@ -1272,32 +1378,10 @@
                     document.getElementById('detailDocumentNumber').textContent = data.documentNumber || '-';
                     document.getElementById('detailDocumentDate').textContent = data.documentDate || '-';
                     document.getElementById('detailDocumentDescription').textContent = data.documentDescription || '-';
-                    document.getElementById('detailInitialValue').textContent = formatRupiah(data.initialValue ? data.initialValue.toString() : '0', 'Rp ') || 'Rp 0';
+                    document.getElementById('detailInitialValue').textContent = formatRupiah(data.initialValue.toString(), 'Rp ') || 'Rp 0';
                     document.getElementById('detailChangeDate').textContent = data.changeDate || '-';
                     document.getElementById('detailChangeDescription').textContent = data.changeDescription || '-';
-                    document.getElementById('detailChangedValue').textContent = formatRupiah(data.changedValue ? data.changedValue.toString() : '0', 'Rp ') || 'Rp 0';
-
-                    const pdfBeforeLinkElement = document.getElementById('detailPdfBeforeChangeLink').querySelector('a');
-                    if (data.pdfBeforeChangeLink) {
-                        pdfBeforeLinkElement.href = data.pdfBeforeChangeLink;
-                        pdfBeforeLinkElement.textContent = 'Lihat Dokumen';
-                        pdfBeforeLinkElement.classList.remove('hidden');
-                    } else {
-                        pdfBeforeLinkElement.textContent = 'Tidak Ada';
-                        pdfBeforeLinkElement.removeAttribute('href');
-                        pdfBeforeLinkElement.classList.add('hidden');
-                    }
-
-                    const pdfAfterLinkElement = document.getElementById('detailPdfAfterChangeLink').querySelector('a');
-                    if (data.pdfAfterChangeLink) {
-                        pdfAfterLinkElement.href = data.pdfAfterChangeLink;
-                        pdfAfterLinkElement.textContent = 'Lihat Dokumen';
-                        pdfAfterLinkElement.classList.remove('hidden');
-                    } else {
-                        pdfAfterLinkElement.textContent = 'Tidak Ada';
-                        pdfAfterLinkElement.removeAttribute('href');
-                        pdfAfterLinkElement.classList.add('hidden');
-                    }
+                    document.getElementById('detailChangedValue').textContent = formatRupiah(data.changedValue.toString(), 'Rp ') || 'Rp 0';
 
                     toggleModal('monitoringDetailModal', true);
                 } else {
@@ -1323,10 +1407,10 @@
                     document.getElementById('documentNumber').value = data.documentNumber || '';
                     document.getElementById('documentDate').value = data.documentDate || '';
                     document.getElementById('documentDescription').value = data.documentDescription || '';
-                    document.getElementById('initialValue').value = formatRupiah(data.initialValue ? data.initialValue.toString() : '0', 'Rp ') || '';
+                    document.getElementById('initialValue').value = formatRupiah(data.initialValue.toString(), 'Rp ') || '';
                     document.getElementById('changeDate').value = data.changeDate || '';
                     document.getElementById('changeDescription').value = data.changeDescription || '';
-                    document.getElementById('changedValue').value = formatRupiah(data.changedValue ? data.changedValue.toString() : '0', 'Rp ') || '';
+                    document.getElementById('changedValue').value = formatRupiah(data.changedValue.toString(), 'Rp ') || '';
 
                     toggleModal('monitoringModal', true);
                 } else {
@@ -1406,274 +1490,6 @@
             if (currentFilterDocNumber) filterDocumentNumberSelect.value = currentFilterDocNumber;
         }
 
-        // --- Google Identity Services (GSI) Client Initialization ---
-        let client; // Google Identity Services client
-
-        function initializeGsiClient() {
-            client = google.accounts.oauth2.initCodeClient({
-                client_id: GOOGLE_API_CONFIG.clientId,
-                scope: GOOGLE_API_CONFIG.scopes,
-                redirect_uri: GOOGLE_API_CONFIG.redirectUri,
-                ux_mode: 'popup', // Menggunakan pop-up untuk otorisasi
-                callback: (response) => {
-                    if (response.error) {
-                        console.error('Google OAuth error:', response.error);
-                        alert('Google authorization failed: ' + response.error);
-                        hideGlobalLoading();
-                        toggleModal('googleAuthModal', false);
-                        return;
-                    }
-                    console.log('Authorization code received:', response.code);
-                    sendCodeToBackendForTokenExchange(response.code);
-                },
-                enable_granular_consent: true,
-            });
-        }
-
-        async function sendCodeToBackendForTokenExchange(code) {
-            try {
-                showGlobalLoading();
-                const exchangeEndpoint = `https://monitoring-github-io-rho.vercel.app/upload-to-drive/exchange-code`;
-
-                const response = await fetch(exchangeEndpoint, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ code, redirectUri: GOOGLE_API_CONFIG.redirectUri })
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(`Backend token exchange error: ${response.status} - ${errorData.message || 'Unknown error'}`);
-                }
-
-                const result = await response.json();
-                console.log('Tokens exchanged by backend:', result);
-                alert('Google Drive authorized successfully! You can now upload documents.');
-                toggleModal('googleAuthModal', false);
-
-            } catch (error) {
-                console.error("Error exchanging code with backend: ", error);
-                alert("Failed to authorize Google Drive. Please try again.");
-            } finally {
-                hideGlobalLoading();
-            }
-        }
-
-        // Event listener untuk tombol "Authorize with Google" di modal
-        document.getElementById('authorizeGoogleBtn').addEventListener('click', () => {
-            showGlobalLoading();
-            client.requestCode(); // Memulai alur OAuth
-        });
-
-        // --- Document Upload Modal Logic (Autocomplete & Link Loading) ---
-        let selectedMonitoringForUpload = null; // This will store the full monitoring object
-
-        // Autocomplete for Document Number Search in Upload Modal
-        const docUploadSearchInput = document.getElementById('docUpload_documentNumberSearch');
-        const docUploadSuggestionsDiv = document.getElementById('docUpload_documentNumberSuggestions');
-        let currentAutocompleteFocus = -1;
-
-        docUploadSearchInput.addEventListener('input', async function() {
-            const val = this.value;
-            closeAllAutocompleteLists(docUploadSuggestionsDiv);
-            if (!val) { return false; }
-            currentAutocompleteFocus = -1;
-
-            const snapshot = await monitoringsCollection.orderBy('documentNumber').startAt(val).endAt(val + '\uf8ff').limit(10).get();
-            const suggestions = [];
-            snapshot.forEach(doc => {
-                suggestions.push({ id: doc.id, number: doc.data().documentNumber, data: doc.data() });
-            });
-
-            if (suggestions.length === 0) return false;
-
-            suggestions.forEach((item, index) => {
-                const div = document.createElement('div');
-                div.innerHTML = "<strong>" + item.number.substr(0, val.length) + "</strong>";
-                div.innerHTML += item.number.substr(val.length);
-                div.innerHTML += "<input type='hidden' value='" + item.number + "' data-id='" + item.id + "'>";
-                div.addEventListener('click', function() {
-                    docUploadSearchInput.value = this.getElementsByTagName("input")[0].value;
-                    const monitoringId = this.getElementsByTagName("input")[0].dataset.id;
-                    document.getElementById('docUpload_monitoringId').value = monitoringId;
-                    document.getElementById('selectedDocumentNumberDisplay').textContent = docUploadSearchInput.value;
-                    document.getElementById('selectedDocumentInfo').classList.remove('hidden');
-                    closeAllAutocompleteLists(docUploadSuggestionsDiv);
-                    // Find the full monitoring object from suggestions
-                    selectedMonitoringForUpload = suggestions.find(s => s.id === monitoringId).data;
-                    loadDocumentLinksForUpload(monitoringId, selectedMonitoringForUpload);
-                });
-                docUploadSuggestionsDiv.appendChild(div);
-            });
-        });
-
-        docUploadSearchInput.addEventListener('keydown', function(e) {
-            let x = docUploadSuggestionsDiv.getElementsByTagName("div");
-            if (x) x = x;
-            if (e.keyCode == 40) { // Arrow Down
-                currentAutocompleteFocus++;
-                addActive(x);
-            } else if (e.keyCode == 38) { // Arrow Up
-                currentAutocompleteFocus--;
-                addActive(x);
-            } else if (e.keyCode == 13) { // Enter
-                e.preventDefault();
-                if (currentAutocompleteFocus > -1) {
-                    if (x) x[currentAutocompleteFocus].click();
-                }
-            }
-        });
-
-        function addActive(x) {
-            if (!x) return false;
-            removeActive(x);
-            if (currentAutocompleteFocus >= x.length) currentAutocompleteFocus = 0;
-            if (currentAutocompleteFocus < 0) currentAutocompleteFocus = (x.length - 1);
-            x[currentAutocompleteFocus].classList.add("autocomplete-active");
-        }
-
-        function removeActive(x) {
-            for (let i = 0; i < x.length; i++) {
-                x[i].classList.remove("autocomplete-active");
-            }
-        }
-
-        function closeAllAutocompleteLists(elmnt) {
-            const x = document.getElementsByClassName("autocomplete-items");
-            for (let i = 0; i < x.length; i++) {
-                if (elmnt != x[i] && elmnt != docUploadSearchInput) {
-                    x[i].parentNode.removeChild(x[i]);
-                }
-            }
-        }
-        document.addEventListener("click", function (e) {
-            closeAllAutocompleteLists(e.target);
-        });
-
-        // Load Document Links when a document is selected in the upload modal
-        async function loadDocumentLinksForUpload(monitoringId, monitoringData) {
-            document.getElementById('docUpload_monitoringId').value = monitoringId;
-            document.getElementById('selectedDocumentNumberDisplay').textContent = monitoringData.documentNumber;
-            document.getElementById('selectedDocumentInfo').classList.remove('hidden');
-
-            // Update "Before Change" link
-            const linkBeforeChange = document.getElementById('linkBeforeChange');
-            const linkBeforeChangeAnchor = linkBeforeChange.querySelector('a');
-            if (monitoringData.pdfBeforeChangeLink) {
-                linkBeforeChangeAnchor.href = monitoringData.pdfBeforeChangeLink;
-                linkBeforeChange.classList.remove('hidden');
-                document.getElementById('statusBeforeChange').textContent = 'File sudah diupload.';
-            } else {
-                linkBeforeChange.classList.add('hidden');
-                linkBeforeChangeAnchor.removeAttribute('href');
-                document.getElementById('statusBeforeChange').textContent = 'Belum ada file diupload.';
-            }
-
-            // Update "After Change" link
-            const linkAfterChange = document.getElementById('linkAfterChange');
-            const linkAfterChangeAnchor = linkAfterChange.querySelector('a');
-            if (monitoringData.pdfAfterChangeLink) {
-                linkAfterChangeAnchor.href = monitoringData.pdfAfterChangeLink;
-                linkAfterChange.classList.remove('hidden');
-                document.getElementById('statusAfterChange').textContent = 'File sudah diupload.';
-            } else {
-                linkAfterChange.classList.add('hidden');
-                linkAfterChangeAnchor.removeAttribute('href');
-                document.getElementById('statusAfterChange').textContent = 'Belum ada file diupload.';
-            }
-        }
-
-        // --- Google Drive Upload Logic (calling backend) ---
-        async function uploadFileToDrive(file, type) { // type: 'before' or 'after'
-            const monitoringId = document.getElementById('docUpload_monitoringId').value;
-            if (!monitoringId || !selectedMonitoringForUpload) {
-                alert('Please select a document first before uploading.');
-                return;
-            }
-            if (!file) {
-                alert('Please select a PDF file to upload.');
-                return;
-            }
-
-            showGlobalLoading();
-            const statusElement = type === 'before' ? document.getElementById('statusBeforeChange') : document.getElementById('statusAfterChange');
-            const linkElement = type === 'before' ? document.getElementById('linkBeforeChange') : document.getElementById('linkAfterChange');
-            const linkAnchor = linkElement.querySelector('a');
-
-            statusElement.textContent = 'Uploading...';
-            linkElement.classList.add('hidden');
-
-            try {
-                const fileName = `${selectedMonitoringForUpload.documentNumber}_${type === 'before' ? 'SebelumPerubahan' : 'SetelahPerubahan'}_${file.name}`;
-
-                const formData = new FormData();
-                formData.append('pdfFile', file); // 'pdfFile' should match the field name in multer config on backend
-                formData.append('fileName', fileName);
-                formData.append('folderId', GOOGLE_API_CONFIG.folderId); // Pass folderId to backend
-
-                const response = await fetch(GOOGLE_API_CONFIG.backendUploadUrl, {
-                    method: 'POST',
-                    body: formData // FormData handles Content-Type automatically
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    if (response.status === 401 || response.status === 403) {
-                        alert('Google Drive authorization required. Please authorize your account.');
-                        toggleModal('googleAuthModal', true); // Tampilkan modal otorisasi
-                    }
-                    throw new Error(`Backend upload error: ${response.status} - ${errorData.message || 'Unknown error'}`);
-                }
-
-                const result = await response.json();
-                console.log('File uploaded via backend:', result);
-
-                const webViewLink = result.webViewLink;
-
-                // Update Firestore with the link
-                const updateData = {};
-                if (type === 'before') {
-                    updateData.pdfBeforeChangeLink = webViewLink;
-                } else {
-                    updateData.pdfAfterChangeLink = webViewLink;
-                }
-                await monitoringsCollection.doc(monitoringId).update(updateData);
-
-                statusElement.textContent = 'Upload successful!';
-                linkAnchor.href = webViewLink;
-                linkElement.classList.remove('hidden');
-
-                toggleModal('successAlertModal', true);
-                document.getElementById('successAlertMessage').textContent = `Dokumen ${type === 'before' ? 'Sebelum Perubahan' : 'Setelah Perubahan'} berhasil diupload!`;
-
-                // Refresh the selected monitoring data in the upload modal after successful upload
-                // This ensures the links are updated if the user uploads another file for the same monitoring
-                selectedMonitoringForUpload = { ...selectedMonitoringForUpload, ...updateData };
-                loadDocumentLinksForUpload(monitoringId, selectedMonitoringForUpload);
-
-
-            } catch (error) {
-                console.error("Error uploading file: ", error);
-                statusElement.textContent = `Upload failed: ${error.message}`;
-                alert("Failed to upload document. Please ensure backend is running and authenticated, then try again.");
-            } finally {
-                hideGlobalLoading();
-            }
-        }
-
-        document.getElementById('uploadBeforeChangeBtn').addEventListener('click', () => {
-            const fileInput = document.getElementById('pdfBeforeChange');
-            uploadFileToDrive(fileInput.files[0], 'before');
-        });
-
-        document.getElementById('uploadAfterChangeBtn').addEventListener('click', () => {
-            const fileInput = document.getElementById('pdfAfterChange');
-            uploadFileToDrive(fileInput.files[0], 'after');
-        });
-
-
         // Initial load of monitorings
         loadMonitorings();
 
@@ -1691,9 +1507,6 @@
         document.getElementById('filterDocumentNumber').addEventListener('focus', function() {
             this.dataset.currentValue = this.value;
         });
-
-        // Panggil inisialisasi GSI saat DOMContentLoaded
-        initializeGsiClient();
     });
 </script>
 </body>
