@@ -4,15 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Monitoring Dokumen - Genetek</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- Library for Export Excel -->
-    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <!-- Supabase SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Tailwind CSS (biasanya diletakkan di head) -->
+    <script src="https://cdn.tailwindcss.com"></script>
 
     <style>
         /* New Color Palette */
@@ -852,7 +846,7 @@
             <div class="bg-white rounded-xl p-8 w-full max-w-2xl shadow-2xl modal-content-enter" id="filterPanelContent">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-xl sm:text-2xl font-bold text-gray-900 flex items-center"><i class="fas fa-filter mr-3 text-gray-500"></i> Filter Monitorings</h2>
-                    <button type="button" id="closeFilterPanelBtn" class="text-gray-500 hover:text-gray-700 transition duration-200">
+                    <button type="button" class="text-gray-500 hover:text-gray-700 transition duration-200" id="closeFilterPanelBtn">
                         <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
@@ -964,6 +958,13 @@
 
     </div>
 
+<!-- Pindahkan semua skrip ke akhir body untuk memastikan semua elemen DOM dan SDK eksternal dimuat -->
+<!-- Gunakan atribut 'defer' untuk skrip yang tidak perlu memblokir rendering, tetapi tetap dieksekusi sesuai urutan -->
+<script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js" defer></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js" defer></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+
 <script>
     // Firebase Configuration
     const firebaseConfig = {
@@ -988,9 +989,17 @@
     const SUPABASE_BUCKET_NAME = 'monitoring-acc';
     const SUPABASE_STORAGE_URL = 'https://rmeoiuddtkerhagytisa.supabase.co/storage/v1/object/public/monitoring-acc/';
 
-    document.addEventListener('DOMContentLoaded', function() {
-        // Inisialisasi klien Supabase di sini, memastikan SDK sudah dimuat
-        const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Gunakan window.onload untuk memastikan semua skrip eksternal (termasuk Supabase) sudah dimuat
+    window.onload = function() {
+        // Pastikan Supabase tersedia sebelum inisialisasi
+        if (typeof Supabase !== 'undefined' && Supabase.createClient) {
+            const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            console.log("Supabase client initialized successfully."); // Debugging
+        } else {
+            console.error("Supabase SDK not loaded or not available.");
+            alert("Terjadi masalah saat memuat layanan Supabase. Mohon coba lagi atau periksa koneksi internet Anda.");
+            return; // Hentikan eksekusi jika Supabase tidak tersedia
+        }
 
         // Generic function to toggle modal visibility
         function toggleModal(modalId, show) {
@@ -1671,7 +1680,7 @@
         document.getElementById('filterDocumentNumber').addEventListener('change', loadMonitorings);
         document.getElementById('filterStartDate').addEventListener('change', loadMonitorings);
         document.getElementById('filterEndDate').addEventListener('change', loadMonitorings);
-    });
+    }; // End of window.onload
 </script>
 </body>
 </html>
