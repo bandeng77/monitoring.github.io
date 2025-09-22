@@ -823,10 +823,37 @@
                     </div>
                 </div>
 
-                <div class="flex justify-end space-x-3 mt-6">
-                    <button type="button" id="closeMonitoringDetailBtn" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
-                        Close
+                <!-- Document Uploads Section -->
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">Dokumen Terunggah</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="detail-item" id="detailDocument1Upload">
+                            <p class="font-semibold">Dokumen 1:</p>
+                            <p id="detailDocument1FileName">-</p>
+                            <a id="detailDocument1DownloadLink" href="#" target="_blank" class="text-blue-600 hover:underline text-sm mt-1 hidden">
+                                <i class="fas fa-file-pdf mr-1"></i> Lihat Dokumen 1
+                            </a>
+                        </div>
+                        <div class="detail-item" id="detailDocument2Upload">
+                            <p class="font-semibold">Dokumen 2:</p>
+                            <p id="detailDocument2FileName">-</p>
+                            <a id="detailDocument2DownloadLink" href="#" target="_blank" class="text-blue-600 hover:underline text-sm mt-1 hidden">
+                                <i class="fas fa-file-pdf mr-1"></i> Lihat Dokumen 2
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center mt-6">
+                    <!-- New button for viewing PDF (aligned left) -->
+                    <button type="button" id="viewPdfBtn" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition duration-200 ease-in-out transform hover:scale-105 text-sm hidden">
+                        <i class="fas fa-file-pdf mr-2"></i> View All PDFs
                     </button>
+                    <div class="flex space-x-3">
+                        <button type="button" id="closeMonitoringDetailBtn" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
+                            Close
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1521,6 +1548,8 @@
             showGlobalLoading();
             try {
                 const doc = await monitoringsCollection.doc(id).get();
+                const uploadDoc = await documentUploadsCollection.doc(id).get(); // Fetch document upload status
+
                 if (doc.exists) {
                     const data = doc.data();
                     document.getElementById('detailDocumentType').textContent = data.documentType || '-';
@@ -1531,6 +1560,62 @@
                     document.getElementById('detailChangeDate').textContent = data.changeDate || '-';
                     document.getElementById('detailChangeDescription').textContent = data.changeDescription || '-';
                     document.getElementById('detailChangedValue').textContent = formatRupiah(data.changedValue, 'Rp ') || 'Rp 0';
+
+                    // --- Handle Document Uploads Display ---
+                    const detailDocument1FileNameDisplay = document.getElementById('detailDocument1FileName');
+                    const detailDocument1DownloadLink = document.getElementById('detailDocument1DownloadLink');
+                    const detailDocument2FileNameDisplay = document.getElementById('detailDocument2FileName');
+                    const detailDocument2DownloadLink = document.getElementById('detailDocument2DownloadLink');
+                    const viewPdfBtn = document.getElementById('viewPdfBtn');
+
+                    // Reset display elements
+                    detailDocument1FileNameDisplay.textContent = '-';
+                    detailDocument1FileNameDisplay.classList.remove('hidden'); // Ensure it's visible to show '-'
+                    detailDocument1DownloadLink.classList.add('hidden');
+                    detailDocument1DownloadLink.removeAttribute('href');
+
+                    detailDocument2FileNameDisplay.textContent = '-';
+                    detailDocument2FileNameDisplay.classList.remove('hidden'); // Ensure it's visible to show '-'
+                    detailDocument2DownloadLink.classList.add('hidden');
+                    detailDocument2DownloadLink.removeAttribute('href');
+
+                    viewPdfBtn.classList.add('hidden'); // Hide "View All PDFs" button by default
+
+                    let hasUploadedDocuments = false;
+                    const pdfLinks = [];
+
+                    if (uploadDoc.exists) {
+                        const uploadData = uploadDoc.data();
+
+                        // Document 1
+                        if (uploadData.document1FileName && uploadData.document1FileId && uploadData.document1Url) {
+                            detailDocument1FileNameDisplay.textContent = uploadData.document1FileName;
+                            detailDocument1DownloadLink.href = uploadData.document1Url;
+                            detailDocument1DownloadLink.classList.remove('hidden');
+                            hasUploadedDocuments = true;
+                            pdfLinks.push(uploadData.document1Url);
+                        }
+
+                        // Document 2
+                        if (uploadData.document2FileName && uploadData.document2FileId && uploadData.document2Url) {
+                            detailDocument2FileNameDisplay.textContent = uploadData.document2FileName;
+                            detailDocument2DownloadLink.href = uploadData.document2Url;
+                            detailDocument2DownloadLink.classList.remove('hidden');
+                            hasUploadedDocuments = true;
+                            pdfLinks.push(uploadData.document2Url);
+                        }
+                    }
+
+                    // Show "View All PDFs" button if any document is uploaded
+                    if (hasUploadedDocuments) {
+                        viewPdfBtn.classList.remove('hidden');
+                        // Set event listener for "View All PDFs" button
+                        viewPdfBtn.onclick = () => {
+                            pdfLinks.forEach(link => {
+                                window.open(link, '_blank');
+                            });
+                        };
+                    }
 
                     toggleModal('monitoringDetailModal', true);
                 } else {
