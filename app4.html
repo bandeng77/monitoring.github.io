@@ -4,9 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Monitoring Dokumen - Genetek</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- Tailwind CSS (biasanya diletakkan di head) -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Library for Export Excel -->
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <!-- Appwrite SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/appwrite@11.0.0"></script>
 
     <style>
         /* New Color Palette */
@@ -829,7 +835,7 @@
         <div id="deleteModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
             <div class="bg-white rounded-xl p-8 w-full max-w-sm shadow-2xl modal-content-enter" id="deleteModalContent">
                 <h2 class="text-xl font-bold mb-4 text-gray-900">Delete Confirmation</h2>
-                <p class="text-gray-700 mb-6 text-sm">Are you sure you want to delete "<span id="monitoringToDeleteName" class="font-semibold"></span>"? This action cannot be undone.</p>
+                <p class="text-gray-700 mb-6 text-sm">Are you sure you want to delete "<span id="dealToDeleteName" class="font-semibold"></span>"? This action cannot be undone.</p>
                 <div class="flex justify-end space-x-3">
                     <button type="button" id="cancelDeleteBtn" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
                         Cancel
@@ -846,7 +852,7 @@
             <div class="bg-white rounded-xl p-8 w-full max-w-2xl shadow-2xl modal-content-enter" id="filterPanelContent">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-xl sm:text-2xl font-bold text-gray-900 flex items-center"><i class="fas fa-filter mr-3 text-gray-500"></i> Filter Monitorings</h2>
-                    <button type="button" class="text-gray-500 hover:text-gray-700 transition duration-200" id="closeFilterPanelBtn">
+                    <button type="button" id="closeFilterPanelBtn" class="text-gray-500 hover:text-gray-700 transition duration-200">
                         <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
@@ -954,823 +960,704 @@
         <!-- Global Loading Overlay -->
         <div id="global-loading-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-[9999] hidden">
             <div class="spinner"></div>
-            <p class="text-white text-lg mt-4">Loading...</p> <!-- Added loading text -->
         </div>
 
     </div>
 
-<!-- Pindahkan semua skrip ke akhir body untuk memastikan semua elemen DOM dan SDK eksternal dimuat -->
-<!-- Gunakan atribut 'defer' untuk skrip yang tidak perlu memblokir rendering, tetapi tetap dieksekusi sesuai urutan -->
-<script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js" defer></script>
-
-<!-- Firebase SDKs - Pastikan firebase-app.js pertama, diikuti auth dan firestore -->
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js" defer></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js" defer></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js" defer></script>
-
-<!-- Supabase SDK -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-
 <script>
-    // Firebase Configuration - UPDATED to match app.html's Firebase Project
+    // Firebase Configuration
     const firebaseConfig = {
-        apiKey: "AIzaSyB9s6k2K75vrbe1lWgiu42SAXV_lySHR_NU", // <-- PASTIKAN INI SAMA PERSIS DENGAN app.html
-        authDomain: "monitoring-efk.firebaseapp.com",
-        projectId: "monitoring-efk",
-        storageBucket: "monitoring-efk.firebasestorage.app",
-        messagingSenderId: "1083858508151",
-        appId: "1:1083858508151:web:3d505dec79d715f9cd6972"
+        apiKey: "AIzaSyDWgxJfYKksEoeUF2rK67rAH-arejKawJM",
+        authDomain: "monitoring-acc.firebaseapp.com",
+        projectId: "monitoring-acc",
+        storageBucket: "monitoring-acc.firebasestorage.app",
+        messagingSenderId: "898707897888",
+        appId: "1:898707897888:web:8cfe6f77cd784d8c1ec645"
     };
 
-    // Pindahkan seluruh inisialisasi dan logika aplikasi ke dalam DOMContentLoaded
-    document.addEventListener('DOMContentLoaded', () => {
-        console.log("DOM Content Loaded.");
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const monitoringsCollection = db.collection('monitorings');
+    const purchaseOrdersCollection = db.collection('purchaseOrders'); // Assuming you have a 'purchaseOrders' collection
+    const documentUploadsCollection = db.collection('documentUploads'); // New collection for document upload status
 
-        // Periksa apakah Firebase SDK sudah dimuat
-        if (typeof firebase === 'undefined' || typeof firebase.initializeApp === 'undefined') {
-            console.error("Firebase SDK is not loaded. Please check your internet connection or script tags.");
-            alert("Terjadi masalah saat memuat layanan Firebase. Mohon coba lagi atau periksa koneksi internet Anda.");
-            return; // Hentikan eksekusi jika Firebase tidak tersedia
+    // Appwrite Configuration
+    const client = new Appwrite.Client();
+    client
+        .setEndpoint('https://cloud.appwrite.io/v1') // Your Appwrite Endpoint
+        .setProject('68d0d6eb001dc06a95b3'); // Your Project ID
+
+    const storage = new Appwrite.Storage(client);
+    const database = new Appwrite.Databases(client); // If you plan to use Appwrite Database for document metadata
+    const APPWRITE_DATABASE_ID = '68d0d71600124cfdc86e';
+    const APPWRITE_BUCKET_ID = '68d0d72500025b188805';
+
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Generic function to toggle modal visibility
+        function toggleModal(modalId, show) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                if (show) {
+                    modal.classList.remove('hidden');
+                } else {
+                    modal.classList.add('hidden');
+                }
+            }
         }
 
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const monitoringsCollection = db.collection('monitorings');
-        const documentUploadsCollection = db.collection('documentUploads'); // New collection for document upload status
+        // --- Currency Formatting Functions ---
+        function formatRupiah(angka, prefix) {
+            if (angka === null || angka === undefined || isNaN(angka)) return ''; // Handle null, undefined, NaN
+            let number_string = angka.toString().replace(/[^,\d]/g, ''),
+                split = number_string.split(','),
+                sisa = split[0].length % 3,
+                rupiah = split[0].substr(0, sisa),
+                ribuan = split[0].substr(sisa).match(/\d{3}/gi);
 
-        // Supabase Configuration
-        // CATATAN PENTING: Jika Supabase juga perlu dibagikan antar aplikasi dan terkait dengan proyek Firebase 'monitoring-efk',
-        // pastikan SUPABASE_URL, SUPABASE_ANON_KEY, dan SUPABASE_BUCKET_NAME juga konsisten
-        // di semua aplikasi yang relevan dan mengacu pada bucket Supabase yang sama.
-        // Saat ini, SUPABASE_BUCKET_NAME masih 'monitoring-acc'. Jika ini harus berubah, sesuaikan di sini.
-        const SUPABASE_URL = 'https://rmeoiuddtkerhagytisa.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJtZW9pdWRkdGtlcmhhZ3l0aXNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgyNTIzMzMsImV4cCI6MjA3MzgyODMzM30.OYsklW59sBG5xHP-oEVRu_6unxkuo0aTwJpp2RGUG-w';
-        const SUPABASE_BUCKET_NAME = 'monitoring-acc';
-        const SUPABASE_STORAGE_URL = 'https://rmeoiuddtkerhagytisa.supabase.co/storage/v1/object/public/monitoring-acc/';
+            if (ribuan) {
+                let separator = sisa ? '.' : '';
+                rupiah += separator + ribuan.join('.');
+            }
 
-        // Inisialisasi Supabase client
-        let supabase;
-        if (typeof Supabase !== 'undefined' && Supabase.createClient) {
-            supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            console.log("Supabase client initialized successfully."); // Debugging
-        } else {
-            console.error("Supabase SDK not loaded or not available.");
-            alert("Terjadi masalah saat memuat layanan Supabase. Mohon coba lagi atau periksa koneksi internet Anda.");
-            // Tidak perlu 'return' di sini karena ini bukan fungsi yang akan menghentikan eksekusi skrip secara keseluruhan
+            rupiah = split[1] !== undefined ? rupiah + ',' + split[1] : rupiah;
+            return prefix === undefined ? rupiah : (rupiah ? 'Rp ' + rupiah : '');
         }
 
-        // --- Autentikasi Firebase ---
-        firebase.auth().onAuthStateChanged(user => {
-            if (user) {
-                // User is signed in.
-                console.log("User is signed in:", user.uid);
-                initializeAppFunctions(); // Panggil fungsi utama setelah autentikasi berhasil
-                // Update tombol Logout
-                document.getElementById('authButton').textContent = 'Logout';
-                // Hapus listener placeholder jika ada, lalu tambahkan listener logout yang sebenarnya
-                document.getElementById('authButton').removeEventListener('click', handlePlaceholderLogout);
-                document.getElementById('authButton').addEventListener('click', handleLogout);
-            } else {
-                // User is signed out.
-                console.log("No user is signed in.");
-                alert("Anda harus login untuk mengakses halaman ini.");
-                window.location.href = 'login.html'; // Redirect ke halaman login
+        function unformatRupiah(rupiah) {
+            if (!rupiah) return 0;
+            // Remove "Rp ", dots, and replace comma with dot for proper parsing
+            const cleaned = rupiah.replace('Rp ', '').replace(/\./g, '').replace(/,/g, '.');
+            return parseFloat(cleaned) || 0; // Use parseFloat for decimal values if needed, otherwise parseInt
+        }
+
+        // Apply currency formatting to inputs
+        document.querySelectorAll('.currency-input').forEach(input => {
+            input.addEventListener('keyup', function(e) {
+                this.value = formatRupiah(unformatRupiah(this.value), 'Rp ');
+            });
+            input.addEventListener('blur', function() {
+                if (this.value === 'Rp ' || this.value === '') {
+                    this.value = '';
+                } else {
+                    this.value = formatRupiah(unformatRupiah(this.value), 'Rp ');
+                }
+            });
+            // Initial format if there's a value on load
+            if (input.value) {
+                input.value = formatRupiah(unformatRupiah(input.value), 'Rp ');
             }
         });
 
-        function handlePlaceholderLogout() {
-            // Fungsi ini tidak akan pernah terpanggil jika user sudah login karena listenernya dihapus
-            alert('Logout button clicked! (Placeholder)');
-        }
+        // --- Event Listeners for Modals ---
 
-        function handleLogout() {
-            firebase.auth().signOut().then(() => {
-                alert("Anda telah logout.");
-                window.location.href = 'login.html'; // Redirect ke halaman login setelah logout
-            }).catch((error) => {
-                console.error("Error signing out:", error);
-                alert("Gagal logout. Silakan coba lagi.");
-            });
-        }
+        // Add Monitoring Button
+        document.getElementById('addMonitoringBtn').addEventListener('click', () => {
+            document.getElementById('modalTitle').textContent = 'Add New Monitoring';
+            document.getElementById('monitoringId').value = ''; // Clear ID for new entry
+            document.getElementById('monitoringForm').reset(); // Clear form fields
+            toggleModal('monitoringModal', true);
+        });
 
-        // Fungsi utama untuk menginisialisasi semua event listener dan memuat data
-        function initializeAppFunctions() {
-            // Pastikan Supabase client sudah tersedia sebelum melanjutkan
-            if (!supabase) {
-                console.error("Supabase client is not available. Stopping further execution.");
+        // Close Add/Edit Monitoring Modal (using new ID for cancel button)
+        document.getElementById('cancelMonitoringBtn').addEventListener('click', () => toggleModal('monitoringModal', false));
+
+        // Submit Monitoring Form
+        document.getElementById('monitoringForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            showGlobalLoading();
+
+            const monitoringId = document.getElementById('monitoringId').value;
+            const data = {
+                documentType: document.getElementById('documentType').value,
+                documentNumber: document.getElementById('documentNumber').value,
+                documentDate: document.getElementById('documentDate').value,
+                documentDescription: document.getElementById('documentDescription').value,
+                initialValue: unformatRupiah(document.getElementById('initialValue').value),
+                changeDate: document.getElementById('changeDate').value,
+                changeDescription: document.getElementById('changeDescription').value,
+                changedValue: unformatRupiah(document.getElementById('changedValue').value),
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            try {
+                if (monitoringId) {
+                    // Update existing monitoring
+                    await monitoringsCollection.doc(monitoringId).update(data);
+                    document.getElementById('successAlertMessage').textContent = 'Monitoring updated successfully!';
+                } else {
+                    // Add new monitoring
+                    await monitoringsCollection.add(data);
+                    document.getElementById('successAlertMessage').textContent = 'New monitoring added successfully!';
+                }
+                toggleModal('monitoringModal', false);
+                toggleModal('successAlertModal', true);
+                loadMonitorings(); // Reload list after save
+                fetchAllDocumentNumbers(); // Re-fetch document numbers for autocomplete
+            } catch (error) {
+                console.error("Error saving monitoring: ", error);
+                alert("Failed to save monitoring. Please try again.");
+            } finally {
+                hideGlobalLoading();
+            }
+        });
+
+        // Upload Document Button (formerly Document Checklist)
+        document.getElementById('uploadDocumentBtn').addEventListener('click', () => {
+            document.getElementById('uploadDocumentForm').reset();
+            document.getElementById('uploadDoc_monitoringId').value = ''; // Changed from poId
+            document.getElementById('selectedMonitoringInfo').classList.add('hidden'); // Changed from selectedPoInfo
+            document.getElementById('uploadDoc_documentNumberSuggestions').innerHTML = ''; // Changed from poNumberSuggestions
+            document.getElementById('uploadDoc_document1').value = ''; // Clear file input
+            document.getElementById('uploadDoc_document2').value = ''; // Clear file input
+            document.getElementById('document1FileName').classList.add('hidden');
+            document.getElementById('document1DownloadLink').classList.add('hidden');
+            document.getElementById('document2FileName').classList.add('hidden');
+            document.getElementById('document2DownloadLink').classList.add('hidden');
+            toggleModal('uploadDocumentModal', true);
+        });
+
+        // Close Upload Document Modal
+        document.getElementById('closeUploadDocumentModalBtn').addEventListener('click', () => toggleModal('uploadDocumentModal', false));
+        document.getElementById('cancelUploadDocumentBtn').addEventListener('click', () => toggleModal('uploadDocumentModal', false));
+
+        // Upload Document Form Submission
+        document.getElementById('uploadDocumentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            showGlobalLoading();
+
+            const monitoringId = document.getElementById('uploadDoc_monitoringId').value;
+            const documentNumber = document.getElementById('uploadDoc_documentNumberSearch').value;
+            const document1File = document.getElementById('uploadDoc_document1').files[0];
+            const document2File = document.getElementById('uploadDoc_document2').files[0];
+
+            if (!monitoringId) {
+                alert('Please select a valid Nomor Dokumen from the suggestions.');
+                hideGlobalLoading();
                 return;
             }
 
-            // Generic function to toggle modal visibility
-            function toggleModal(modalId, show) {
-                const modal = document.getElementById(modalId);
-                if (modal) {
-                    if (show) {
-                        modal.classList.remove('hidden');
-                    } else {
-                        modal.classList.add('hidden');
-                    }
-                }
+            if (!document1File && !document2File) {
+                alert('Please upload at least one document.');
+                hideGlobalLoading();
+                return;
             }
 
-            // --- Currency Formatting Functions ---
-            function formatRupiah(angka, prefix) {
-                if (angka === null || angka === undefined || isNaN(angka)) return ''; // Handle null, undefined, NaN
-                let number_string = angka.toString().replace(/[^,\d]/g, ''),
-                    split = number_string.split(','),
-                    sisa = split[0].length % 3,
-                    rupiah = split[0].substr(0, sisa),
-                    ribuan = split[0].substr(sisa).match(/\d{3}/gi);
+            let document1FileId = '';
+            let document2FileId = '';
+            let document1Url = '';
+            let document2Url = '';
 
-                if (ribuan) {
-                    let separator = sisa ? '.' : '';
-                    rupiah += separator + ribuan.join('.');
-                }
-
-                rupiah = split[1] !== undefined ? rupiah + ',' + split[1] : rupiah;
-                return prefix === undefined ? rupiah : (rupiah ? 'Rp ' + rupiah : '');
-            }
-
-            function unformatRupiah(rupiah) {
-                if (!rupiah) return 0;
-                // Remove "Rp ", dots, and replace comma with dot for proper parsing
-                const cleaned = rupiah.replace('Rp ', '').replace(/\./g, '').replace(/,/g, '.');
-                return parseFloat(cleaned) || 0; // Use parseFloat for decimal values if needed, otherwise parseInt
-            }
-
-            // Apply currency formatting to inputs
-            document.querySelectorAll('.currency-input').forEach(input => {
-                input.addEventListener('keyup', function(e) {
-                    this.value = formatRupiah(unformatRupiah(this.value), 'Rp ');
-                });
-                input.addEventListener('blur', function() {
-                    if (this.value === 'Rp ' || this.value === '') {
-                        this.value = '';
-                    } else {
-                        this.value = formatRupiah(unformatRupiah(this.value), 'Rp ');
-                    }
-                });
-                // Initial format if there's a value on load
-                if (input.value) {
-                    input.value = formatRupiah(unformatRupiah(input.value), 'Rp ');
-                }
-            });
-
-            // --- Event Listeners for Modals ---
-
-            // Add Monitoring Button
-            document.getElementById('addMonitoringBtn').addEventListener('click', () => {
-                document.getElementById('modalTitle').textContent = 'Add New Monitoring';
-                document.getElementById('monitoringId').value = ''; // Clear ID for new entry
-                document.getElementById('monitoringForm').reset(); // Clear form fields
-                toggleModal('monitoringModal', true);
-            });
-
-            // Close Add/Edit Monitoring Modal (using new ID for cancel button)
-            document.getElementById('cancelMonitoringBtn').addEventListener('click', () => toggleModal('monitoringModal', false));
-
-            // Submit Monitoring Form
-            document.getElementById('monitoringForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                showGlobalLoading();
-
-                const monitoringId = document.getElementById('monitoringId').value;
-                const initialValueRaw = document.getElementById('initialValue').value;
-                const changedValueRaw = document.getElementById('changedValue').value;
-
-                const initialValueParsed = unformatRupiah(initialValueRaw);
-                const changedValueParsed = unformatRupiah(changedValueRaw);
-
-                // Basic validation for currency inputs
-                if (isNaN(initialValueParsed) || initialValueParsed < 0) {
-                    alert("Nilai Harga Awal harus berupa angka positif.");
-                    hideGlobalLoading();
-                    return;
-                }
-                if (isNaN(changedValueParsed)) { // Changed value can be negative for reduction
-                    alert("Perubahan Nilai Harga harus berupa angka.");
-                    hideGlobalLoading();
-                    return;
-                }
-
-                const data = {
-                    documentType: document.getElementById('documentType').value,
-                    documentNumber: document.getElementById('documentNumber').value,
-                    documentDate: document.getElementById('documentDate').value || null, // Simpan null jika kosong
-                    documentDescription: document.getElementById('documentDescription').value,
-                    initialValue: initialValueParsed,
-                    changeDate: document.getElementById('changeDate').value || null, // Simpan null jika kosong
-                    changeDescription: document.getElementById('changeDescription').value,
-                    changedValue: changedValueParsed,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            try {
+                const updateData = {
+                    documentNumber: documentNumber,
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
 
-                try {
-                    if (monitoringId) {
-                        // Update existing monitoring
-                        await monitoringsCollection.doc(monitoringId).update(data);
-                        document.getElementById('successAlertMessage').textContent = 'Monitoring updated successfully!';
-                    } else {
-                        // Add new monitoring
-                        await monitoringsCollection.add(data);
-                        document.getElementById('successAlertMessage').textContent = 'New monitoring added successfully!';
-                    }
-                    toggleModal('monitoringModal', false);
-                    toggleModal('successAlertModal', true);
-                    loadMonitorings(); // Reload list after save
-                    fetchAllDocumentNumbers(); // Re-fetch document numbers for autocomplete
-                } catch (error) {
-                    console.error("Error saving monitoring: ", error);
-                    alert("Failed to save monitoring. Please try again.");
-                } finally {
-                    hideGlobalLoading();
-                }
-            });
-
-            // Upload Document Button (formerly Document Checklist)
-            document.getElementById('uploadDocumentBtn').addEventListener('click', () => {
-                document.getElementById('uploadDocumentForm').reset();
-                document.getElementById('uploadDoc_monitoringId').value = ''; // Changed from poId
-                document.getElementById('selectedMonitoringInfo').classList.add('hidden'); // Changed from selectedPoInfo
-                document.getElementById('uploadDoc_documentNumberSuggestions').innerHTML = ''; // Changed from poNumberSuggestions
-                document.getElementById('uploadDoc_document1').value = ''; // Clear file input
-                document.getElementById('uploadDoc_document2').value = ''; // Clear file input
-                document.getElementById('document1FileName').classList.add('hidden');
-                document.getElementById('document1DownloadLink').classList.add('hidden');
-                document.getElementById('document2FileName').classList.add('hidden');
-                document.getElementById('document2DownloadLink').classList.add('hidden');
-                toggleModal('uploadDocumentModal', true);
-            });
-
-            // Close Upload Document Modal
-            document.getElementById('closeUploadDocumentModalBtn').addEventListener('click', () => toggleModal('uploadDocumentModal', false));
-            document.getElementById('cancelUploadDocumentBtn').addEventListener('click', () => toggleModal('uploadDocumentModal', false));
-
-            // Upload Document Form Submission
-            document.getElementById('uploadDocumentForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                showGlobalLoading();
-
-                const monitoringId = document.getElementById('uploadDoc_monitoringId').value; // Changed from poId
-                const documentNumber = document.getElementById('uploadDoc_documentNumberSearch').value; // Changed from poNumber
-                const document1File = document.getElementById('uploadDoc_document1').files[0]; // Get file 1
-                const document2File = document.getElementById('uploadDoc_document2').files[0]; // Get file 2
-
-                if (!monitoringId) {
-                    alert('Please select a valid Nomor Dokumen from the suggestions.');
-                    hideGlobalLoading();
-                    return;
+                // Upload Document 1 to Appwrite Storage
+                if (document1File) {
+                    const file1Response = await storage.createFile(
+                        APPWRITE_BUCKET_ID,
+                        Appwrite.ID.unique(), // Generate a unique ID for the file
+                        document1File
+                    );
+                    document1FileId = file1Response.$id;
+                    document1Url = client.getEndpoint() + '/storage/buckets/' + APPWRITE_BUCKET_ID + '/files/' + document1FileId + '/view?project=' + client.config.project;
+                    updateData.document1FileId = document1FileId;
+                    updateData.document1FileName = document1File.name;
+                    updateData.document1Url = document1Url;
                 }
 
-                if (!document1File && !document2File) { // Only check for files, as status selects are removed
-                    alert('Please upload at least one document.');
-                    hideGlobalLoading();
-                    return;
+                // Upload Document 2 to Appwrite Storage
+                if (document2File) {
+                    const file2Response = await storage.createFile(
+                        APPWRITE_BUCKET_ID,
+                        Appwrite.ID.unique(), // Generate a unique ID for the file
+                        document2File
+                    );
+                    document2FileId = file2Response.$id;
+                    document2Url = client.getEndpoint() + '/storage/buckets/' + APPWRITE_BUCKET_ID + '/files/' + document2FileId + '/view?project=' + client.config.project;
+                    updateData.document2FileId = document2FileId;
+                    updateData.document2FileName = document2File.name;
+                    updateData.document2Url = document2Url;
                 }
 
-                let document1Url = '';
-                let document2Url = '';
+                // Store document upload status and URLs in Firebase 'documentUploads' collection
+                const uploadRef = documentUploadsCollection.doc(monitoringId);
+                await uploadRef.set(updateData, { merge: true });
 
-                try {
-                    // Upload Document 1
-                    if (document1File) {
-                        // PATH BARU: Tambahkan 'upload1/' di depan
-                        const filePath = `upload1/${monitoringId}/document1_${Date.now()}_${document1File.name}`;
-                        const { data, error } = await supabase.storage
-                            .from(SUPABASE_BUCKET_NAME)
-                            .upload(filePath, document1File, {
-                                cacheControl: '3600',
-                                upsert: false
-                            });
+                document.getElementById('successAlertMessage').textContent = `Document files for Nomor Dokumen ${documentNumber} saved successfully!`;
+                toggleModal('uploadDocumentModal', false);
+                toggleModal('successAlertModal', true);
+            } catch (error) {
+                console.error("Error saving document upload status or uploading files: ", error);
+                alert(`Failed to save document upload status or upload files. Error: ${error.message}. Please try again.`);
+            } finally {
+                hideGlobalLoading();
+            }
+        });
 
-                        if (error) {
-                            throw error;
-                        }
-                        document1Url = SUPABASE_STORAGE_URL + filePath;
-                    }
-
-                    // Upload Document 2
-                    if (document2File) {
-                        // PATH BARU: Tambahkan 'upload2/' di depan
-                        const filePath = `upload2/${monitoringId}/document2_${Date.now()}_${document2File.name}`;
-                        const { data, error } = await supabase.storage
-                            .from(SUPABASE_BUCKET_NAME)
-                            .upload(filePath, document2File, {
-                                cacheControl: '3600',
-                                upsert: false
-                            });
-
-                        if (error) {
-                            throw error;
-                        }
-                        document2Url = SUPABASE_STORAGE_URL + filePath;
-                    }
-
-                    // Store document upload status and URLs in 'documentUploads' collection
-                    const uploadRef = documentUploadsCollection.doc(monitoringId); // Use monitoringId
-                    const updateData = {
-                        documentNumber: documentNumber, // Use documentNumber
-                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                    };
-
-                    if (document1Url) {
-                        updateData.document1Url = document1Url;
-                        updateData.document1FileName = document1File ? document1File.name : (await uploadRef.get()).data().document1FileName; // Keep old name if no new file
-                    }
-                    if (document2Url) {
-                        updateData.document2Url = document2Url;
-                        updateData.document2FileName = document2File ? document2File.name : (await uploadRef.get()).data().document2FileName; // Keep old name if no new file
-                    }
-
-                    await uploadRef.set(updateData, { merge: true });
-
-                    document.getElementById('successAlertMessage').textContent = `Document files for Nomor Dokumen ${documentNumber} saved successfully!`;
-                    toggleModal('uploadDocumentModal', false);
-                    toggleModal('successAlertModal', true);
-                } catch (error) {
-                    console.error("Error saving document upload status or uploading files: ", error);
-                    alert(`Failed to save document upload status or upload files. Error: ${error.message}. Please try again.`);
-                } finally {
-                    hideGlobalLoading();
-                }
-            });
-
-            // Autocomplete for Document Number Search in Upload Document (Modified for substring search)
-            let allDocumentNumbers = []; // Cache all document numbers for client-side filtering
-            async function fetchAllDocumentNumbers() {
-                try {
-                    const snapshot = await monitoringsCollection.get(); // Fetch all documents
-                    allDocumentNumbers = snapshot.docs.map(doc => ({ id: doc.id, documentNumber: doc.data().documentNumber }));
-                    console.log("Fetched all document numbers:", allDocumentNumbers); // Debugging line
-                } catch (error) {
+        // Autocomplete for Document Number Search in Upload Document (Modified for substring search)
+        let allDocumentNumbers = []; // Cache all document numbers for client-side filtering
+        async function fetchAllDocumentNumbers() {
+            try {
+                const snapshot = await monitoringsCollection.get(); // Fetch all documents
+                allDocumentNumbers = snapshot.docs.map(doc => ({ id: doc.id, documentNumber: doc.data().documentNumber }));
+                console.log("Fetched all document numbers:", allDocumentNumbers); // Debugging line
+            } catch (error) {
                 console.error("Error fetching all document numbers for search: ", error);
-                }
+            }
+        }
+
+        // Call this once on page load
+        fetchAllDocumentNumbers();
+
+        document.getElementById('uploadDoc_documentNumberSearch').addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const suggestionsContainer = document.getElementById('uploadDoc_documentNumberSuggestions');
+            suggestionsContainer.innerHTML = '';
+            document.getElementById('selectedMonitoringInfo').classList.add('hidden');
+            document.getElementById('uploadDoc_monitoringId').value = '';
+
+            if (searchTerm.length < 1) { // Allow search with 1 character
+                return;
             }
 
-            // Call this once on page load (now called after auth)
-            // fetchAllDocumentNumbers();
+            const filteredSuggestions = allDocumentNumbers.filter(doc =>
+                doc.documentNumber && doc.documentNumber.toLowerCase().includes(searchTerm)
+            ).slice(0, 10); // Limit to 10 suggestions
 
-            document.getElementById('uploadDoc_documentNumberSearch').addEventListener('input', function() {
-                const searchTerm = this.value.toLowerCase();
-                const suggestionsContainer = document.getElementById('uploadDoc_documentNumberSuggestions');
-                suggestionsContainer.innerHTML = '';
-                document.getElementById('selectedMonitoringInfo').classList.add('hidden');
-                document.getElementById('uploadDoc_monitoringId').value = '';
+            filteredSuggestions.forEach(doc => {
+                const div = document.createElement('div');
+                div.textContent = doc.documentNumber;
+                div.addEventListener('click', () => {
+                    document.getElementById('uploadDoc_documentNumberSearch').value = doc.documentNumber;
+                    document.getElementById('uploadDoc_monitoringId').value = doc.id;
+                    document.getElementById('selectedDocumentNumberDisplay').textContent = doc.documentNumber;
+                    document.getElementById('selectedMonitoringInfo').classList.remove('hidden');
+                    suggestionsContainer.innerHTML = ''; // Clear suggestions after selection
+                    loadUploadDocumentStatus(doc.id); // Load existing status for this Monitoring
+                });
+                suggestionsContainer.appendChild(div);
+            });
+        });
 
-                if (searchTerm.length < 1) { // Allow search with 1 character
+        // Function to load existing upload document status for a selected Monitoring
+        async function loadUploadDocumentStatus(monitoringId) {
+            try {
+                const uploadDoc = await documentUploadsCollection.doc(monitoringId).get();
+                const document1FileNameDisplay = document.getElementById('document1FileName');
+                const document1DownloadLink = document.getElementById('document1DownloadLink');
+                const document2FileNameDisplay = document.getElementById('document2FileName');
+                const document2DownloadLink = document.getElementById('document2DownloadLink');
+
+                // Reset display elements
+                document1FileNameDisplay.classList.add('hidden');
+                document1DownloadLink.classList.add('hidden');
+                document2FileNameDisplay.classList.add('hidden');
+                document2DownloadLink.classList.add('hidden');
+                document1DownloadLink.removeAttribute('href');
+                document2DownloadLink.removeAttribute('href');
+
+
+                if (uploadDoc.exists) {
+                    const data = uploadDoc.data();
+
+                    // Document 1
+                    if (data.document1FileName && data.document1FileId) {
+                        document1FileNameDisplay.textContent = `File: ${data.document1FileName}`;
+                        document1FileNameDisplay.classList.remove('hidden');
+                        // Construct Appwrite download URL
+                        const downloadUrl1 = client.getEndpoint() + '/storage/buckets/' + APPWRITE_BUCKET_ID + '/files/' + data.document1FileId + '/view?project=' + client.config.project;
+                        document1DownloadLink.href = downloadUrl1;
+                        document1DownloadLink.classList.remove('hidden');
+                    }
+
+                    // Document 2
+                    if (data.document2FileName && data.document2FileId) {
+                        document2FileNameDisplay.textContent = `File: ${data.document2FileName}`;
+                        document2FileNameDisplay.classList.remove('hidden');
+                        // Construct Appwrite download URL
+                        const downloadUrl2 = client.getEndpoint() + '/storage/buckets/' + APPWRITE_BUCKET_ID + '/files/' + data.document2FileId + '/view?project=' + client.config.project;
+                        document2DownloadLink.href = downloadUrl2;
+                        document2DownloadLink.classList.remove('hidden');
+                    }
+                }
+            } catch (error) {
+                console.error("Error loading document upload status: ", error);
+            }
+        }
+
+
+        // Filter Panel Button
+        document.getElementById('openFilterPanelBtn').addEventListener('click', () => toggleModal('filterPanel', true));
+        document.getElementById('closeFilterPanelBtn').addEventListener('click', () => toggleModal('filterPanel', false)); // Added ID for close button
+        document.getElementById('applyFiltersBtn').addEventListener('click', () => { // Added ID for apply button
+            // Save current filter values before applying
+            document.getElementById('filterDocumentType').dataset.currentValue = document.getElementById('filterDocumentType').value;
+            document.getElementById('filterDocumentNumber').dataset.currentValue = document.getElementById('filterDocumentNumber').value;
+            loadMonitorings(); // Reload with filters
+            toggleModal('filterPanel', false);
+        });
+        document.getElementById('resetFiltersBtn').addEventListener('click', () => { // Added ID for reset button
+            // Reset filter dropdowns
+            document.getElementById('filterDocumentType').value = 'all';
+            document.getElementById('filterDocumentNumber').value = 'all';
+            document.getElementById('filterStartDate').value = '';
+            document.getElementById('filterEndDate').value = '';
+            // Clear stored current values
+            delete document.getElementById('filterDocumentType').dataset.currentValue;
+            delete document.getElementById('filterDocumentNumber').dataset.currentValue;
+            loadMonitorings(); // Reload without filters
+            toggleModal('filterPanel', false);
+        });
+
+        // Close Success Alert Modal
+        document.getElementById('closeSuccessAlertBtn').addEventListener('click', () => toggleModal('successAlertModal', false)); // Added ID for close button
+
+        // --- Global Loading Overlay ---
+        function showGlobalLoading() {
+            document.getElementById('global-loading-overlay').classList.add('show');
+        }
+
+        function hideGlobalLoading() {
+            document.getElementById('global-loading-overlay').classList.remove('show');
+        }
+
+        // --- Ripple Effect for Buttons ---
+        document.querySelectorAll('button').forEach(button => {
+            button.addEventListener('click', function(event) {
+                const circle = document.createElement('span');
+                const diameter = Math.max(this.clientWidth, this.clientHeight);
+                const radius = diameter / 2;
+
+                circle.style.width = circle.style.height = `${diameter}px`;
+                circle.style.left = `${event.clientX - (this.getBoundingClientRect().left + radius)}px`;
+                circle.style.top = `${event.clientY - (this.getBoundingClientRect().top + radius)}px`;
+                circle.classList.add('ripple');
+
+                const ripple = this.getElementsByClassName('ripple')[0];
+
+                if (ripple) {
+                    ripple.remove();
+                }
+
+                this.appendChild(circle);
+            });
+        });
+
+        // --- Placeholder for other buttons ---
+        document.getElementById('authButton').addEventListener('click', () => alert('Logout button clicked!'));
+        // Updated Back button functionality
+        document.getElementById('backButton').addEventListener('click', () => {
+            window.location.href = 'index.html'; // Redirect to index.html
+        });
+
+        // --- Export Excel Functionality ---
+        document.getElementById('exportExcelBtn').addEventListener('click', async () => {
+            showGlobalLoading();
+            try {
+                const snapshot = await monitoringsCollection.orderBy('createdAt', 'desc').get();
+                const dataToExport = [];
+
+                snapshot.forEach(doc => {
+                    const monitoring = doc.data();
+                    dataToExport.push({
+                        'Document Type': monitoring.documentType || '',
+                        'Document Number': monitoring.documentNumber || '',
+                        'Document Date': monitoring.documentDate || '',
+                        'Document Description': monitoring.documentDescription || '',
+                        'Initial Value (Rp)': formatRupiah(monitoring.initialValue, ''),
+                        'Change Date': monitoring.changeDate || '',
+                        'Change Description': monitoring.changeDescription || '',
+                        'Changed Value (Rp)': formatRupiah(monitoring.changedValue, ''),
+                        'Created At': monitoring.createdAt ? new Date(monitoring.createdAt.toDate()).toLocaleString() : '',
+                        'Updated At': monitoring.updatedAt ? new Date(monitoring.updatedAt.toDate()).toLocaleString() : ''
+                    });
+                });
+
+                if (dataToExport.length === 0) {
+                    alert('No data to export.');
                     return;
                 }
 
-                const filteredSuggestions = allDocumentNumbers.filter(doc =>
-                    doc.documentNumber && doc.documentNumber.toLowerCase().includes(searchTerm)
-                ).slice(0, 10); // Limit to 10 suggestions
+                const ws = XLSX.utils.json_to_sheet(dataToExport);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Monitoring Data");
+                XLSX.writeFile(wb, "Monitoring_Dokumen.xlsx");
 
-                filteredSuggestions.forEach(doc => {
-                    const div = document.createElement('div');
-                    div.textContent = doc.documentNumber;
-                    div.addEventListener('click', () => {
-                        document.getElementById('uploadDoc_documentNumberSearch').value = doc.documentNumber;
-                        document.getElementById('uploadDoc_monitoringId').value = doc.id;
-                        document.getElementById('selectedDocumentNumberDisplay').textContent = doc.documentNumber;
-                        document.getElementById('selectedMonitoringInfo').classList.remove('hidden');
-                        suggestionsContainer.innerHTML = ''; // Clear suggestions after selection
-                        loadUploadDocumentStatus(doc.id); // Load existing status for this Monitoring
-                    });
-                    suggestionsContainer.appendChild(div);
-                });
-            });
+                document.getElementById('successAlertMessage').textContent = 'Data exported to Excel successfully!';
+                toggleModal('successAlertModal', true);
 
-            // Hide autocomplete suggestions when input loses focus
-            document.getElementById('uploadDoc_documentNumberSearch').addEventListener('blur', function() {
-                setTimeout(() => { // Small delay to allow click event on suggestions to fire
-                    document.getElementById('uploadDoc_documentNumberSuggestions').innerHTML = '';
-                }, 100);
-            });
+            } catch (error) {
+                console.error("Error exporting data to Excel: ", error);
+                alert("Failed to export data to Excel. Please try again.");
+            } finally {
+                hideGlobalLoading();
+            }
+        });
 
 
-            // Function to load existing upload document status for a selected Monitoring (Modified)
-            async function loadUploadDocumentStatus(monitoringId) { // Changed from poId
-                try {
-                    const uploadDoc = await documentUploadsCollection.doc(monitoringId).get(); // Use monitoringId
-                    const document1FileNameDisplay = document.getElementById('document1FileName');
-                    const document1DownloadLink = document.getElementById('document1DownloadLink');
-                    const document2FileNameDisplay = document.getElementById('document2FileName');
-                    const document2DownloadLink = document.getElementById('document2DownloadLink');
+        // --- Functions for Monitoring List and Details ---
 
-                    if (uploadDoc.exists) {
-                        const data = uploadDoc.data();
+        async function loadMonitorings() {
+            showGlobalLoading();
+            const monitoringsStage = document.getElementById('monitorings-stage');
+            monitoringsStage.innerHTML = ''; // Clear current list
 
-                        // Document 1
-                        if (data.document1FileName) {
-                            document1FileNameDisplay.textContent = `File: ${data.document1FileName}`;
-                            document1FileNameDisplay.classList.remove('hidden');
-                        } else {
-                            document1FileNameDisplay.classList.add('hidden');
-                        }
-                        if (data.document1Url) {
-                            document1DownloadLink.href = data.document1Url;
-                            document1DownloadLink.classList.remove('hidden');
-                        } else {
-                            document1DownloadLink.classList.add('hidden');
-                        }
+            try {
+                let query = monitoringsCollection.orderBy('createdAt', 'desc');
 
-                        // Document 2
-                        if (data.document2FileName) {
-                            document2FileNameDisplay.textContent = `File: ${data.document2FileName}`;
-                            document2FileNameDisplay.classList.remove('hidden');
-                        } else {
-                            document2FileNameDisplay.classList.add('hidden');
-                        }
-                        if (data.document2Url) {
-                            document2DownloadLink.href = data.document2Url;
-                            document2DownloadLink.classList.remove('hidden');
-                        } else {
-                            document2DownloadLink.classList.add('hidden');
-                        }
+                const filterDocType = document.getElementById('filterDocumentType').value;
+                const filterDocNumber = document.getElementById('filterDocumentNumber').value;
+                const filterStartDate = document.getElementById('filterStartDate').value;
+                const filterEndDate = document.getElementById('filterEndDate').value;
+                const searchTerm = document.getElementById('searchMonitorings').value.toLowerCase();
 
-                    } else {
-                        document1FileNameDisplay.classList.add('hidden');
-                        document1DownloadLink.classList.add('hidden');
-                        document2FileNameDisplay.classList.add('hidden');
-                        document2DownloadLink.classList.add('hidden');
-                    }
-                } catch (error) {
-                    console.error("Error loading document upload status: ", error);
+                if (filterDocType !== 'all') {
+                    query = query.where('documentType', '==', filterDocType);
                 }
-            }
-
-
-            // Filter Panel Button
-            document.getElementById('openFilterPanelBtn').addEventListener('click', () => toggleModal('filterPanel', true));
-            document.getElementById('closeFilterPanelBtn').addEventListener('click', () => toggleModal('filterPanel', false)); // Added ID for close button
-            document.getElementById('applyFiltersBtn').addEventListener('click', () => { // Added ID for apply button
-                // Save current filter values before applying
-                document.getElementById('filterDocumentType').dataset.currentValue = document.getElementById('filterDocumentType').value;
-                document.getElementById('filterDocumentNumber').dataset.currentValue = document.getElementById('filterDocumentNumber').value;
-                loadMonitorings(); // Reload with filters
-                toggleModal('filterPanel', false);
-            });
-            document.getElementById('resetFiltersBtn').addEventListener('click', () => { // Added ID for reset button
-                // Reset filter dropdowns
-                document.getElementById('filterDocumentType').value = 'all';
-                document.getElementById('filterDocumentNumber').value = 'all';
-                document.getElementById('filterStartDate').value = '';
-                document.getElementById('filterEndDate').value = '';
-                // Clear stored current values
-                delete document.getElementById('filterDocumentType').dataset.currentValue;
-                delete document.getElementById('filterDocumentNumber').dataset.currentValue;
-                loadMonitorings(); // Reload without filters
-                toggleModal('filterPanel', false);
-            });
-
-            // Close Success Alert Modal
-            document.getElementById('closeSuccessAlertBtn').addEventListener('click', () => toggleModal('successAlertModal', false)); // Added ID for close button
-
-            // --- Global Loading Overlay ---
-            function showGlobalLoading() {
-                document.getElementById('global-loading-overlay').classList.add('show');
-            }
-
-            function hideGlobalLoading() {
-                document.getElementById('global-loading-overlay').classList.remove('show');
-            }
-
-            // --- Ripple Effect for Buttons ---
-            document.querySelectorAll('button').forEach(button => {
-                button.addEventListener('click', function(event) {
-                    const circle = document.createElement('span');
-                    const diameter = Math.max(this.clientWidth, this.clientHeight);
-                    const radius = diameter / 2;
-
-                    circle.style.width = circle.style.height = `${diameter}px`;
-                    circle.style.left = `${event.clientX - (this.getBoundingClientRect().left + radius)}px`;
-                    circle.style.top = `${event.clientY - (this.getBoundingClientRect().top + radius)}px`;
-                    circle.classList.add('ripple');
-
-                    const ripple = this.getElementsByClassName('ripple')[0];
-
-                    if (ripple) {
-                        ripple.remove();
-                    }
-
-                    this.appendChild(circle);
-                });
-            });
-
-            // --- Placeholder for other buttons ---
-            // document.getElementById('authButton').addEventListener('click', () => alert('Logout button clicked!')); // Ini sudah diganti oleh logika autentikasi
-            // Updated Back button functionality
-            document.getElementById('backButton').addEventListener('click', () => {
-                window.location.href = 'index.html'; // Redirect to index.html
-            });
-
-            // --- Export Excel Functionality ---
-            document.getElementById('exportExcelBtn').addEventListener('click', async () => {
-                showGlobalLoading();
-                try {
-                    const snapshot = await monitoringsCollection.orderBy('createdAt', 'desc').get();
-                    const dataToExport = [];
-
-                    snapshot.forEach(doc => {
-                        const monitoring = doc.data();
-                        dataToExport.push({
-                            'Document Type': monitoring.documentType || '',
-                            'Document Number': monitoring.documentNumber || '',
-                            'Document Date': monitoring.documentDate || '',
-                            'Document Description': monitoring.documentDescription || '',
-                            'Initial Value (Rp)': formatRupiah(monitoring.initialValue, ''),
-                            'Change Date': monitoring.changeDate || '',
-                            'Change Description': monitoring.changeDescription || '',
-                            'Changed Value (Rp)': formatRupiah(monitoring.changedValue, ''),
-                            'Created At': monitoring.createdAt ? new Date(monitoring.createdAt.toDate()).toLocaleString() : '',
-                            'Updated At': monitoring.updatedAt ? new Date(monitoring.updatedAt.toDate()).toLocaleString() : ''
-                        });
-                    });
-
-                    if (dataToExport.length === 0) {
-                        alert('No data to export.');
-                        return;
-                    }
-
-                    const ws = XLSX.utils.json_to_sheet(dataToExport);
-                    const wb = XLSX.utils.book_new();
-                    XLSX.utils.book_append_sheet(wb, ws, "Monitoring Data");
-                    XLSX.writeFile(wb, "Monitoring_Dokumen.xlsx");
-
-                    document.getElementById('successAlertMessage').textContent = 'Data exported to Excel successfully!';
-                    toggleModal('successAlertModal', true);
-
-                } catch (error) {
-                    console.error("Error exporting data to Excel: ", error);
-                    alert("Failed to export data to Excel. Please try again.");
-                } finally {
-                    hideGlobalLoading();
+                if (filterDocNumber !== 'all') {
+                    query = query.where('documentNumber', '==', filterDocNumber);
                 }
-            });
+
+                const snapshot = await query.get();
+                const monitorings = [];
+                snapshot.forEach(doc => {
+                    monitorings.push({ id: doc.id, ...doc.data() });
+                });
+
+                const filteredMonitorings = monitorings.filter(monitoring => {
+                    const matchesSearch = searchTerm === '' ||
+                                          (monitoring.documentType && monitoring.documentType.toLowerCase().includes(searchTerm)) ||
+                                          (monitoring.documentNumber && monitoring.documentNumber.toLowerCase().includes(searchTerm)) ||
+                                          (monitoring.documentDescription && monitoring.documentDescription.toLowerCase().includes(searchTerm));
+
+                    const docDate = monitoring.documentDate;
+                    const matchesDate = (!filterStartDate || (docDate && docDate >= filterStartDate)) &&
+                                        (!filterEndDate || (docDate && docDate <= filterEndDate));
+
+                    return matchesSearch && matchesDate;
+                });
 
 
-            // --- Functions for Monitoring List and Details ---
-
-            async function loadMonitorings() {
-                showGlobalLoading();
-                const monitoringsStage = document.getElementById('monitorings-stage');
-                monitoringsStage.innerHTML = ''; // Clear current list
-
-                try {
-                    let query = monitoringsCollection.orderBy('createdAt', 'desc');
-
-                    const filterDocType = document.getElementById('filterDocumentType').value;
-                    const filterDocNumber = document.getElementById('filterDocumentNumber').value;
-                    const filterStartDate = document.getElementById('filterStartDate').value;
-                    const filterEndDate = document.getElementById('filterEndDate').value;
-                    const searchTerm = document.getElementById('searchMonitorings').value.toLowerCase();
-
-                    if (filterDocType !== 'all') {
-                        query = query.where('documentType', '==', filterDocType);
-                    }
-                    if (filterDocNumber !== 'all') {
-                        query = query.where('documentNumber', '==', filterDocNumber);
-                    }
-
-                    const snapshot = await query.get();
-                    const monitorings = [];
-                    snapshot.forEach(doc => {
-                        monitorings.push({ id: doc.id, ...doc.data() });
-                    });
-
-                    const filteredMonitorings = monitorings.filter(monitoring => {
-                        const matchesSearch = searchTerm === '' ||
-                                              (monitoring.documentType && monitoring.documentType.toLowerCase().includes(searchTerm)) ||
-                                              (monitoring.documentNumber && monitoring.documentNumber.toLowerCase().includes(searchTerm)) ||
-                                              (monitoring.documentDescription && monitoring.documentDescription.toLowerCase().includes(searchTerm));
-
-                        const docDate = monitoring.documentDate;
-                        const matchesDate = (!filterStartDate || (docDate && docDate >= filterStartDate)) &&
-                                            (!filterEndDate || (docDate && docDate <= filterEndDate));
-
-                        return matchesSearch && matchesDate;
-                    });
-
-
-                    if (filteredMonitorings.length === 0) {
-                        monitoringsStage.innerHTML = `
-                            <div class="empty-state">
-                                <i class="fas fa-box-open"></i>
-                                <p>No Monitoring entries to display.</p>
-                                <p>Start by adding a new monitoring entry or adjusting your filters.</p>
-                            </div>
-                        `;
-                    } else {
-                        // Assign sequential numbers based on the filtered and sorted list
-                        filteredMonitorings.forEach((monitoring, index) => {
-                            const card = createMonitoringCard(monitoring, index + 1); // Pass index + 1 as the sequential number
-                            monitoringsStage.appendChild(card);
-                            setTimeout(() => card.classList.add('show'), 50); // Animate cards
-                        });
-                    }
-
-                    populateFilterOptions(monitorings); // Update filter dropdowns
-                } catch (error) {
-                    console.error("Error loading monitorings: ", error);
+                if (filteredMonitorings.length === 0) {
                     monitoringsStage.innerHTML = `
-                        <div class="empty-state text-red-500">
-                            <i class="fas fa-exclamation-circle"></i>
-                            <p>Error loading monitoring data.</p>
-                            <p>Please check your internet connection or try again later.</p>
-                            <p>Detail: ${error.message}</p>
+                        <div class="empty-state">
+                            <i class="fas fa-box-open"></i>
+                            <p>No Monitoring entries to display.</p>
+                            <p>Start by adding a new monitoring entry or adjusting your filters.</p>
                         </div>
                     `;
-                } finally {
-                    hideGlobalLoading();
+                } else {
+                    // Assign sequential numbers based on the filtered and sorted list
+                    filteredMonitorings.forEach((monitoring, index) => {
+                        const card = createMonitoringCard(monitoring, index + 1); // Pass index + 1 as the sequential number
+                        monitoringsStage.appendChild(card);
+                        setTimeout(() => card.classList.add('show'), 50); // Animate cards
+                    });
                 }
-            }
 
-            // Modified createMonitoringCard to accept a sequential number
-            function createMonitoringCard(monitoring, sequentialNumber) {
-                const card = document.createElement('div');
-                card.className = 'deal-card relative w-full sm:w-1/2 lg:w-1/4'; // Adjust width for responsiveness
-                card.setAttribute('data-id', monitoring.id);
-
-                const formattedInitialValue = formatRupiah(monitoring.initialValue, 'Rp ');
-                const formattedChangedValue = formatRupiah(monitoring.changedValue, 'Rp ');
-
-                card.innerHTML = `
-                    <span class="monitoring-card-number">${sequentialNumber}</span> <!-- Display sequential number -->
-                    <h3 class="text-lg font-bold text-gray-900 mb-2">${monitoring.documentNumber || 'N/A'}</h3> <!-- Changed to Nomor Dokumen -->
-                    <div class="deal-details">
-                        <p><i class="fas fa-calendar-alt"></i> Tanggal Dokumen: ${monitoring.documentDate || 'N/A'}</p> <!-- Changed label -->
-                        <p><i class="fas fa-file-alt"></i> Deskripsi Dokumen: ${monitoring.documentDescription || 'N/A'}</p> <!-- Changed label -->
-                        <p><i class="fas fa-money-bill-wave"></i> Perubahan Nilai Harga: ${formattedChangedValue || 'Rp 0'}</p> <!-- Changed label and value -->
-                    </div>
-                    <div class="deal-footer">
-                        <div class="deal-actions">
-                            <button class="view-btn text-blue-600 hover:text-blue-800 p-1" title="View Details">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                            <button class="edit-btn text-green-600 hover:text-green-800 p-1" title="Edit">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="delete-btn text-red-600 hover:text-red-800 p-1" title="Delete">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
-                        </div>
+                populateFilterOptions(monitorings); // Update filter dropdowns
+            } catch (error) {
+                console.error("Error loading monitorings: ", error);
+                monitoringsStage.innerHTML = `
+                    <div class="empty-state text-red-500">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <p>Error loading monitoring data.</p>
+                        <p>Please check your internet connection or try again later.</p>
                     </div>
                 `;
-
-                // Event Listeners for card buttons
-                card.querySelector('.view-btn').addEventListener('click', () => viewMonitoringDetails(monitoring.id));
-                card.querySelector('.edit-btn').addEventListener('click', () => editMonitoring(monitoring.id));
-                card.querySelector('.delete-btn').addEventListener('click', () => confirmDeleteMonitoring(monitoring.id, monitoring.documentNumber));
-
-                return card;
+            } finally {
+                hideGlobalLoading();
             }
+        }
 
-            async function viewMonitoringDetails(id) {
+        // Modified createMonitoringCard to accept a sequential number
+        function createMonitoringCard(monitoring, sequentialNumber) {
+            const card = document.createElement('div');
+            card.className = 'deal-card relative w-full sm:w-1/2 lg:w-1/4'; // Adjust width for responsiveness
+            card.setAttribute('data-id', monitoring.id);
+
+            const formattedInitialValue = formatRupiah(monitoring.initialValue, 'Rp ');
+            const formattedChangedValue = formatRupiah(monitoring.changedValue, 'Rp ');
+
+            card.innerHTML = `
+                <span class="monitoring-card-number">${sequentialNumber}</span> <!-- Display sequential number -->
+                <h3 class="text-lg font-bold text-gray-900 mb-2">${monitoring.documentNumber || 'N/A'}</h3> <!-- Changed to Nomor Dokumen -->
+                <div class="deal-details">
+                    <p><i class="fas fa-calendar-alt"></i> Tanggal Dokumen: ${monitoring.documentDate || 'N/A'}</p> <!-- Changed label -->
+                    <p><i class="fas fa-file-alt"></i> Deskripsi Dokumen: ${monitoring.documentDescription || 'N/A'}</p> <!-- Changed label -->
+                    <p><i class="fas fa-money-bill-wave"></i> Perubahan Nilai Harga: ${formattedChangedValue || 'Rp 0'}</p> <!-- Changed label and value -->
+                </div>
+                <div class="deal-footer">
+                    <div class="deal-actions">
+                        <button class="view-btn text-blue-600 hover:text-blue-800 p-1" title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="edit-btn text-green-600 hover:text-green-800 p-1" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="delete-btn text-red-600 hover:text-red-800 p-1" title="Delete">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            // Event Listeners for card buttons
+            card.querySelector('.view-btn').addEventListener('click', () => viewMonitoringDetails(monitoring.id));
+            card.querySelector('.edit-btn').addEventListener('click', () => editMonitoring(monitoring.id));
+            card.querySelector('.delete-btn').addEventListener('click', () => confirmDeleteMonitoring(monitoring.id, monitoring.documentNumber));
+
+            return card;
+        }
+
+        async function viewMonitoringDetails(id) {
+            showGlobalLoading();
+            try {
+                const doc = await monitoringsCollection.doc(id).get();
+                if (doc.exists) {
+                    const data = doc.data();
+                    document.getElementById('detailDocumentType').textContent = data.documentType || '-';
+                    document.getElementById('detailDocumentNumber').textContent = data.documentNumber || '-';
+                    document.getElementById('detailDocumentDate').textContent = data.documentDate || '-';
+                    document.getElementById('detailDocumentDescription').textContent = data.documentDescription || '-';
+                    document.getElementById('detailInitialValue').textContent = formatRupiah(data.initialValue, 'Rp ') || 'Rp 0';
+                    document.getElementById('detailChangeDate').textContent = data.changeDate || '-';
+                    document.getElementById('detailChangeDescription').textContent = data.changeDescription || '-';
+                    document.getElementById('detailChangedValue').textContent = formatRupiah(data.changedValue, 'Rp ') || 'Rp 0';
+
+                    toggleModal('monitoringDetailModal', true);
+                } else {
+                    alert("Monitoring not found.");
+                }
+            } catch (error) {
+                console.error("Error fetching monitoring details: ", error);
+                alert("Failed to load monitoring details.");
+            } finally {
+                hideGlobalLoading();
+            }
+        }
+
+        // FIX: Add event listener for closeMonitoringDetailBtn
+        document.getElementById('closeMonitoringDetailBtn').addEventListener('click', () => toggleModal('monitoringDetailModal', false));
+
+
+        async function editMonitoring(id) {
+            showGlobalLoading();
+            try {
+                const doc = await monitoringsCollection.doc(id).get();
+                if (doc.exists) {
+                    const data = doc.data();
+                    document.getElementById('modalTitle').textContent = 'Edit Monitoring';
+                    document.getElementById('monitoringId').value = id;
+                    document.getElementById('documentType').value = data.documentType || '';
+                    document.getElementById('documentNumber').value = data.documentNumber || '';
+                    document.getElementById('documentDate').value = data.documentDate || '';
+                    document.getElementById('documentDescription').value = data.documentDescription || '';
+                    document.getElementById('initialValue').value = formatRupiah(data.initialValue, 'Rp ') || '';
+                    document.getElementById('changeDate').value = data.changeDate || '';
+                    document.getElementById('changeDescription').value = data.changeDescription || '';
+                    document.getElementById('changedValue').value = formatRupiah(data.changedValue, 'Rp ') || '';
+
+                    toggleModal('monitoringModal', true);
+                } else {
+                    alert("Monitoring not found for editing.");
+                }
+            } catch (error) {
+                console.error("Error fetching monitoring for edit: ", error);
+                alert("Failed to load monitoring for editing.");
+            } finally {
+                hideGlobalLoading();
+            }
+        }
+
+        let monitoringToDeleteId = null;
+        async function confirmDeleteMonitoring(id, name) {
+            monitoringToDeleteId = id;
+            document.getElementById('dealToDeleteName').textContent = name;
+            toggleModal('deleteModal', true);
+        }
+
+        document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
+            if (monitoringToDeleteId) {
                 showGlobalLoading();
                 try {
-                    const doc = await monitoringsCollection.doc(id).get();
-                    if (doc.exists) {
-                        const data = doc.data();
-                        document.getElementById('detailDocumentType').textContent = data.documentType || '-';
-                        document.getElementById('detailDocumentNumber').textContent = data.documentNumber || '-';
-                        document.getElementById('detailDocumentDate').textContent = data.documentDate || '-';
-                        document.getElementById('detailDocumentDescription').textContent = data.documentDescription || '-';
-                        document.getElementById('detailInitialValue').textContent = formatRupiah(data.initialValue, 'Rp ') || 'Rp 0';
-                        document.getElementById('detailChangeDate').textContent = data.changeDate || '-';
-                        document.getElementById('detailChangeDescription').textContent = data.changeDescription || '-';
-                        document.getElementById('detailChangedValue').textContent = formatRupiah(data.changedValue, 'Rp ') || 'Rp 0';
-
-                        toggleModal('monitoringDetailModal', true);
-                    } else {
-                        alert("Monitoring not found.");
-                    }
+                    await monitoringsCollection.doc(monitoringToDeleteId).delete();
+                    toggleModal('deleteModal', false);
+                    toggleModal('successAlertModal', true);
+                    document.getElementById('successAlertMessage').textContent = 'Monitoring deleted successfully!';
+                    loadMonitorings(); // Reload list after deletion
+                    fetchAllDocumentNumbers(); // Re-fetch document numbers for autocomplete
                 } catch (error) {
-                    console.error("Error fetching monitoring details: ", error);
-                    alert("Failed to load monitoring details.");
+                    console.error("Error deleting monitoring: ", error);
+                    alert("Failed to delete monitoring. Please try again.");
                 } finally {
                     hideGlobalLoading();
+                    monitoringToDeleteId = null;
                 }
             }
+        });
+        document.getElementById('cancelDeleteBtn').addEventListener('click', () => toggleModal('deleteModal', false)); // Added ID for cancel button
 
-            // FIX: Add event listener for closeMonitoringDetailBtn
-            document.getElementById('closeMonitoringDetailBtn').addEventListener('click', () => toggleModal('monitoringDetailModal', false));
 
+        // Function to populate filter dropdowns
+        async function populateFilterOptions(monitorings) {
+            const filterDocumentTypeSelect = document.getElementById('filterDocumentType');
+            const filterDocumentNumberSelect = document.getElementById('filterDocumentNumber');
 
-            async function editMonitoring(id) {
-                showGlobalLoading();
-                try {
-                    const doc = await monitoringsCollection.doc(id).get();
-                    if (doc.exists) {
-                        const data = doc.data();
-                        document.getElementById('modalTitle').textContent = 'Edit Monitoring';
-                        document.getElementById('monitoringId').value = id;
-                        document.getElementById('documentType').value = data.documentType || '';
-                        document.getElementById('documentNumber').value = data.documentNumber || '';
-                        document.getElementById('documentDate').value = data.documentDate || '';
-                        document.getElementById('documentDescription').value = data.documentDescription || '';
-                        document.getElementById('initialValue').value = formatRupiah(data.initialValue, 'Rp ') || '';
-                        document.getElementById('changeDate').value = data.changeDate || '';
-                        document.getElementById('changeDescription').value = data.changeDescription || '';
-                        document.getElementById('changedValue').value = formatRupiah(data.changedValue, 'Rp ') || '';
+            // Store current selected values
+            const currentFilterDocType = filterDocumentTypeSelect.value;
+            const currentFilterDocNumber = filterDocumentNumberSelect.value;
 
-                        toggleModal('monitoringModal', true);
-                    } else {
-                        alert("Monitoring not found for editing.");
-                    }
-                } catch (error) {
-                    console.error("Error fetching monitoring for edit: ", error);
-                    alert("Failed to load monitoring for editing.");
-                } finally {
-                    hideGlobalLoading();
-                }
-            }
+            // Clear existing options (except "All")
+            filterDocumentTypeSelect.innerHTML = '<option value="all">Semua Tipe Dokumen</option>';
+            filterDocumentNumberSelect.innerHTML = '<option value="all">Semua Nomor Dokumen</option>';
 
-            let monitoringToDeleteId = null;
-            async function confirmDeleteMonitoring(id, name) {
-                monitoringToDeleteId = id;
-                document.getElementById('monitoringToDeleteName').textContent = name; // Changed ID here
-                toggleModal('deleteModal', true);
-            }
+            const documentTypes = new Set();
+            const documentNumbers = new Set();
 
-            document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
-                if (monitoringToDeleteId) {
-                    showGlobalLoading();
-                    try {
-                        await monitoringsCollection.doc(monitoringToDeleteId).delete();
-                        toggleModal('deleteModal', false);
-                        toggleModal('successAlertModal', true);
-                        document.getElementById('successAlertMessage').textContent = 'Monitoring deleted successfully!';
-                        loadMonitorings(); // Reload list after deletion
-                        fetchAllDocumentNumbers(); // Re-fetch document numbers for autocomplete
-                    } catch (error) {
-                        console.error("Error deleting monitoring: ", error);
-                        alert("Failed to delete monitoring. Please try again.");
-                    } finally {
-                        hideGlobalLoading();
-                        monitoringToDeleteId = null;
-                    }
-                }
+            monitorings.forEach(m => {
+                if (m.documentType) documentTypes.add(m.documentType);
+                if (m.documentNumber) documentNumbers.add(m.documentNumber);
             });
-            document.getElementById('cancelDeleteBtn').addEventListener('click', () => toggleModal('deleteModal', false)); // Added ID for cancel button
 
+            Array.from(documentTypes).sort().forEach(type => {
+                const option = document.createElement('option');
+                option.value = type;
+                option.textContent = type;
+                filterDocumentTypeSelect.appendChild(option);
+            });
 
-            // Function to populate filter dropdowns
-            async function populateFilterOptions(monitorings) {
-                const filterDocumentTypeSelect = document.getElementById('filterDocumentType');
-                const filterDocumentNumberSelect = document.getElementById('filterDocumentNumber');
+            Array.from(documentNumbers).sort().forEach(number => {
+                const option = document.createElement('option');
+                option.value = number;
+                option.textContent = number;
+                filterDocumentNumberSelect.appendChild(option);
+            });
 
-                // Store current selected values
-                const currentFilterDocType = filterDocumentTypeSelect.value;
-                const currentFilterDocNumber = filterDocumentNumberSelect.value;
-
-                // Clear existing options (except "All")
-                filterDocumentTypeSelect.innerHTML = '<option value="all">Semua Tipe Dokumen</option>';
-                filterDocumentNumberSelect.innerHTML = '<option value="all">Semua Nomor Dokumen</option>';
-
-                const documentTypes = new Set();
-                const documentNumbers = new Set();
-
-                monitorings.forEach(m => {
-                    if (m.documentType) documentTypes.add(m.documentType);
-                    if (m.documentNumber) documentNumbers.add(m.documentNumber);
-                });
-
-                Array.from(documentTypes).sort().forEach(type => {
-                    const option = document.createElement('option');
-                    option.value = type;
-                    option.textContent = type;
-                    filterDocumentTypeSelect.appendChild(option);
-                });
-
-                Array.from(documentNumbers).sort().forEach(number => {
-                    const option = document.createElement('option');
-                    option.value = number;
-                    option.textContent = number;
-                    filterDocumentNumberSelect.appendChild(option);
-                });
-
-                // Restore selected filter values
-                if (currentFilterDocType && Array.from(documentTypes).includes(currentFilterDocType)) {
-                    filterDocumentTypeSelect.value = currentFilterDocType;
-                }
-                if (currentFilterDocNumber && Array.from(documentNumbers).includes(currentFilterDocNumber)) {
-                    filterDocumentNumberSelect.value = currentFilterDocNumber;
-                }
+            // Restore selected filter values
+            if (currentFilterDocType && Array.from(documentTypes).includes(currentFilterDocType)) {
+                filterDocumentTypeSelect.value = currentFilterDocType;
             }
+            if (currentFilterDocNumber && Array.from(documentNumbers).includes(currentFilterDocNumber)) {
+                filterDocumentNumberSelect.value = currentFilterDocNumber;
+            }
+        }
 
-            // Initial load of monitorings (now called after auth)
-            loadMonitorings();
-            fetchAllDocumentNumbers(); // Panggil juga ini setelah auth
+        // Initial load of monitorings
+        loadMonitorings();
 
-            // Search functionality
-            document.getElementById('searchMonitorings').addEventListener('keyup', loadMonitorings);
-            document.getElementById('filterDocumentType').addEventListener('change', loadMonitorings);
-            document.getElementById('filterDocumentNumber').addEventListener('change', loadMonitorings);
-            document.getElementById('filterStartDate').addEventListener('change', loadMonitorings);
-            document.getElementById('filterEndDate').addEventListener('change', loadMonitorings);
-        } // End of initializeAppFunctions
-    }); // End of DOMContentLoaded listener
+        // Search functionality
+        document.getElementById('searchMonitorings').addEventListener('keyup', loadMonitorings);
+        document.getElementById('filterDocumentType').addEventListener('change', loadMonitorings);
+        document.getElementById('filterDocumentNumber').addEventListener('change', loadMonitorings);
+        document.getElementById('filterStartDate').addEventListener('change', loadMonitorings);
+        document.getElementById('filterEndDate').addEventListener('change', loadMonitorings);
+    });
 </script>
 </body>
 </html>
