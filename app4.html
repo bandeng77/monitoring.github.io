@@ -988,12 +988,9 @@
     const SUPABASE_BUCKET_NAME = 'monitoring-acc';
     const SUPABASE_STORAGE_URL = 'https://rmeoiuddtkerhagytisa.supabase.co/storage/v1/object/public/monitoring-acc/';
 
-    // Pindahkan deklarasi dan inisialisasi Supabase ke dalam DOMContentLoaded
-    let supabase; // Deklarasikan di sini agar scope-nya global
-
     document.addEventListener('DOMContentLoaded', function() {
         // Inisialisasi klien Supabase di sini, memastikan SDK sudah dimuat
-        supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // Generic function to toggle modal visibility
         function toggleModal(modalId, show) {
