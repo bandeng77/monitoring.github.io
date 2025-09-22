@@ -829,7 +829,7 @@
         <div id="deleteModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
             <div class="bg-white rounded-xl p-8 w-full max-w-sm shadow-2xl modal-content-enter" id="deleteModalContent">
                 <h2 class="text-xl font-bold mb-4 text-gray-900">Delete Confirmation</h2>
-                <p class="text-gray-700 mb-6 text-sm">Are you sure you want to delete "<span id="dealToDeleteName" class="font-semibold"></span>"? This action cannot be undone.</p>
+                <p class="text-gray-700 mb-6 text-sm">Are you sure you want to delete "<span id="monitoringToDeleteName" class="font-semibold"></span>"? This action cannot be undone.</p>
                 <div class="flex justify-end space-x-3">
                     <button type="button" id="cancelDeleteBtn" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
                         Cancel
@@ -954,6 +954,7 @@
         <!-- Global Loading Overlay -->
         <div id="global-loading-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-[9999] hidden">
             <div class="spinner"></div>
+            <p class="text-white text-lg mt-4">Loading...</p> <!-- Added loading text -->
         </div>
 
     </div>
@@ -961,8 +962,13 @@
 <!-- Pindahkan semua skrip ke akhir body untuk memastikan semua elemen DOM dan SDK eksternal dimuat -->
 <!-- Gunakan atribut 'defer' untuk skrip yang tidak perlu memblokir rendering, tetapi tetap dieksekusi sesuai urutan -->
 <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js" defer></script>
+
+<!-- Firebase SDKs - Pastikan firebase-app.js pertama, diikuti auth dan firestore -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js" defer></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js" defer></script> <!-- Tambahkan ini untuk autentikasi -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js" defer></script>
+
+<!-- Supabase SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 
 <script>
@@ -976,11 +982,10 @@
         appId: "1:898707897888:web:8cfe6f77cd784d8c1ec645"
     };
 
-    // Initialize Firebase
+    // Initialize Firebase - PENTING: Pindahkan inisialisasi ke sini, di luar window.onload
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const monitoringsCollection = db.collection('monitorings');
-    const purchaseOrdersCollection = db.collection('purchaseOrders'); // Assuming you have a 'purchaseOrders' collection
     const documentUploadsCollection = db.collection('documentUploads'); // New collection for document upload status
 
     // Supabase Configuration
@@ -989,16 +994,59 @@
     const SUPABASE_BUCKET_NAME = 'monitoring-acc';
     const SUPABASE_STORAGE_URL = 'https://rmeoiuddtkerhagytisa.supabase.co/storage/v1/object/public/monitoring-acc/';
 
-    // Gunakan window.onload untuk memastikan semua skrip eksternal (termasuk Supabase) sudah dimuat
-    window.onload = function() {
-        // Pastikan Supabase tersedia sebelum inisialisasi
-        if (typeof Supabase !== 'undefined' && Supabase.createClient) {
-            const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            console.log("Supabase client initialized successfully."); // Debugging
+    // Inisialisasi Supabase client - PENTING: Pindahkan inisialisasi ke sini, di luar window.onload
+    let supabase;
+    if (typeof Supabase !== 'undefined' && Supabase.createClient) {
+        supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log("Supabase client initialized successfully."); // Debugging
+    } else {
+        console.error("Supabase SDK not loaded or not available.");
+        alert("Terjadi masalah saat memuat layanan Supabase. Mohon coba lagi atau periksa koneksi internet Anda.");
+        // Tidak perlu 'return' di sini karena ini bukan fungsi yang akan menghentikan eksekusi skrip secara keseluruhan
+    }
+
+    // --- Autentikasi Firebase ---
+    firebase.auth().onAuthStateChanged(user => {
+        if (user) {
+            // User is signed in.
+            console.log("User is signed in:", user.uid);
+            // Lanjutkan dengan memuat data dan fungsionalitas aplikasi
+            // Panggil fungsi-fungsi yang perlu dijalankan setelah autentikasi berhasil
+            loadMonitorings();
+            fetchAllDocumentNumbers();
+
+            // Update tombol Logout
+            document.getElementById('authButton').textContent = 'Logout';
+            document.getElementById('authButton').removeEventListener('click', handlePlaceholderLogout); // Hapus listener placeholder
+            document.getElementById('authButton').addEventListener('click', handleLogout);
         } else {
-            console.error("Supabase SDK not loaded or not available.");
-            alert("Terjadi masalah saat memuat layanan Supabase. Mohon coba lagi atau periksa koneksi internet Anda.");
-            return; // Hentikan eksekusi jika Supabase tidak tersedia
+            // User is signed out.
+            console.log("No user is signed in.");
+            alert("Anda harus login untuk mengakses halaman ini.");
+            window.location.href = 'login.html'; // Redirect ke halaman login
+        }
+    });
+
+    function handlePlaceholderLogout() {
+        alert('Logout button clicked! (Placeholder)');
+    }
+
+    function handleLogout() {
+        firebase.auth().signOut().then(() => {
+            alert("Anda telah logout.");
+            window.location.href = 'login.html'; // Redirect ke halaman login setelah logout
+        }).catch((error) => {
+            console.error("Error signing out:", error);
+            alert("Gagal logout. Silakan coba lagi.");
+        });
+    }
+
+    // Gunakan window.onload untuk memastikan semua elemen DOM sudah dimuat
+    window.onload = function() {
+        // Pastikan Supabase client sudah tersedia sebelum melanjutkan
+        if (!supabase) {
+            console.error("Supabase client is not available. Stopping further execution.");
+            return;
         }
 
         // Generic function to toggle modal visibility
@@ -1075,15 +1123,33 @@
             showGlobalLoading();
 
             const monitoringId = document.getElementById('monitoringId').value;
+            const initialValueRaw = document.getElementById('initialValue').value;
+            const changedValueRaw = document.getElementById('changedValue').value;
+
+            const initialValueParsed = unformatRupiah(initialValueRaw);
+            const changedValueParsed = unformatRupiah(changedValueRaw);
+
+            // Basic validation for currency inputs
+            if (isNaN(initialValueParsed) || initialValueParsed < 0) {
+                alert("Nilai Harga Awal harus berupa angka positif.");
+                hideGlobalLoading();
+                return;
+            }
+            if (isNaN(changedValueParsed)) { // Changed value can be negative for reduction
+                alert("Perubahan Nilai Harga harus berupa angka.");
+                hideGlobalLoading();
+                return;
+            }
+
             const data = {
                 documentType: document.getElementById('documentType').value,
                 documentNumber: document.getElementById('documentNumber').value,
-                documentDate: document.getElementById('documentDate').value,
+                documentDate: document.getElementById('documentDate').value || null, // Simpan null jika kosong
                 documentDescription: document.getElementById('documentDescription').value,
-                initialValue: unformatRupiah(document.getElementById('initialValue').value),
-                changeDate: document.getElementById('changeDate').value,
+                initialValue: initialValueParsed,
+                changeDate: document.getElementById('changeDate').value || null, // Simpan null jika kosong
                 changeDescription: document.getElementById('changeDescription').value,
-                changedValue: unformatRupiah(document.getElementById('changedValue').value),
+                changedValue: changedValueParsed,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
@@ -1196,12 +1262,14 @@
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
 
-                if (document1Url) updateData.document1Url = document1Url;
-                if (document1File) updateData.document1FileName = document1File.name;
-
-                if (document2Url) updateData.document2Url = document2Url;
-                if (document2File) updateData.document2FileName = document2File.name;
-
+                if (document1Url) {
+                    updateData.document1Url = document1Url;
+                    updateData.document1FileName = document1File ? document1File.name : (await uploadRef.get()).data().document1FileName; // Keep old name if no new file
+                }
+                if (document2Url) {
+                    updateData.document2Url = document2Url;
+                    updateData.document2FileName = document2File ? document2File.name : (await uploadRef.get()).data().document2FileName; // Keep old name if no new file
+                }
 
                 await uploadRef.set(updateData, { merge: true });
 
@@ -1228,8 +1296,8 @@
             }
         }
 
-        // Call this once on page load
-        fetchAllDocumentNumbers();
+        // Call this once on page load (now called after auth)
+        // fetchAllDocumentNumbers();
 
         document.getElementById('uploadDoc_documentNumberSearch').addEventListener('input', function() {
             const searchTerm = this.value.toLowerCase();
@@ -1260,6 +1328,14 @@
                 suggestionsContainer.appendChild(div);
             });
         });
+
+        // Hide autocomplete suggestions when input loses focus
+        document.getElementById('uploadDoc_documentNumberSearch').addEventListener('blur', function() {
+            setTimeout(() => { // Small delay to allow click event on suggestions to fire
+                document.getElementById('uploadDoc_documentNumberSuggestions').innerHTML = '';
+            }, 100);
+        });
+
 
         // Function to load existing upload document status for a selected Monitoring (Modified)
         async function loadUploadDocumentStatus(monitoringId) { // Changed from poId
@@ -1371,7 +1447,7 @@
         });
 
         // --- Placeholder for other buttons ---
-        document.getElementById('authButton').addEventListener('click', () => alert('Logout button clicked!'));
+        // document.getElementById('authButton').addEventListener('click', () => alert('Logout button clicked!')); // Ini sudah diganti oleh logika autentikasi
         // Updated Back button functionality
         document.getElementById('backButton').addEventListener('click', () => {
             window.location.href = 'index.html'; // Redirect to index.html
@@ -1601,7 +1677,7 @@
         let monitoringToDeleteId = null;
         async function confirmDeleteMonitoring(id, name) {
             monitoringToDeleteId = id;
-            document.getElementById('dealToDeleteName').textContent = name;
+            document.getElementById('monitoringToDeleteName').textContent = name; // Changed ID here
             toggleModal('deleteModal', true);
         }
 
@@ -1671,8 +1747,8 @@
             }
         }
 
-        // Initial load of monitorings
-        loadMonitorings();
+        // Initial load of monitorings (now called after auth)
+        // loadMonitorings();
 
         // Search functionality
         document.getElementById('searchMonitorings').addEventListener('keyup', loadMonitorings);
