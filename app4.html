@@ -1164,7 +1164,8 @@
                         document1File
                     );
                     document1FileId = file1Response.$id;
-                    document1Url = client.getEndpoint() + '/storage/buckets/' + APPWRITE_BUCKET_ID + '/files/' + document1FileId + '/view?project=' + client.config.project;
+                    // Menggunakan client.endpoint (properti) bukan client.getEndpoint() (metode)
+                    document1Url = client.endpoint + '/storage/buckets/' + APPWRITE_BUCKET_ID + '/files/' + document1FileId + '/view?project=' + client.config.project;
                     updateData.document1FileId = document1FileId;
                     updateData.document1FileName = document1File.name;
                     updateData.document1Url = document1Url;
@@ -1178,7 +1179,8 @@
                         document2File
                     );
                     document2FileId = file2Response.$id;
-                    document2Url = client.getEndpoint() + '/storage/buckets/' + APPWRITE_BUCKET_ID + '/files/' + document2FileId + '/view?project=' + client.config.project;
+                    // Menggunakan client.endpoint (properti) bukan client.getEndpoint() (metode)
+                    document2Url = client.endpoint + '/storage/buckets/' + APPWRITE_BUCKET_ID + '/files/' + document2FileId + '/view?project=' + client.config.project;
                     updateData.document2FileId = document2FileId;
                     updateData.document2FileName = document2File.name;
                     updateData.document2Url = document2Url;
@@ -1269,8 +1271,8 @@
                     if (data.document1FileName && data.document1FileId) {
                         document1FileNameDisplay.textContent = `File: ${data.document1FileName}`;
                         document1FileNameDisplay.classList.remove('hidden');
-                        // Construct Appwrite download URL
-                        const downloadUrl1 = client.getEndpoint() + '/storage/buckets/' + APPWRITE_BUCKET_ID + '/files/' + data.document1FileId + '/view?project=' + client.config.project;
+                        // Construct Appwrite download URL menggunakan client.endpoint
+                        const downloadUrl1 = client.endpoint + '/storage/buckets/' + APPWRITE_BUCKET_ID + '/files/' + data.document1FileId + '/view?project=' + client.config.project;
                         document1DownloadLink.href = downloadUrl1;
                         document1DownloadLink.classList.remove('hidden');
                     }
@@ -1279,8 +1281,8 @@
                     if (data.document2FileName && data.document2FileId) {
                         document2FileNameDisplay.textContent = `File: ${data.document2FileName}`;
                         document2FileNameDisplay.classList.remove('hidden');
-                        // Construct Appwrite download URL
-                        const downloadUrl2 = client.getEndpoint() + '/storage/buckets/' + APPWRITE_BUCKET_ID + '/files/' + data.document2FileId + '/view?project=' + client.config.project;
+                        // Construct Appwrite download URL menggunakan client.endpoint
+                        const downloadUrl2 = client.endpoint + '/storage/buckets/' + APPWRITE_BUCKET_ID + '/files/' + data.document2FileId + '/view?project=' + client.config.project;
                         document2DownloadLink.href = downloadUrl2;
                         document2DownloadLink.classList.remove('hidden');
                     }
