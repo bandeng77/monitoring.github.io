@@ -14,20 +14,6 @@
     <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <!-- Supabase Client Initialization (Moved to be executed after Supabase SDK is loaded) -->
-    <script>
-        // Supabase Configuration
-        const SUPABASE_URL = 'https://rmeoiuddtkerhagytisa.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJtZW9pdWRkdGtlcmhhZ3l0aXNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgyNTIzMzMsImV4cCI6MjA3MzgyODMzM30.OYsklW59sBG5xHP-oEVRu_6unxkuo0aTwJpp2RGUG-w';
-        const SUPABASE_BUCKET_NAME = 'monitoring-acc';
-        const SUPABASE_STORAGE_URL = 'https://rmeoiuddtkerhagytisa.supabase.co/storage/v1/object/public/monitoring-acc/';
-
-        // Initialize Supabase client globally, but ensure it's after the SDK script tag.
-        // For safety, it's often best to put this inside DOMContentLoaded or immediately after the SDK script.
-        // Here, we place it directly after the SDK script tag.
-        const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    </script>
-
     <style>
         /* New Color Palette */
         :root {
@@ -933,7 +919,6 @@
                     <div class="mb-4">
                         <label class="block text-gray-700 text-sm font-semibold mb-2" for="uploadDoc_document1">Document Upload 1 (PDF)</label>
                         <input type="file" id="uploadDoc_document1" accept=".pdf" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
-                        <!-- Removed select status 1 -->
                         <p id="document1FileName" class="text-sm text-gray-600 mt-1 hidden"></p>
                         <a id="document1DownloadLink" href="#" target="_blank" class="text-blue-600 hover:underline text-sm mt-1 hidden">View Document 1</a>
                     </div>
@@ -942,7 +927,6 @@
                     <div class="mb-4">
                         <label class="block text-gray-700 text-sm font-semibold mb-2" for="uploadDoc_document2">Document Upload 2 (PDF)</label>
                         <input type="file" id="uploadDoc_document2" accept=".pdf" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
-                        <!-- Removed select status 2 -->
                         <p id="document2FileName" class="text-sm text-gray-600 mt-1 hidden"></p>
                         <a id="document2DownloadLink" href="#" target="_blank" class="text-blue-600 hover:underline text-sm mt-1 hidden">View Document 2</a>
                     </div>
@@ -998,16 +982,19 @@
     const purchaseOrdersCollection = db.collection('purchaseOrders'); // Assuming you have a 'purchaseOrders' collection
     const documentUploadsCollection = db.collection('documentUploads'); // New collection for document upload status
 
-    // Supabase Configuration (These constants are now used by the script block above)
-    // const SUPABASE_URL = 'https://rmeoiuddtkerhagytisa.supabase.co';
-    // const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJtZW9pdWRkdGtlcmhhZ3l0aXNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgyNTIzMzMsImV4cCI6MjA3MzgyODMzM30.OYsklW59sBG5xHP-oEVRu_6unxkuo0aTwJpp2RGUG-w';
-    // const SUPABASE_BUCKET_NAME = 'monitoring-acc';
-    // const SUPABASE_STORAGE_URL = 'https://rmeoiuddtkerhagytisa.supabase.co/storage/v1/object/public/monitoring-acc/';
+    // Supabase Configuration
+    const SUPABASE_URL = 'https://rmeoiuddtkerhagytisa.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJtZW9pdWRkdGtlcmhhZ3l0aXNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgyNTIzMzMsImV4cCI6MjA3MzgyODMzM30.OYsklW59sBG5xHP-oEVRu_6unxkuo0aTwJpp2RGUG-w';
+    const SUPABASE_BUCKET_NAME = 'monitoring-acc';
+    const SUPABASE_STORAGE_URL = 'https://rmeoiuddtkerhagytisa.supabase.co/storage/v1/object/public/monitoring-acc/';
 
-    // The 'supabase' client is now initialized in the script block above this one.
-    // It is globally available.
+    // Deklarasikan supabase secara global, tetapi inisialisasi di dalam DOMContentLoaded
+    let supabase;
 
     document.addEventListener('DOMContentLoaded', function() {
+        // Inisialisasi klien Supabase di sini, memastikan SDK sudah dimuat
+        supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
         // Generic function to toggle modal visibility
         function toggleModal(modalId, show) {
             const modal = document.getElementById(modalId);
@@ -1164,7 +1151,8 @@
             try {
                 // Upload Document 1
                 if (document1File) {
-                    const filePath = `${monitoringId}/document1_${Date.now()}_${document1File.name}`;
+                    // PATH BARU: Tambahkan 'upload1/' di depan
+                    const filePath = `upload1/${monitoringId}/document1_${Date.now()}_${document1File.name}`;
                     const { data, error } = await supabase.storage
                         .from(SUPABASE_BUCKET_NAME)
                         .upload(filePath, document1File, {
@@ -1180,7 +1168,8 @@
 
                 // Upload Document 2
                 if (document2File) {
-                    const filePath = `${monitoringId}/document2_${Date.now()}_${document2File.name}`;
+                    // PATH BARU: Tambahkan 'upload2/' di depan
+                    const filePath = `upload2/${monitoringId}/document2_${Date.now()}_${document2File.name}`;
                     const { data, error } = await supabase.storage
                         .from(SUPABASE_BUCKET_NAME)
                         .upload(filePath, document2File, {
@@ -1201,7 +1190,6 @@
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
 
-                // Removed status1 and status2 from updateData
                 if (document1Url) updateData.document1Url = document1Url;
                 if (document1File) updateData.document1FileName = document1File.name;
 
@@ -1271,7 +1259,6 @@
         async function loadUploadDocumentStatus(monitoringId) { // Changed from poId
             try {
                 const uploadDoc = await documentUploadsCollection.doc(monitoringId).get(); // Use monitoringId
-                // Removed uploadDoc_status1 and uploadDoc_status2
                 const document1FileNameDisplay = document.getElementById('document1FileName');
                 const document1DownloadLink = document.getElementById('document1DownloadLink');
                 const document2FileNameDisplay = document.getElementById('document2FileName');
@@ -1279,7 +1266,6 @@
 
                 if (uploadDoc.exists) {
                     const data = uploadDoc.data();
-                    // Removed status1 and status2 assignment
 
                     // Document 1
                     if (data.document1FileName) {
@@ -1310,7 +1296,6 @@
                     }
 
                 } else {
-                    // Removed status1 and status2 reset
                     document1FileNameDisplay.classList.add('hidden');
                     document1DownloadLink.classList.add('hidden');
                     document2FileNameDisplay.classList.add('hidden');
