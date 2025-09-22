@@ -988,8 +988,8 @@
     const SUPABASE_BUCKET_NAME = 'monitoring-acc';
     const SUPABASE_STORAGE_URL = 'https://rmeoiuddtkerhagytisa.supabase.co/storage/v1/object/public/monitoring-acc/';
 
-    // Deklarasikan supabase secara global, tetapi inisialisasi di dalam DOMContentLoaded
-    let supabase;
+    // Pindahkan deklarasi dan inisialisasi Supabase ke dalam DOMContentLoaded
+    let supabase; // Deklarasikan di sini agar scope-nya global
 
     document.addEventListener('DOMContentLoaded', function() {
         // Inisialisasi klien Supabase di sini, memastikan SDK sudah dimuat
@@ -1484,6 +1484,7 @@
                         <i class="fas fa-exclamation-circle"></i>
                         <p>Error loading monitoring data.</p>
                         <p>Please check your internet connection or try again later.</p>
+                        <p>Detail: ${error.message}</p>
                     </div>
                 `;
             } finally {
