@@ -1010,10 +1010,13 @@
         if (user) {
             // User is signed in.
             console.log("User is signed in:", user.uid);
-            // Lanjutkan dengan memuat data dan fungsionalitas aplikasi
             // Panggil fungsi-fungsi yang perlu dijalankan setelah autentikasi berhasil
-            loadMonitorings();
-            fetchAllDocumentNumbers();
+            // Ini akan dipanggil setelah DOMContentLoaded juga selesai
+            if (document.readyState === 'complete' || document.readyState === 'interactive') {
+                initializeAppFunctions();
+            } else {
+                document.addEventListener('DOMContentLoaded', initializeAppFunctions);
+            }
 
             // Update tombol Logout
             document.getElementById('authButton').textContent = 'Logout';
@@ -1041,8 +1044,8 @@
         });
     }
 
-    // Gunakan window.onload untuk memastikan semua elemen DOM sudah dimuat
-    window.onload = function() {
+    // Fungsi utama untuk menginisialisasi semua event listener dan memuat data
+    function initializeAppFunctions() {
         // Pastikan Supabase client sudah tersedia sebelum melanjutkan
         if (!supabase) {
             console.error("Supabase client is not available. Stopping further execution.");
@@ -1748,7 +1751,8 @@
         }
 
         // Initial load of monitorings (now called after auth)
-        // loadMonitorings();
+        loadMonitorings();
+        fetchAllDocumentNumbers(); // Panggil juga ini setelah auth
 
         // Search functionality
         document.getElementById('searchMonitorings').addEventListener('keyup', loadMonitorings);
@@ -1756,7 +1760,7 @@
         document.getElementById('filterDocumentNumber').addEventListener('change', loadMonitorings);
         document.getElementById('filterStartDate').addEventListener('change', loadMonitorings);
         document.getElementById('filterEndDate').addEventListener('change', loadMonitorings);
-    }; // End of window.onload
+    } // End of initializeAppFunctions
 </script>
 </body>
 </html>
