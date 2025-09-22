@@ -982,9 +982,17 @@
         appId: "1:1083858508151:web:3d505dec79d715f9cd6972"
     };
 
-    // Inisialisasi Firebase - PENTING: Pindahkan inisialisasi ke sini, di luar window.onload
-    // Pastikan firebase sudah didefinisikan sebelum memanggil initializeApp
-    if (typeof firebase !== 'undefined') {
+    // Pindahkan seluruh inisialisasi dan logika aplikasi ke dalam DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log("DOM Content Loaded.");
+
+        // Periksa apakah Firebase SDK sudah dimuat
+        if (typeof firebase === 'undefined' || typeof firebase.initializeApp === 'undefined') {
+            console.error("Firebase SDK is not loaded. Please check your internet connection or script tags.");
+            alert("Terjadi masalah saat memuat layanan Firebase. Mohon coba lagi atau periksa koneksi internet Anda.");
+            return; // Hentikan eksekusi jika Firebase tidak tersedia
+        }
+
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const monitoringsCollection = db.collection('monitorings');
@@ -1008,6 +1016,7 @@
         } else {
             console.error("Supabase SDK not loaded or not available.");
             alert("Terjadi masalah saat memuat layanan Supabase. Mohon coba lagi atau periksa koneksi internet Anda.");
+            // Tidak perlu 'return' di sini karena ini bukan fungsi yang akan menghentikan eksekusi skrip secara keseluruhan
         }
 
         // --- Autentikasi Firebase ---
@@ -1015,14 +1024,7 @@
             if (user) {
                 // User is signed in.
                 console.log("User is signed in:", user.uid);
-                // Panggil fungsi-fungsi yang perlu dijalankan setelah autentikasi berhasil
-                // Ini akan dipanggil setelah DOMContentLoaded juga selesai
-                if (document.readyState === 'complete' || document.readyState === 'interactive') {
-                    initializeAppFunctions();
-                } else {
-                    document.addEventListener('DOMContentLoaded', initializeAppFunctions);
-                }
-
+                initializeAppFunctions(); // Panggil fungsi utama setelah autentikasi berhasil
                 // Update tombol Logout
                 document.getElementById('authButton').textContent = 'Logout';
                 // Hapus listener placeholder jika ada, lalu tambahkan listener logout yang sebenarnya
@@ -1768,10 +1770,7 @@
             document.getElementById('filterStartDate').addEventListener('change', loadMonitorings);
             document.getElementById('filterEndDate').addEventListener('change', loadMonitorings);
         } // End of initializeAppFunctions
-    } else {
-        console.error("Firebase SDK is not loaded. Please check your internet connection or script tags.");
-        alert("Terjadi masalah saat memuat layanan Firebase. Mohon coba lagi atau periksa koneksi internet Anda.");
-    }
+    }); // End of DOMContentLoaded listener
 </script>
 </body>
 </html>
