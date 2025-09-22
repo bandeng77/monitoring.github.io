@@ -823,37 +823,10 @@
                     </div>
                 </div>
 
-                <!-- Document Uploads Section -->
-                <div class="mt-6 pt-6 border-t border-gray-200">
-                    <h3 class="text-lg font-bold text-gray-900 mb-4">Dokumen Terunggah</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="detail-item" id="detailDocument1Upload">
-                            <p class="font-semibold">Dokumen 1:</p>
-                            <p id="detailDocument1FileName">-</p>
-                            <a id="detailDocument1DownloadLink" href="#" target="_blank" class="text-blue-600 hover:underline text-sm mt-1 hidden">
-                                <i class="fas fa-file-pdf mr-1"></i> Lihat Dokumen 1
-                            </a>
-                        </div>
-                        <div class="detail-item" id="detailDocument2Upload">
-                            <p class="font-semibold">Dokumen 2:</p>
-                            <p id="detailDocument2FileName">-</p>
-                            <a id="detailDocument2DownloadLink" href="#" target="_blank" class="text-blue-600 hover:underline text-sm mt-1 hidden">
-                                <i class="fas fa-file-pdf mr-1"></i> Lihat Dokumen 2
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex justify-between items-center mt-6">
-                    <!-- New button for viewing PDF (aligned left) -->
-                    <button type="button" id="viewPdfBtn" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition duration-200 ease-in-out transform hover:scale-105 text-sm hidden">
-                        <i class="fas fa-file-pdf mr-2"></i> View All PDFs
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" id="closeMonitoringDetailBtn" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
+                        Close
                     </button>
-                    <div class="flex space-x-3">
-                        <button type="button" id="closeMonitoringDetailBtn" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg transition duration-200 text-sm">
-                            Close
-                        </button>
-                    </div>
                 </div>
             </div>
         </div>
@@ -1012,11 +985,12 @@
     // Appwrite Configuration
     const client = new Appwrite.Client();
     client
-        .setEndpoint('https://fra.cloud.appwrite.io/v1') // *** PASTIKAN INI ADALAH ENDPOINT YANG BENAR UNTUK INSTANCE APPWRITE ANDA ***
+        .setEndpoint('https://fra.cloud.appwrite.io/v1') // *** DIPERBAIKI: Menggunakan endpoint yang benar ***
         .setProject('68d0d6eb001dc06a95b3'); // Your Project ID
 
     const storage = new Appwrite.Storage(client);
-    // *** PASTIKAN INI ADALAH ID BUCKET YANG BENAR DI PROYEK APPWRITE ANDA ***
+    const database = new Appwrite.Databases(client); // If you plan to use Appwrite Database for document metadata
+    const APPWRITE_DATABASE_ID = '68d0d71600124cfdc86e'; // Ini tidak digunakan dalam kode ini, tapi tidak masalah
     const APPWRITE_BUCKET_ID = '68d0d72500025b188805';
 
 
@@ -1190,8 +1164,8 @@
                         document1File
                     );
                     document1FileId = file1Response.$id;
-                    // Menggunakan client.getEndpoint() untuk memastikan URL yang benar
-                    document1Url = client.getEndpoint() + '/storage/buckets/' + APPWRITE_BUCKET_ID + '/files/' + document1FileId + '/view?project=' + client.config.project;
+                    // Menggunakan client.endpoint (properti) bukan client.getEndpoint() (metode)
+                    document1Url = client.endpoint + '/storage/buckets/' + APPWRITE_BUCKET_ID + '/files/' + document1FileId + '/view?project=' + client.config.project;
                     updateData.document1FileId = document1FileId;
                     updateData.document1FileName = document1File.name;
                     updateData.document1Url = document1Url;
@@ -1205,8 +1179,8 @@
                         document2File
                     );
                     document2FileId = file2Response.$id;
-                    // Menggunakan client.getEndpoint() untuk memastikan URL yang benar
-                    document2Url = client.getEndpoint() + '/storage/buckets/' + APPWRITE_BUCKET_ID + '/files/' + document2FileId + '/view?project=' + client.config.project;
+                    // Menggunakan client.endpoint (properti) bukan client.getEndpoint() (metode)
+                    document2Url = client.endpoint + '/storage/buckets/' + APPWRITE_BUCKET_ID + '/files/' + document2FileId + '/view?project=' + client.config.project;
                     updateData.document2FileId = document2FileId;
                     updateData.document2FileName = document2File.name;
                     updateData.document2Url = document2Url;
@@ -1297,8 +1271,8 @@
                     if (data.document1FileName && data.document1FileId) {
                         document1FileNameDisplay.textContent = `File: ${data.document1FileName}`;
                         document1FileNameDisplay.classList.remove('hidden');
-                        // Construct Appwrite download URL menggunakan client.getEndpoint()
-                        const downloadUrl1 = client.getEndpoint() + '/storage/buckets/' + APPWRITE_BUCKET_ID + '/files/' + data.document1FileId + '/view?project=' + client.config.project;
+                        // Construct Appwrite download URL menggunakan client.endpoint
+                        const downloadUrl1 = client.endpoint + '/storage/buckets/' + APPWRITE_BUCKET_ID + '/files/' + data.document1FileId + '/view?project=' + client.config.project;
                         document1DownloadLink.href = downloadUrl1;
                         document1DownloadLink.classList.remove('hidden');
                     }
@@ -1307,8 +1281,8 @@
                     if (data.document2FileName && data.document2FileId) {
                         document2FileNameDisplay.textContent = `File: ${data.document2FileName}`;
                         document2FileNameDisplay.classList.remove('hidden');
-                        // Construct Appwrite download URL menggunakan client.getEndpoint()
-                        const downloadUrl2 = client.getEndpoint() + '/storage/buckets/' + APPWRITE_BUCKET_ID + '/files/' + data.document2FileId + '/view?project=' + client.config.project;
+                        // Construct Appwrite download URL menggunakan client.endpoint
+                        const downloadUrl2 = client.endpoint + '/storage/buckets/' + APPWRITE_BUCKET_ID + '/files/' + data.document2FileId + '/view?project=' + client.config.project;
                         document2DownloadLink.href = downloadUrl2;
                         document2DownloadLink.classList.remove('hidden');
                     }
@@ -1547,8 +1521,6 @@
             showGlobalLoading();
             try {
                 const doc = await monitoringsCollection.doc(id).get();
-                const uploadDoc = await documentUploadsCollection.doc(id).get(); // Fetch document upload status
-
                 if (doc.exists) {
                     const data = doc.data();
                     document.getElementById('detailDocumentType').textContent = data.documentType || '-';
@@ -1559,62 +1531,6 @@
                     document.getElementById('detailChangeDate').textContent = data.changeDate || '-';
                     document.getElementById('detailChangeDescription').textContent = data.changeDescription || '-';
                     document.getElementById('detailChangedValue').textContent = formatRupiah(data.changedValue, 'Rp ') || 'Rp 0';
-
-                    // --- Handle Document Uploads Display ---
-                    const detailDocument1FileNameDisplay = document.getElementById('detailDocument1FileName');
-                    const detailDocument1DownloadLink = document.getElementById('detailDocument1DownloadLink');
-                    const detailDocument2FileNameDisplay = document.getElementById('detailDocument2FileName');
-                    const detailDocument2DownloadLink = document.getElementById('detailDocument2DownloadLink');
-                    const viewPdfBtn = document.getElementById('viewPdfBtn');
-
-                    // Reset display elements
-                    detailDocument1FileNameDisplay.textContent = '-';
-                    detailDocument1FileNameDisplay.classList.remove('hidden'); // Ensure it's visible to show '-'
-                    detailDocument1DownloadLink.classList.add('hidden');
-                    detailDocument1DownloadLink.removeAttribute('href');
-
-                    detailDocument2FileNameDisplay.textContent = '-';
-                    detailDocument2FileNameDisplay.classList.remove('hidden'); // Ensure it's visible to show '-'
-                    detailDocument2DownloadLink.classList.add('hidden');
-                    detailDocument2DownloadLink.removeAttribute('href');
-
-                    viewPdfBtn.classList.add('hidden'); // Hide "View All PDFs" button by default
-
-                    let hasUploadedDocuments = false;
-                    const pdfLinks = [];
-
-                    if (uploadDoc.exists) {
-                        const uploadData = uploadDoc.data();
-
-                        // Document 1
-                        if (uploadData.document1FileName && uploadData.document1FileId && uploadData.document1Url) {
-                            detailDocument1FileNameDisplay.textContent = uploadData.document1FileName;
-                            detailDocument1DownloadLink.href = uploadData.document1Url;
-                            detailDocument1DownloadLink.classList.remove('hidden');
-                            hasUploadedDocuments = true;
-                            pdfLinks.push(uploadData.document1Url);
-                        }
-
-                        // Document 2
-                        if (uploadData.document2FileName && uploadData.document2FileId && uploadData.document2Url) {
-                            detailDocument2FileNameDisplay.textContent = uploadData.document2FileName;
-                            detailDocument2DownloadLink.href = uploadData.document2Url;
-                            detailDocument2DownloadLink.classList.remove('hidden');
-                            hasUploadedDocuments = true;
-                            pdfLinks.push(uploadData.document2Url);
-                        }
-                    }
-
-                    // Show "View All PDFs" button if any document is uploaded
-                    if (hasUploadedDocuments) {
-                        viewPdfBtn.classList.remove('hidden');
-                        // Set event listener for "View All PDFs" button
-                        viewPdfBtn.onclick = () => {
-                            pdfLinks.forEach(link => {
-                                window.open(link, '_blank');
-                            });
-                        };
-                    }
 
                     toggleModal('monitoringDetailModal', true);
                 } else {
