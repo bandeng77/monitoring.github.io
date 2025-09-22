@@ -1499,14 +1499,6 @@
                         <button class="view-btn text-blue-600 hover:text-blue-800 p-1" title="View Details">
                             <i class="fas fa-eye"></i>
                         </button>
-                        <!-- New View Document 1 Button -->
-                        <button class="view-doc1-btn text-red-600 hover:text-red-800 p-1 hidden" title="View Document 1">
-                            <i class="fas fa-file-pdf"></i>
-                        </button>
-                        <!-- New View Document 2 Button -->
-                        <button class="view-doc2-btn text-red-600 hover:text-red-800 p-1 hidden" title="View Document 2">
-                            <i class="fas fa-file-pdf"></i>
-                        </button>
                         <button class="edit-btn text-green-600 hover:text-green-800 p-1" title="Edit">
                             <i class="fas fa-edit"></i>
                         </button>
@@ -1521,13 +1513,6 @@
             card.querySelector('.view-btn').addEventListener('click', () => viewMonitoringDetails(monitoring.id));
             card.querySelector('.edit-btn').addEventListener('click', () => editMonitoring(monitoring.id));
             card.querySelector('.delete-btn').addEventListener('click', () => confirmDeleteMonitoring(monitoring.id, monitoring.documentNumber));
-
-            // Add event listeners for new document view buttons
-            const viewDoc1Btn = card.querySelector('.view-doc1-btn');
-            const viewDoc2Btn = card.querySelector('.view-doc2-btn');
-
-            // Fetch document upload status and update button visibility
-            loadDocumentViewButtons(monitoring.id, viewDoc1Btn, viewDoc2Btn);
 
             return card;
         }
@@ -1662,38 +1647,6 @@
             }
             if (currentFilterDocNumber && Array.from(documentNumbers).includes(currentFilterDocNumber)) {
                 filterDocumentNumberSelect.value = currentFilterDocNumber;
-            }
-        }
-
-        // Function to load existing upload document status for a selected Monitoring and update view buttons
-        async function loadDocumentViewButtons(monitoringId, viewDoc1Btn, viewDoc2Btn) {
-            try {
-                const uploadDoc = await documentUploadsCollection.doc(monitoringId).get();
-                if (uploadDoc.exists) {
-                    const data = uploadDoc.data();
-
-                    // Document 1
-                    if (data.document1FileId) {
-                        const downloadUrl1 = client.endpoint + '/storage/buckets/' + APPWRITE_BUCKET_ID + '/files/' + data.document1FileId + '/view?project=' + client.config.project;
-                        viewDoc1Btn.classList.remove('hidden');
-                        viewDoc1Btn.addEventListener('click', (e) => {
-                            e.preventDefault();
-                            window.open(downloadUrl1, '_blank');
-                        });
-                    }
-
-                    // Document 2
-                    if (data.document2FileId) {
-                        const downloadUrl2 = client.endpoint + '/storage/buckets/' + APPWRITE_BUCKET_ID + '/files/' + data.document2FileId + '/view?project=' + client.config.project;
-                        viewDoc2Btn.classList.remove('hidden');
-                        viewDoc2Btn.addEventListener('click', (e) => {
-                            e.preventDefault();
-                            window.open(downloadUrl2, '_blank');
-                        });
-                    }
-                }
-            } catch (error) {
-                console.error("Error loading document view buttons: ", error);
             }
         }
 
