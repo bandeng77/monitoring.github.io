@@ -646,6 +646,20 @@
             align-items: center;
             gap: 0.5rem;
         }
+
+        /* Checkmark icon for uploaded documents */
+        .document-uploaded-checkmark {
+            color: var(--accent-green); /* Green color for checkmark */
+            font-size: 1.2rem; /* Slightly larger icon */
+            margin-right: 0.5rem; /* Space between checkmark and action buttons */
+        }
+
+        /* New container for status/checkmark on the left side of the footer */
+        .deal-footer-left {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem; /* Space between elements in the left footer */
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
@@ -1193,6 +1207,7 @@
                 document.getElementById('successAlertMessage').textContent = `Document files for Nomor Dokumen ${documentNumber} saved successfully!`;
                 toggleModal('uploadDocumentModal', false);
                 toggleModal('successAlertModal', true);
+                loadMonitorings(); // Reload list to update checkmarks on cards
             } catch (error) {
                 console.error("Error saving document upload status or uploading files: ", error);
                 alert(`Failed to save document upload status or upload files. Error: ${error.message}. Please try again.`);
@@ -1455,11 +1470,11 @@
                     `;
                 } else {
                     // Assign sequential numbers based on the filtered and sorted list
-                    filteredMonitorings.forEach((monitoring, index) => {
+                    for (const [index, monitoring] of filteredMonitorings.entries()) {
                         const card = createMonitoringCard(monitoring, index + 1); // Pass index + 1 as the sequential number
                         monitoringsStage.appendChild(card);
                         setTimeout(() => card.classList.add('show'), 50); // Animate cards
-                    });
+                    }
                 }
 
                 populateFilterOptions(monitorings); // Update filter dropdowns
@@ -1488,13 +1503,16 @@
 
             card.innerHTML = `
                 <span class="monitoring-card-number">${sequentialNumber}</span> <!-- Display sequential number -->
-                <h3 class="text-lg font-bold text-gray-900 mb-2">${monitoring.documentNumber || 'N/A'}</h3> <!-- Changed to Nomor Dokumen -->
+                <h3 class="text-lg font-bold text-gray-900 mb-2">${monitoring.documentNumber || 'N/A'}</h3>
                 <div class="deal-details">
-                    <p><i class="fas fa-calendar-alt"></i> Tanggal Dokumen: ${monitoring.documentDate || 'N/A'}</p> <!-- Changed label -->
-                    <p><i class="fas fa-file-alt"></i> Deskripsi Dokumen: ${monitoring.documentDescription || 'N/A'}</p> <!-- Changed label -->
-                    <p><i class="fas fa-money-bill-wave"></i> Perubahan Nilai Harga: ${formattedChangedValue || 'Rp 0'}</p> <!-- Changed label and value -->
+                    <p><i class="fas fa-calendar-alt"></i> Tanggal Dokumen: ${monitoring.documentDate || 'N/A'}</p>
+                    <p><i class="fas fa-file-alt"></i> Deskripsi Dokumen: ${monitoring.documentDescription || 'N/A'}</p>
+                    <p><i class="fas fa-money-bill-wave"></i> Perubahan Nilai Harga: ${formattedChangedValue || 'Rp 0'}</p>
                 </div>
                 <div class="deal-footer">
+                    <div class="deal-footer-left">
+                        <i class="fas fa-check-circle document-uploaded-checkmark hidden" id="checkmark-${monitoring.id}"></i> <!-- Checkmark icon moved here -->
+                    </div>
                     <div class="deal-actions">
                         <button class="view-btn text-blue-600 hover:text-blue-800 p-1" title="View Details">
                             <i class="fas fa-eye"></i>
@@ -1513,6 +1531,9 @@
             card.querySelector('.view-btn').addEventListener('click', () => viewMonitoringDetails(monitoring.id));
             card.querySelector('.edit-btn').addEventListener('click', () => editMonitoring(monitoring.id));
             card.querySelector('.delete-btn').addEventListener('click', () => confirmDeleteMonitoring(monitoring.id, monitoring.documentNumber));
+
+            // Panggil fungsi untuk memeriksa status upload dokumen dan menampilkan ceklis
+            checkAndDisplayDocumentUploadStatus(monitoring.id);
 
             return card;
         }
@@ -1647,6 +1668,28 @@
             }
             if (currentFilterDocNumber && Array.from(documentNumbers).includes(currentFilterDocNumber)) {
                 filterDocumentNumberSelect.value = currentFilterDocNumber;
+            }
+        }
+
+        // Function to check document upload status and display checkmark
+        async function checkAndDisplayDocumentUploadStatus(monitoringId) {
+            try {
+                const uploadDoc = await documentUploadsCollection.doc(monitoringId).get();
+                const checkmarkIcon = document.getElementById(`checkmark-${monitoringId}`);
+
+                if (checkmarkIcon && uploadDoc.exists) {
+                    const data = uploadDoc.data();
+                    // Check if at least one document (document1 or document2) has been uploaded
+                    if (data.document1FileId || data.document2FileId) {
+                        checkmarkIcon.classList.remove('hidden');
+                    } else {
+                        checkmarkIcon.classList.add('hidden');
+                    }
+                } else if (checkmarkIcon) {
+                    checkmarkIcon.classList.add('hidden'); // Hide if no upload document entry exists
+                }
+            } catch (error) {
+                console.error("Error checking document upload status: ", error);
             }
         }
 
