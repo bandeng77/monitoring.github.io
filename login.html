@@ -169,25 +169,11 @@
           storageBucket: "monitoring-efk.firebasestorage.app",
           messagingSenderId: "1083858508151",
           appId: "1:1083858508151:web:3d505dec79d715f9cd6972"
-        };
+};
 
-        // New Firebase config for additional menus
-        const firebaseConfigMenu2 = {
-            apiKey: "AIzaSyDWgxJfYKksEoeUF2rK67rAH-arejKawJM",
-            authDomain: "monitoring-acc.firebaseapp.com",
-            projectId: "monitoring-acc",
-            storageBucket: "monitoring-acc.firebasestorage.app",
-            messagingSenderId: "898707897888",
-            appId: "1:898707897888:web:8cfe6f77cd784d8c1ec645"
-        };
-
-        // Initialize Firebase for the main app
-        firebase.initializeApp(firebaseConfig, 'mainApp'); // Give it a name 'mainApp'
-
-        // Initialize Firebase for the second app (for additional menus)
-        firebase.initializeApp(firebaseConfigMenu2, 'menuApp'); // Give it a name 'menuApp'
-
-        const auth = firebase.auth('mainApp'); // Use the 'mainApp' instance for authentication
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
 
         // Jika sudah login, langsung redirect ke index.html (halaman menu)
         auth.onAuthStateChanged((user) => {
