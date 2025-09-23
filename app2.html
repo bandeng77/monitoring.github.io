@@ -658,7 +658,9 @@
             projectId: "monitoring-acc",
             storageBucket: "monitoring-acc.firebasestorage.app",
             messagingSenderId: "898707897888",
-            appId: "1:898707897888:web:8cfe6f77cd784d8c1ec645"
+            appId: "1:898707897888:web:8cfe6f77cd784d8c1ec645",
+            // URL Realtime Database yang benar
+            databaseURL: "https://monitoring-acc-default-rtdb.asia-southeast1.firebasedatabase.app/"
         };
 
         // Initialize Firebase
@@ -697,7 +699,7 @@
         
         const addItemBtn = document.getElementById('add-item-btn');
         const stockInBtn = document.getElementById('stock-in-btn');
-        const stockOutBtn = document.getElementById('stock-out-btn');
+        const stockOutBtn = document = document.getElementById('stock-out-btn');
         const closeModalBtn = document.getElementById('close-modal');
         const closeStockModalBtn = document.getElementById('close-stock-modal');
         const cancelBtn = document.getElementById('cancel-btn');
@@ -788,8 +790,8 @@
             }
             
             itemsToRender.forEach((item, index) => {
-                const totalValue = item.stock * item.price;
-                const isLowStock = item.stock > 0 && item.stock <= 5;
+                const totalValue = (item.stock || 0) * (item.price || 0); // Ensure calculation with 0 if null/undefined
+                const isLowStock = (item.stock || 0) > 0 && (item.stock || 0) <= 5;
                 
                 const row = document.createElement('tr');
                 row.innerHTML = `
