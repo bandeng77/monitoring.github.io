@@ -1058,8 +1058,11 @@
     const storage = new Appwrite.Storage(client);
     const database = new Appwrite.Databases(client); // If you plan to use Appwrite Database for document metadata
     const APPWRITE_DATABASE_ID = '68d0d71600124cfdc86e'; // Ini tidak digunakan dalam kode ini, tapi tidak masalah
-    const APPWRITE_BUCKET_ID = '68d0d72500025b188805';
+
+    // Appwrite Hardcoded Config
+    const APPWRITE_ENDPOINT = "https://fra.cloud.appwrite.io/v1"; // endpoint asli Appwrite
     const PROJECT_ID = '68d0d6eb001dc06a95b3'; // pakai project ID kamu
+    const APPWRITE_BUCKET_ID = '68d0d72500025b188805';
 
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -1285,7 +1288,7 @@
                         [Appwrite.Permission.read(Appwrite.Role.any())] // izin publik
                     );
                     document1FileId = file1Response.$id;
-                    document1Url = client.endpoint + '/storage/buckets/' + APPWRITE_BUCKET_ID + '/files/' + document1FileId + '/view?project=' + PROJECT_ID;
+                    document1Url = APPWRITE_ENDPOINT + '/storage/buckets/' + APPWRITE_BUCKET_ID + '/files/' + document1FileId + '/view?project=' + PROJECT_ID;
                     updateData.document1FileId = document1FileId;
                     updateData.document1FileName = document1File.name;
                     updateData.document1Url = document1Url;
@@ -1300,7 +1303,7 @@
                         [Appwrite.Permission.read(Appwrite.Role.any())] // izin publik
                     );
                     document2FileId = file2Response.$id;
-                    document2Url = client.endpoint + '/storage/buckets/' + APPWRITE_BUCKET_ID + '/files/' + document2FileId + '/view?project=' + PROJECT_ID;
+                    document2Url = APPWRITE_ENDPOINT + '/storage/buckets/' + APPWRITE_BUCKET_ID + '/files/' + document2FileId + '/view?project=' + PROJECT_ID;
                     updateData.document2FileId = document2FileId;
                     updateData.document2FileName = document2File.name;
                     updateData.document2Url = document2Url;
@@ -1404,7 +1407,7 @@
                         document1FileNameDisplay.textContent = `File: ${data.document1FileName}`;
                         document1FileNameDisplay.classList.remove('hidden');
                         // Construct Appwrite download URL menggunakan PROJECT_ID statis
-                        const downloadUrl1 = client.endpoint + '/storage/buckets/' + APPWRITE_BUCKET_ID + '/files/' + data.document1FileId + '/view?project=' + PROJECT_ID;
+                        const downloadUrl1 = APPWRITE_ENDPOINT + '/storage/buckets/' + APPWRITE_BUCKET_ID + '/files/' + data.document1FileId + '/view?project=' + PROJECT_ID;
                         document1DownloadLink.href = downloadUrl1;
                         document1DownloadLink.classList.remove('hidden');
                     }
@@ -1414,7 +1417,7 @@
                         document2FileNameDisplay.textContent = `File: ${data.document2FileName}`;
                         document2FileNameDisplay.classList.remove('hidden');
                         // Construct Appwrite download URL menggunakan PROJECT_ID statis
-                        const downloadUrl2 = client.endpoint + '/storage/buckets/' + APPWRITE_BUCKET_ID + '/files/' + data.document2FileId + '/view?project=' + PROJECT_ID;
+                        const downloadUrl2 = APPWRITE_ENDPOINT + '/storage/buckets/' + APPWRITE_BUCKET_ID + '/files/' + data.document2FileId + '/view?project=' + PROJECT_ID;
                         document2DownloadLink.href = downloadUrl2;
                         document2DownloadLink.classList.remove('hidden');
                     }
