@@ -405,69 +405,62 @@
             color: #991b1b;
         }
 
-        /* Pagination styles */
+        /* Pagination styles - MODIFIED */
         .pagination-controls {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-top: 1.5rem;
-            padding: 1rem;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+            padding: 0.5rem 1rem; /* Lebih tipis */
             background: white;
             border-radius: 8px;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             flex-wrap: wrap;
-            gap: 1rem;
+            gap: 0.5rem;
+            font-size: 0.8rem; /* Lebih kecil */
         }
 
         .pagination-controls .btn {
-            padding: 0.5rem 1rem;
+            padding: 0.3rem 0.6rem; /* Lebih kecil */
+            font-size: 0.8rem; /* Lebih kecil */
+            min-width: 28px; /* Agar tidak terlalu kecil */
+            justify-content: center;
+            border-radius: 4px; /* Sedikit lebih kecil */
+        }
+
+        .pagination-controls .btn.active-page {
+            background-color: var(--primary-dark); /* Warna untuk halaman aktif */
         }
 
         .pagination-info {
             font-weight: 500;
             color: var(--gray-700);
+            font-size: 0.8rem; /* Lebih kecil */
+            white-space: nowrap; /* Mencegah teks pecah */
         }
 
         .items-per-page-group {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.4rem;
+            font-size: 0.8rem; /* Lebih kecil */
         }
 
-        /* Autocomplete styles */
-        .autocomplete-container {
-            position: relative;
-            width: 100%;
+        .items-per-page-group label {
+            margin-bottom: 0;
+            font-size: 0.8rem; /* Lebih kecil */
         }
 
-        .autocomplete-items {
-            position: absolute;
-            border: 1px solid var(--gray-200);
-            border-bottom: none;
-            border-top: none;
-            z-index: 99;
-            /*position the autocomplete items to be the same width as the container:*/
-            top: 100%;
-            left: 0;
-            right: 0;
+        .filter-select {
+            padding: 0.2rem 0.4rem; /* Lebih kecil */
+            font-size: 0.8rem; /* Lebih kecil */
         }
 
-        .autocomplete-items div {
-            padding: 10px;
-            cursor: pointer;
-            background-color: #fff; 
-            border-bottom: 1px solid var(--gray-200); 
-        }
-
-        /*when hovering an item:*/
-        .autocomplete-items div:hover {
-            background-color: var(--gray-100); 
-        }
-
-        /*when navigating through the items using the arrow keys:*/
-        .autocomplete-active {
-            background-color: var(--primary) !important; 
-            color: #ffffff; 
+        .pagination-buttons {
+            display: flex;
+            gap: 0.2rem; /* Jarak antar tombol halaman */
+            align-items: center;
         }
         
         @media (max-width: 768px) {
@@ -497,6 +490,9 @@
             .pagination-controls {
                 flex-direction: column;
                 align-items: stretch;
+            }
+            .pagination-buttons {
+                justify-content: center; /* Pusatkan tombol paginasi di mobile */
             }
         }
     </style>
@@ -559,6 +555,23 @@
 
             <div id="alert-container"></div>
 
+            <!-- Pagination Controls - MOVED TO TOP AND MODIFIED -->
+            <div class="pagination-controls">
+                <div class="items-per-page-group">
+                    <label for="items-per-page">Tampilkan:</label>
+                    <select id="items-per-page" class="filter-select">
+                        <option value="10">10</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="1000">1000</option>
+                    </select>
+                    <span>item per halaman</span>
+                </div>
+                <div class="pagination-buttons" id="pagination-buttons-container">
+                    <!-- Tombol paginasi akan di-render di sini oleh JavaScript -->
+                </div>
+            </div>
+
             <div class="table-container">
                 <table>
                     <thead>
@@ -576,25 +589,6 @@
                         <!-- Data akan diisi melalui JavaScript -->
                     </tbody>
                 </table>
-            </div>
-
-            <!-- Pagination Controls -->
-            <div class="pagination-controls">
-                <div class="items-per-page-group">
-                    <label for="items-per-page">Tampilkan:</label>
-                    <select id="items-per-page" class="filter-select">
-                        <option value="10">10</option>
-                        <option value="50">50</option>
-                        <option value="100">100</option>
-                        <option value="1000">1000</option>
-                    </select>
-                    <span>item per halaman</span>
-                </div>
-                <div>
-                    <button class="btn" id="prev-page-btn">Sebelumnya</button>
-                    <span class="pagination-info">Halaman <span id="current-page">1</span> dari <span id="total-pages">1</span></span>
-                    <button class="btn" id="next-page-btn">Berikutnya</button>
-                </div>
             </div>
         </div>
         
@@ -665,7 +659,6 @@
                     <label for="item-name-display-edit">Nama Barang</label>
                     <input type="text" id="item-name-display-edit" readonly> <!-- Display only -->
                 </div>
-                <!-- Kategori dihapus -->
                 <div class="form-row">
                     <div class="form-group">
                         <label for="item-stock">Jumlah Stok</label>
@@ -762,7 +755,7 @@
         const itemPidDisplay = document.getElementById('item-pid-display');
         const itemNameDisplayEdit = document.getElementById('item-name-display-edit');
         const itemStockInput = document.getElementById('item-stock');
-        const itemPriceInput = document.getElementById('item-price');
+        const itemPriceInput = document="item-price";
         const stockTypeInput = document.getElementById('stock-type');
         const stockItemSearchInput = document.getElementById('stock-item-search');
         const selectedStockItemIdInput = document.getElementById('selected-stock-item-id');
@@ -791,10 +784,7 @@
 
         // Elemen Paginasi
         const itemsPerPageSelect = document.getElementById('items-per-page');
-        const prevPageBtn = document.getElementById('prev-page-btn');
-        const nextPageBtn = document.getElementById('next-page-btn');
-        const currentPageSpan = document.getElementById('current-page');
-        const totalPagesSpan = document.getElementById('total-pages');
+        const paginationButtonsContainer = document.getElementById('pagination-buttons-container');
         
         // Statistik
         const totalItemsEl = document.getElementById('total-items');
@@ -851,6 +841,86 @@
             totalValueEl.textContent = `Rp ${totalValue.toLocaleString('id-ID')}`;
         }
         
+        // Fungsi untuk merender tombol paginasi
+        function renderPaginationButtons(totalPages) {
+            paginationButtonsContainer.innerHTML = ''; // Bersihkan tombol sebelumnya
+
+            // Tombol "First Page" (<<)
+            const firstPageBtn = document.createElement('button');
+            firstPageBtn.className = 'btn';
+            firstPageBtn.textContent = '««';
+            firstPageBtn.disabled = currentPage === 1;
+            firstPageBtn.addEventListener('click', () => {
+                currentPage = 1;
+                renderItemsTable(currentFilteredItems);
+            });
+            paginationButtonsContainer.appendChild(firstPageBtn);
+
+            // Tombol "Previous Page" (<)
+            const prevPageBtn = document.createElement('button');
+            prevPageBtn.className = 'btn';
+            prevPageBtn.textContent = '«';
+            prevPageBtn.disabled = currentPage === 1;
+            prevPageBtn.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderItemsTable(currentFilteredItems);
+                }
+            });
+            paginationButtonsContainer.appendChild(prevPageBtn);
+
+            // Tentukan rentang halaman yang akan ditampilkan (misal 5 halaman di sekitar halaman saat ini)
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(totalPages, currentPage + 2);
+
+            // Sesuaikan rentang jika di awal atau akhir
+            if (endPage - startPage + 1 < 5) {
+                if (startPage === 1) {
+                    endPage = Math.min(totalPages, 5);
+                } else if (endPage === totalPages) {
+                    startPage = Math.max(1, totalPages - 4);
+                }
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                const pageBtn = document.createElement('button');
+                pageBtn.className = 'btn';
+                pageBtn.textContent = i;
+                if (i === currentPage) {
+                    pageBtn.classList.add('active-page');
+                }
+                pageBtn.addEventListener('click', () => {
+                    currentPage = i;
+                    renderItemsTable(currentFilteredItems);
+                });
+                paginationButtonsContainer.appendChild(pageBtn);
+            }
+
+            // Tombol "Next Page" (>)
+            const nextPageBtn = document.createElement('button');
+            nextPageBtn.className = 'btn';
+            nextPageBtn.textContent = '»';
+            nextPageBtn.disabled = currentPage === totalPages || totalPages === 0;
+            nextPageBtn.addEventListener('click', () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    renderItemsTable(currentFilteredItems);
+                }
+            });
+            paginationButtonsContainer.appendChild(nextPageBtn);
+
+            // Tombol "Last Page" (>>)
+            const lastPageBtn = document.createElement('button');
+            lastPageBtn.className = 'btn';
+            lastPageBtn.textContent = '»»';
+            lastPageBtn.disabled = currentPage === totalPages || totalPages === 0;
+            lastPageBtn.addEventListener('click', () => {
+                currentPage = totalPages;
+                renderItemsTable(currentFilteredItems);
+            });
+            paginationButtonsContainer.appendChild(lastPageBtn);
+        }
+
         // Fungsi untuk merender tabel barang (dengan paginasi)
         function renderItemsTable(itemsToRender = items) {
             currentFilteredItems = itemsToRender; // Simpan item yang sudah difilter untuk paginasi
@@ -902,11 +972,8 @@
                 });
             }
             
-            // Update pagination controls
-            currentPageSpan.textContent = currentPage;
-            totalPagesSpan.textContent = totalPages;
-            prevPageBtn.disabled = currentPage === 1;
-            nextPageBtn.disabled = currentPage === totalPages || totalPages === 0;
+            // Render ulang tombol paginasi
+            renderPaginationButtons(totalPages);
 
             // Tambahkan event listener untuk tombol
             document.querySelectorAll('.edit-btn').forEach(btn => {
@@ -1338,21 +1405,6 @@
             itemsPerPage = parseInt(itemsPerPageSelect.value);
             currentPage = 1; // Reset ke halaman pertama setiap kali items per page berubah
             renderItemsTable(currentFilteredItems); // Render ulang dengan filter yang sedang aktif
-        });
-
-        prevPageBtn.addEventListener('click', () => {
-            if (currentPage > 1) {
-                currentPage--;
-                renderItemsTable(currentFilteredItems);
-            }
-        });
-
-        nextPageBtn.addEventListener('click', () => {
-            const totalPages = Math.ceil(currentFilteredItems.length / itemsPerPage);
-            if (currentPage < totalPages) {
-                currentPage++;
-                renderItemsTable(currentFilteredItems);
-            }
         });
 
         // Autocomplete untuk input pencarian barang di modal stok
