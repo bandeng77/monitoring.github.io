@@ -548,7 +548,6 @@
                     <input type="text" id="search-input" placeholder="Cari barang...">
                 </div>
                 <div style="display: flex; gap: 1rem;">
-                    <!-- Tombol "Tambah Barang" dihapus -->
                     <button class="btn btn-info" id="stock-in-btn">
                         <span>⬇️</span> Stok Masuk
                     </button>
@@ -567,7 +566,6 @@
                             <th>No.</th>
                             <th>No. Barang</th>
                             <th>Nama Barang</th>
-                            <th>Kategori</th>
                             <th>Stok</th>
                             <th>Harga</th>
                             <th>Total Nilai</th>
@@ -650,7 +648,7 @@
         </div>
     </main>
 
-    <!-- Modal untuk mengedit barang (modal tambah barang dihapus) -->
+    <!-- Modal untuk mengedit barang -->
     <div class="modal" id="item-modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -667,18 +665,7 @@
                     <label for="item-name-display-edit">Nama Barang</label>
                     <input type="text" id="item-name-display-edit" readonly> <!-- Display only -->
                 </div>
-                <div class="form-group">
-                    <label for="item-category">Kategori</label>
-                    <select id="item-category" required>
-                        <option value="">Pilih Kategori</option>
-                        <option value="Elektronik">Elektronik</option>
-                        <option value="Pakaian">Pakaian</option>
-                        <option value="Makanan">Makanan</option>
-                        <option value="Perabotan">Perabotan</option>
-                        <option value="Olahraga">Olahraga</option>
-                        <option value="Lainnya">Lainnya</option>
-                    </select>
-                </div>
+                <!-- Kategori dihapus -->
                 <div class="form-row">
                     <div class="form-group">
                         <label for="item-stock">Jumlah Stok</label>
@@ -772,25 +759,21 @@
         const modalTitle = document.getElementById('modal-title');
         const stockModalTitle = document.getElementById('stock-modal-title');
         const itemIdInput = document.getElementById('item-id');
-        // const itemPidSelect = document.getElementById('item-pid-select'); // Dihapus
-        // const itemNameDisplay = document.getElementById('item-name-display'); // Dihapus
-        const itemPidDisplay = document.getElementById('item-pid-display'); // Baru untuk modal edit
-        const itemNameDisplayEdit = document.getElementById('item-name-display-edit'); // Baru untuk modal edit
-        const itemCategoryInput = document.getElementById('item-category');
+        const itemPidDisplay = document.getElementById('item-pid-display');
+        const itemNameDisplayEdit = document.getElementById('item-name-display-edit');
+        // const itemCategoryInput = document.getElementById('item-category'); // Dihapus
         const itemStockInput = document.getElementById('item-stock');
         const itemPriceInput = document.getElementById('item-price');
         const stockTypeInput = document.getElementById('stock-type');
-        // const stockItemInput = document.getElementById('stock-item'); // Dihapus
-        const stockItemSearchInput = document.getElementById('stock-item-search'); // Baru
-        const selectedStockItemIdInput = document.getElementById('selected-stock-item-id'); // Baru
-        const autocompleteList = document.getElementById('autocomplete-list'); // Baru
+        const stockItemSearchInput = document.getElementById('stock-item-search');
+        const selectedStockItemIdInput = document.getElementById('selected-stock-item-id');
+        const autocompleteList = document.getElementById('autocomplete-list');
         const stockQuantityInput = document.getElementById('stock-quantity');
         const stockDestinationInput = document.getElementById('stock-destination');
         const stockNotesInput = document.getElementById('stock-notes');
         const destinationGroup = document.getElementById('destination-group');
         const destinationLabel = document.getElementById('destination-label');
         
-        // const addItemBtn = document.getElementById('add-item-btn'); // Dihapus
         const stockInBtn = document.getElementById('stock-in-btn');
         const stockOutBtn = document.getElementById('stock-out-btn');
         const closeModalBtn = document.getElementById('close-modal');
@@ -829,23 +812,11 @@
                 }
                 pidData = await response.json();
                 console.log('PID Data loaded:', pidData);
-                // populatePidSelect(); // Tidak perlu lagi karena modal tambah barang dihapus
             } catch (error) {
                 console.error('Error loading PID data:', error);
                 showAlert('Gagal memuat data No. Barang (PID).', 'error');
             }
         }
-
-        // Fungsi untuk mengisi dropdown PID di modal tambah/edit (dihapus karena modal tambah barang dihapus)
-        // function populatePidSelect() {
-        //     itemPidSelect.innerHTML = '<option value="">Pilih No. Barang</option>';
-        //     pidData.forEach(data => {
-        //         const option = document.createElement('option');
-        //         option.value = data.pid;
-        //         option.textContent = data.pid;
-        //         itemPidSelect.appendChild(option);
-        //     });
-        // }
         
         // Fungsi untuk menampilkan alert
         function showAlert(message, type = 'success') {
@@ -896,7 +867,7 @@
             if (itemsForCurrentPage.length === 0) {
                 itemsTableBody.innerHTML = `
                     <tr>
-                        <td colspan="8" style="text-align: center; padding: 2rem;">
+                        <td colspan="7" style="text-align: center; padding: 2rem;">
                             Tidak ada data barang.
                         </td>
                     </tr>
@@ -911,7 +882,6 @@
                         <td>${startIndex + index + 1}</td> <!-- Nomor urut global -->
                         <td>${item.pid}</td>
                         <td>${item.name}</td>
-                        <td>${item.category || '-'}</td>
                         <td class="${isLowStock ? 'low-stock' : ''}">${item.stock || 0}</td>
                         <td>Rp ${item.price ? item.price.toLocaleString('id-ID') : '0'}</td>
                         <td>Rp ${totalValue ? totalValue.toLocaleString('id-ID') : '0'}</td>
@@ -1045,36 +1015,6 @@
             });
         }
         
-        // Fungsi untuk mengisi dropdown barang (dihapus karena diganti search input)
-        // function populateItemDropdown() {
-        //     stockItemInput.innerHTML = '<option value="">Pilih Barang</option>';
-        //     items.forEach(item => {
-        //         const option = document.createElement('option');
-        //         option.value = item.id;
-        //         option.textContent = `${item.name} (Stok: ${item.stock || 0})`;
-        //         stockItemInput.appendChild(option);
-        //     });
-            
-        //     // Juga isi filter barang di tab history
-        //     itemFilter.innerHTML = '<option value="all">Semua Barang</option>';
-        //     items.forEach(item => {
-        //         const option = document.createElement('option');
-        //         option.value = item.id;
-        //         option.textContent = item.name;
-        //         itemFilter.appendChild(option);
-        //     });
-        // }
-        
-        // Fungsi untuk membuka modal tambah barang (dihapus)
-        // function openAddModal() {
-        //     modalTitle.textContent = 'Tambah Barang Baru';
-        //     itemForm.reset();
-        //     itemIdInput.value = '';
-        //     itemPidSelect.value = ''; // Clear selected PID
-        //     itemNameDisplay.value = ''; // Clear displayed name
-        //     itemModal.style.display = 'flex';
-        // }
-        
         // Fungsi untuk membuka modal stok masuk/keluar
         function openStockModal(type) {
             stockTypeInput.value = type;
@@ -1084,7 +1024,6 @@
             stockItemSearchInput.value = ''; // Clear search input
             selectedStockItemIdInput.value = ''; // Clear selected item ID
             autocompleteList.innerHTML = ''; // Clear autocomplete list
-            // populateItemDropdown(); // Dihapus
             stockModal.style.display = 'flex';
         }
         
@@ -1097,7 +1036,7 @@
                 itemIdInput.value = item.id;
                 itemPidDisplay.value = item.pid; // Set selected PID
                 itemNameDisplayEdit.value = item.name; // Set displayed name
-                itemCategoryInput.value = item.category || ''; // Set default if null
+                // itemCategoryInput.value = item.category || ''; // Dihapus
                 itemStockInput.value = item.stock || 0; // Set default if null
                 itemPriceInput.value = item.price || 0; // Set default if null
                 
@@ -1144,7 +1083,7 @@
             const id = itemIdInput.value;
             const pid = itemPidDisplay.value; // PID dari display field
             const name = itemNameDisplayEdit.value; // Nama dari display field
-            const category = itemCategoryInput.value;
+            // const category = itemCategoryInput.value; // Dihapus
             const stock = parseInt(itemStockInput.value);
             const price = parseInt(itemPriceInput.value);
 
@@ -1158,7 +1097,8 @@
             const existingItem = items.find(item => item.id === id);
             if (existingItem) {
                 const oldStock = existingItem.stock || 0;
-                const updatedItem = { id, pid, name, category, stock, price };
+                // const updatedItem = { id, pid, name, category, stock, price }; // Dihapus kategori
+                const updatedItem = { id, pid, name, stock, price };
                 await itemsRef.child(id).set(updatedItem);
                 
                 // Catat perubahan stok di history jika ada
@@ -1228,7 +1168,7 @@
             if (searchTerm) {
                 const filteredItems = items.filter(item => 
                     item.name.toLowerCase().includes(searchTerm) || 
-                    (item.category && item.category.toLowerCase().includes(searchTerm)) || 
+                    // (item.category && item.category.toLowerCase().includes(searchTerm)) || // Dihapus
                     item.pid.toLowerCase().includes(searchTerm)
                 );
                 // Reset halaman ke 1 setelah pencarian
@@ -1281,7 +1221,6 @@
         });
         
         // Event listener untuk tombol dan modal
-        // addItemBtn.addEventListener('click', openAddModal); // Dihapus
         stockInBtn.addEventListener('click', () => openStockModal('in'));
         stockOutBtn.addEventListener('click', () => openStockModal('out'));
         
@@ -1315,17 +1254,6 @@
             }
         });
 
-        // Event listener untuk itemPidSelect agar otomatis mengisi Nama Barang (dihapus)
-        // itemPidSelect.addEventListener('change', () => {
-        //     const pidValue = itemPidSelect.value;
-        //     const foundItem = pidData.find(data => data.pid === pidValue);
-        //     if (foundItem) {
-        //         itemNameDisplay.value = foundItem.description;
-        //     } else {
-        //         itemNameDisplay.value = ''; // Clear if PID not found
-        //     }
-        // });
-
         // Sinkronisasi data inventori dari Firebase
         itemsRef.on('value', (snapshot) => {
             const data = snapshot.val();
@@ -1339,7 +1267,6 @@
             if (searchTerm) {
                 const filteredItems = items.filter(item => 
                     item.name.toLowerCase().includes(searchTerm) || 
-                    (item.category && item.category.toLowerCase().includes(searchTerm)) || 
                     item.pid.toLowerCase().includes(searchTerm)
                 );
                 renderItemsTable(filteredItems);
@@ -1347,7 +1274,6 @@
                 renderItemsTable(items);
             }
             updateStats();
-            // populateItemDropdown(); // Dihapus karena diganti search input
         });
 
         // Sinkronisasi data history dari Firebase
@@ -1383,8 +1309,8 @@
                         id: newId,
                         pid: pidEntry.pid,
                         name: pidEntry.description,
-                        category: '', // Default empty category
-                        stock: 0,     // Default stock to 0
+                        // category: '', // Dihapus
+                        stock: pidEntry.stok || 0, // Ambil stok dari pid.json, default 0 jika tidak ada
                         price: 0      // Default price to 0
                     };
                     await itemsRef.child(newId).set(newItem);
