@@ -169,16 +169,36 @@
           storageBucket: "monitoring-efk.firebasestorage.app",
           messagingSenderId: "1083858508151",
           appId: "1:1083858508151:web:3d505dec79d715f9cd6972"
-};
+        };
 
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
 
+        // List of allowed email addresses
+        const allowedEmails = [
+            "maida@genetek.co.id",
+            "maya@genetek.co.id",
+            "evi@genetek.co.id",
+            "rossiana.yl@genetek.co.id",
+            "sarju@genetek.co.id"
+        ];
+
         // Jika sudah login, langsung redirect ke index.html (halaman menu)
         auth.onAuthStateChanged((user) => {
             if (user) {
-                window.location.href = 'index.html';
+                // Check if the logged-in user's email is in the allowed list
+                if (allowedEmails.includes(user.email)) {
+                    window.location.href = 'index.html';
+                } else {
+                    // If not allowed, sign out the user and show an error
+                    auth.signOut().then(() => {
+                        errorMessage.textContent = "Akses ditolak. Email Anda tidak diizinkan.";
+                        errorMessage.style.display = 'block';
+                    }).catch((error) => {
+                        console.error("Error signing out unauthorized user:", error);
+                    });
+                }
             }
         });
 
@@ -198,6 +218,15 @@
             errorMessage.textContent = '';
             loginBtn.disabled = true;
             loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
+
+            // Check if the entered email is in the allowed list before attempting Firebase login
+            if (!allowedEmails.includes(email)) {
+                errorMessage.textContent = "Akses ditolak. Email Anda tidak diizinkan.";
+                errorMessage.style.display = 'block';
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Masuk';
+                return; // Stop the login process
+            }
 
             try {
                 await auth.signInWithEmailAndPassword(email, password);
