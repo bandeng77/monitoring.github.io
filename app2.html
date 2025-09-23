@@ -430,6 +430,9 @@
             }
         }
     </style>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 </head>
 <body>
     <header>
@@ -570,12 +573,15 @@
             <form id="item-form">
                 <input type="hidden" id="item-id">
                 <div class="form-group">
-                    <label for="item-pid">No. Barang (PID)</label>
-                    <input type="text" id="item-pid" required>
+                    <label for="item-pid-select">Pilih No. Barang</label>
+                    <select id="item-pid-select" required>
+                        <option value="">Pilih No. Barang</option>
+                        <!-- Options will be populated from pid.json -->
+                    </select>
                 </div>
                 <div class="form-group">
-                    <label for="item-name">Nama Barang</label>
-                    <input type="text" id="item-name" required>
+                    <label for="item-name-display">Nama Barang</label>
+                    <input type="text" id="item-name-display" readonly> <!-- Display only -->
                 </div>
                 <div class="form-group">
                     <label for="item-category">Kategori</label>
@@ -643,11 +649,27 @@
     </div>
 
     <script>
-        // Data barang (disimpan di localStorage)
-        let items = JSON.parse(localStorage.getItem('inventoryItems')) || [];
-        let history = JSON.parse(localStorage.getItem('inventoryHistory')) || [];
-        let pidData = []; // Data dari pid.json
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDWgxJfYKksEoeUF2rK67rAH-arejKawJM",
+            authDomain: "monitoring-acc.firebaseapp.com",
+            projectId: "monitoring-acc",
+            storageBucket: "monitoring-acc.firebasestorage.app",
+            messagingSenderId: "898707897888",
+            appId: "1:898707897888:web:8cfe6f77cd784d8c1ec645"
+        };
 
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const itemsRef = database.ref('inventoryItems');
+        const historyRef = database.ref('inventoryHistory');
+
+        // Data barang (akan disinkronkan dengan Firebase)
+        let items = [];
+        let history = [];
+        let pidData = []; // Data dari pid.json
+        
         // Elemen DOM
         const itemsTableBody = document.getElementById('items-table-body');
         const historyTableBody = document.getElementById('history-table-body');
@@ -658,8 +680,8 @@
         const modalTitle = document.getElementById('modal-title');
         const stockModalTitle = document.getElementById('stock-modal-title');
         const itemIdInput = document.getElementById('item-id');
-        const itemPidInput = document.getElementById('item-pid'); // New PID input
-        const itemNameInput = document.getElementById('item-name');
+        const itemPidSelect = document.getElementById('item-pid-select'); // Changed to select
+        const itemNameDisplay = document.getElementById('item-name-display'); // Display only
         const itemCategoryInput = document.getElementById('item-category');
         const itemStockInput = document.getElementById('item-stock');
         const itemPriceInput = document.getElementById('item-price');
@@ -703,10 +725,22 @@
                 }
                 pidData = await response.json();
                 console.log('PID Data loaded:', pidData);
+                populatePidSelect(); // Populate the select dropdown after loading
             } catch (error) {
                 console.error('Error loading PID data:', error);
                 showAlert('Gagal memuat data No. Barang (PID).', 'error');
             }
+        }
+
+        // Fungsi untuk mengisi dropdown PID di modal tambah/edit
+        function populatePidSelect() {
+            itemPidSelect.innerHTML = '<option value="">Pilih No. Barang</option>';
+            pidData.forEach(data => {
+                const option = document.createElement('option');
+                option.value = data.pid;
+                option.textContent = data.pid;
+                itemPidSelect.appendChild(option);
+            });
         }
         
         // Fungsi untuk menampilkan alert
@@ -912,6 +946,8 @@
             modalTitle.textContent = 'Tambah Barang Baru';
             itemForm.reset();
             itemIdInput.value = '';
+            itemPidSelect.value = ''; // Clear selected PID
+            itemNameDisplay.value = ''; // Clear displayed name
             itemModal.style.display = 'flex';
         }
         
@@ -932,8 +968,8 @@
             if (item) {
                 modalTitle.textContent = 'Edit Barang';
                 itemIdInput.value = item.id;
-                itemPidInput.value = item.pid; // Set PID
-                itemNameInput.value = item.name;
+                itemPidSelect.value = item.pid; // Set selected PID
+                itemNameDisplay.value = item.name; // Set displayed name
                 itemCategoryInput.value = item.category;
                 itemStockInput.value = item.stock;
                 itemPriceInput.value = item.price;
@@ -943,26 +979,25 @@
         }
         
         // Fungsi untuk menghapus barang
-        function deleteItem(id) {
+        async function deleteItem(id) {
             if (confirm('Apakah Anda yakin ingin menghapus barang ini?')) {
-                // Tambahkan ke history
                 const item = items.find(item => item.id === id);
                 if (item) {
-                    addHistoryRecord('out', item.id, item.name, item.stock, 'Dihapus dari sistem', 'Barang dihapus dari inventori');
+                    // Add to history before deleting from inventory
+                    await addHistoryRecord('out', item.id, item.name, item.stock, 'Dihapus dari sistem', 'Barang dihapus dari inventori');
+                    
+                    // Remove from Firebase
+                    await itemsRef.child(id).remove();
+                    showAlert('Barang berhasil dihapus');
                 }
-                
-                items = items.filter(item => item.id !== id);
-                saveItems();
-                renderItemsTable();
-                updateStats();
-                showAlert('Barang berhasil dihapus');
             }
         }
         
-        // Fungsi untuk menambahkan record history
-        function addHistoryRecord(type, itemId, itemName, quantity, destination, notes) {
+        // Fungsi untuk menambahkan record history ke Firebase
+        async function addHistoryRecord(type, itemId, itemName, quantity, destination, notes) {
+            const newHistoryRef = historyRef.push(); // Generate unique key
             const record = {
-                id: Date.now().toString(),
+                id: newHistoryRef.key,
                 type,
                 itemId,
                 itemName,
@@ -972,44 +1007,32 @@
                 user: 'Admin', // Dalam implementasi nyata, ini bisa diambil dari info login
                 timestamp: new Date().toISOString()
             };
-            
-            history.unshift(record); // Tambahkan di awal array
-            saveHistory();
-        }
-        
-        // Fungsi untuk menyimpan barang ke localStorage
-        function saveItems() {
-            localStorage.setItem('inventoryItems', JSON.stringify(items));
-        }
-        
-        // Fungsi untuk menyimpan history ke localStorage
-        function saveHistory() {
-            localStorage.setItem('inventoryHistory', JSON.stringify(history));
+            await newHistoryRef.set(record);
         }
         
         // Event listener untuk form barang
-        itemForm.addEventListener('submit', (e) => {
+        itemForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const id = itemIdInput.value;
-            const pid = itemPidInput.value; // Get PID
-            const name = itemNameInput.value;
+            const pid = itemPidSelect.value; // Get PID from select
+            const name = itemNameDisplay.value; // Get name from display field
             const category = itemCategoryInput.value;
             const stock = parseInt(itemStockInput.value);
             const price = parseInt(itemPriceInput.value);
 
-            // Validasi PID unik
-            if (!id && items.some(item => item.pid === pid)) {
-                showAlert('No. Barang (PID) sudah ada. Harap gunakan PID yang berbeda.', 'error');
+            if (!pid) {
+                showAlert('Pilih No. Barang terlebih dahulu.', 'error');
                 return;
             }
             
             if (id) {
                 // Edit barang yang sudah ada
-                const index = items.findIndex(item => item.id === id);
-                if (index !== -1) {
-                    const oldStock = items[index].stock;
-                    items[index] = { id, pid, name, category, stock, price }; // Update PID
+                const existingItem = items.find(item => item.id === id);
+                if (existingItem) {
+                    const oldStock = existingItem.stock;
+                    const updatedItem = { id, pid, name, category, stock, price };
+                    await itemsRef.child(id).set(updatedItem);
                     
                     // Catat perubahan stok di history jika ada
                     if (stock !== oldStock) {
@@ -1017,33 +1040,36 @@
                         const changeQuantity = Math.abs(stock - oldStock);
                         const destination = changeType === 'in' ? 'Penyesuaian stok (tambah)' : 'Penyesuaian stok (kurang)';
                         
-                        addHistoryRecord(changeType, id, name, changeQuantity, destination, 'Penyesuaian stok manual');
+                        await addHistoryRecord(changeType, id, name, changeQuantity, destination, 'Penyesuaian stok manual');
                     }
                     
                     showAlert('Barang berhasil diupdate');
                 }
             } else {
                 // Tambah barang baru
-                const newId = Date.now().toString();
-                items.push({ id: newId, pid, name, category, stock, price }); // Add PID
+                // Check if PID already exists in current inventory
+                if (items.some(item => item.pid === pid)) {
+                    showAlert('No. Barang (PID) sudah ada di inventori. Harap pilih PID yang berbeda atau edit item yang sudah ada.', 'error');
+                    return;
+                }
+
+                const newId = itemsRef.push().key; // Generate unique key from Firebase
+                const newItem = { id: newId, pid, name, category, stock, price };
+                await itemsRef.child(newId).set(newItem);
                 
                 // Catat penambahan barang baru di history
                 if (stock > 0) {
-                    addHistoryRecord('in', newId, name, stock, 'Barang baru', 'Penambahan barang baru ke inventori');
+                    await addHistoryRecord('in', newId, name, stock, 'Barang baru', 'Penambahan barang baru ke inventori');
                 }
                 
                 showAlert('Barang berhasil ditambahkan');
             }
             
-            saveItems();
-            renderItemsTable();
-            updateStats();
-            populateItemDropdown();
             itemModal.style.display = 'none';
         });
         
         // Event listener untuk form stok
-        stockForm.addEventListener('submit', (e) => {
+        stockForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const type = stockTypeInput.value;
@@ -1064,26 +1090,20 @@
                 return;
             }
             
-            // Update stok barang
+            // Update stok barang di Firebase
+            let newStock;
             if (type === 'in') {
-                item.stock += quantity;
+                newStock = item.stock + quantity;
             } else {
-                item.stock -= quantity;
+                newStock = item.stock - quantity;
             }
+            await itemsRef.child(itemId).update({ stock: newStock });
             
-            // Catat di history
-            addHistoryRecord(type, itemId, item.name, quantity, destination, notes);
+            // Catat di history Firebase
+            await addHistoryRecord(type, itemId, item.name, quantity, destination, notes);
             
-            saveItems();
-            renderItemsTable();
-            updateStats();
             showAlert(`Stok berhasil ${type === 'in' ? 'ditambahkan' : 'dikurangi'}`);
             stockModal.style.display = 'none';
-            
-            // Jika sedang di tab history, perbarui juga
-            if (document.getElementById('history-tab').classList.contains('active')) {
-                renderHistoryTable();
-            }
         });
         
         // Event listener untuk pencarian barang
@@ -1094,7 +1114,7 @@
                 const filteredItems = items.filter(item => 
                     item.name.toLowerCase().includes(searchTerm) || 
                     item.category.toLowerCase().includes(searchTerm) ||
-                    item.pid.toLowerCase().includes(searchTerm) // Include PID in search
+                    item.pid.toLowerCase().includes(searchTerm)
                 );
                 
                 renderItemsTable(filteredItems);
@@ -1173,82 +1193,46 @@
             }
         });
 
-        // Event listener untuk input PID agar otomatis mengisi Nama Barang
-        itemPidInput.addEventListener('input', () => {
-            const pidValue = itemPidInput.value;
+        // Event listener untuk itemPidSelect agar otomatis mengisi Nama Barang
+        itemPidSelect.addEventListener('change', () => {
+            const pidValue = itemPidSelect.value;
             const foundItem = pidData.find(data => data.pid === pidValue);
             if (foundItem) {
-                itemNameInput.value = foundItem.description;
+                itemNameDisplay.value = foundItem.description;
             } else {
-                itemNameInput.value = ''; // Clear if PID not found
+                itemNameDisplay.value = ''; // Clear if PID not found
+            }
+        });
+
+        // Sinkronisasi data inventori dari Firebase
+        itemsRef.on('value', (snapshot) => {
+            const data = snapshot.val();
+            items = [];
+            for (let key in data) {
+                items.push(data[key]);
+            }
+            renderItemsTable();
+            updateStats();
+            populateItemDropdown();
+        });
+
+        // Sinkronisasi data history dari Firebase
+        historyRef.on('value', (snapshot) => {
+            const data = snapshot.val();
+            history = [];
+            for (let key in data) {
+                history.push(data[key]);
+            }
+            // Only re-render history if the history tab is active
+            if (document.getElementById('history-tab').classList.contains('active')) {
+                renderHistoryTable();
             }
         });
         
         // Inisialisasi aplikasi
         async function initApp() {
             await loadPidData(); // Load PID data first
-            renderItemsTable();
-            updateStats();
-            populateItemDropdown();
-            
-            // Tambahkan beberapa data contoh jika belum ada
-            if (items.length === 0) {
-                items = [
-                    { id: '1', pid: 'ELEC001', name: 'Laptop ASUS', category: 'Elektronik', stock: 5, price: 8000000 },
-                    { id: '2', pid: 'CLOTH001', name: 'Kemeja Flanel', category: 'Pakaian', stock: 15, price: 250000 },
-                    { id: '3', pid: 'ELEC002', name: 'Mouse Wireless', category: 'Elektronik', stock: 3, price: 200000 },
-                    { id: '4', pid: 'FOOD001', name: 'Snack Coklat', category: 'Makanan', stock: 20, price: 15000 },
-                    { id: '5', pid: 'FURN001', name: 'Meja Kerja', category: 'Perabotan', stock: 2, price: 1200000 }
-                ];
-                saveItems();
-                renderItemsTable();
-                updateStats();
-                populateItemDropdown();
-            }
-            
-            // Tambahkan beberapa history contoh jika belum ada
-            if (history.length === 0) {
-                const now = new Date();
-                const oneDayAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000));
-                const twoDaysAgo = new Date(now.getTime() - (2 * 24 * 60 * 60 * 1000));
-                
-                history = [
-                    {
-                        id: '1',
-                        type: 'in',
-                        itemId: '1',
-                        itemName: 'Laptop ASUS',
-                        quantity: 5,
-                        destination: 'PT. Supplier Elektronik',
-                        notes: 'Pembelian awal',
-                        user: 'Admin',
-                        timestamp: twoDaysAgo.toISOString()
-                    },
-                    {
-                        id: '2',
-                        type: 'out',
-                        itemId: '1',
-                        itemName: 'Laptop ASUS',
-                        quantity: 2,
-                        destination: 'Customer: Budi Santoso',
-                        notes: 'Penjualan offline',
-                        user: 'Admin',
-                        timestamp: oneDayAgo.toISOString()
-                    },
-                    {
-                        id: '3',
-                        type: 'in',
-                        itemId: '3',
-                        itemName: 'Mouse Wireless',
-                        quantity: 10,
-                        destination: 'PT. Aksesori Komputer',
-                        notes: 'Stok tambahan',
-                        user: 'Admin',
-                        timestamp: now.toISOString()
-                    }
-                ];
-                saveHistory();
-            }
+            // Initial render and stats update will be handled by Firebase 'value' listeners
         }
         
         // Jalankan aplikasi
