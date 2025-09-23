@@ -478,6 +478,8 @@
                     <input type="text" id="search-input" placeholder="Cari barang...">
                 </div>
                 <div style="display: flex; gap: 1rem;">
+                    <!-- Tombol "Tambah Barang" akan tetap ada untuk menambahkan item baru yang tidak ada di pid.json,
+                         atau untuk mengedit detail item yang sudah ada dari pid.json -->
                     <button class="btn" id="add-item-btn">
                         <span>➕</span> Tambah Barang
                     </button>
@@ -794,10 +796,10 @@
                     <td>${index + 1}</td>
                     <td>${item.pid}</td>
                     <td>${item.name}</td>
-                    <td>${item.category}</td>
-                    <td class="${isLowStock ? 'low-stock' : ''}">${item.stock}</td>
-                    <td>Rp ${item.price.toLocaleString('id-ID')}</td>
-                    <td>Rp ${totalValue.toLocaleString('id-ID')}</td>
+                    <td>${item.category || '-'}</td> <!-- Display default if category is null/undefined -->
+                    <td class="${isLowStock ? 'low-stock' : ''}">${item.stock || 0}</td> <!-- Display default if stock is null/undefined -->
+                    <td>Rp ${item.price ? item.price.toLocaleString('id-ID') : '0'}</td> <!-- Display default if price is null/undefined -->
+                    <td>Rp ${totalValue ? totalValue.toLocaleString('id-ID') : '0'}</td> <!-- Display default if totalValue is null/undefined -->
                     <td class="action-cell">
                         <button class="action-btn edit-btn" data-id="${item.id}">✏️</button>
                         <button class="action-btn history-btn" data-id="${item.id}">📊</button>
@@ -927,7 +929,7 @@
             items.forEach(item => {
                 const option = document.createElement('option');
                 option.value = item.id;
-                option.textContent = `${item.name} (Stok: ${item.stock})`;
+                option.textContent = `${item.name} (Stok: ${item.stock || 0})`;
                 stockItemInput.appendChild(option);
             });
             
@@ -970,9 +972,9 @@
                 itemIdInput.value = item.id;
                 itemPidSelect.value = item.pid; // Set selected PID
                 itemNameDisplay.value = item.name; // Set displayed name
-                itemCategoryInput.value = item.category;
-                itemStockInput.value = item.stock;
-                itemPriceInput.value = item.price;
+                itemCategoryInput.value = item.category || ''; // Set default if null
+                itemStockInput.value = item.stock || 0; // Set default if null
+                itemPriceInput.value = item.price || 0; // Set default if null
                 
                 itemModal.style.display = 'flex';
             }
@@ -984,7 +986,7 @@
                 const item = items.find(item => item.id === id);
                 if (item) {
                     // Add to history before deleting from inventory
-                    await addHistoryRecord('out', item.id, item.name, item.stock, 'Dihapus dari sistem', 'Barang dihapus dari inventori');
+                    await addHistoryRecord('out', item.id, item.name, item.stock || 0, 'Dihapus dari sistem', 'Barang dihapus dari inventori');
                     
                     // Remove from Firebase
                     await itemsRef.child(id).remove();
@@ -1030,7 +1032,7 @@
                 // Edit barang yang sudah ada
                 const existingItem = items.find(item => item.id === id);
                 if (existingItem) {
-                    const oldStock = existingItem.stock;
+                    const oldStock = existingItem.stock || 0;
                     const updatedItem = { id, pid, name, category, stock, price };
                     await itemsRef.child(id).set(updatedItem);
                     
@@ -1085,7 +1087,7 @@
                 return;
             }
             
-            if (type === 'out' && quantity > item.stock) {
+            if (type === 'out' && quantity > (item.stock || 0)) { // Check against current stock or 0
                 showAlert('Stok tidak mencukupi', 'error');
                 return;
             }
@@ -1093,9 +1095,9 @@
             // Update stok barang di Firebase
             let newStock;
             if (type === 'in') {
-                newStock = item.stock + quantity;
+                newStock = (item.stock || 0) + quantity;
             } else {
-                newStock = item.stock - quantity;
+                newStock = (item.stock || 0) - quantity;
             }
             await itemsRef.child(itemId).update({ stock: newStock });
             
@@ -1113,7 +1115,7 @@
             if (searchTerm) {
                 const filteredItems = items.filter(item => 
                     item.name.toLowerCase().includes(searchTerm) || 
-                    item.category.toLowerCase().includes(searchTerm) ||
+                    (item.category && item.category.toLowerCase().includes(searchTerm)) || // Check if category exists
                     item.pid.toLowerCase().includes(searchTerm)
                 );
                 
@@ -1228,11 +1230,42 @@
                 renderHistoryTable();
             }
         });
+
+        // Fungsi untuk mengisi Firebase dengan data dari pid.json jika belum ada
+        async function populateFirebaseFromPidData() {
+            if (pidData.length === 0) {
+                console.warn("pid.json data not loaded yet.");
+                return;
+            }
+
+            // Get current items from Firebase once
+            const snapshot = await itemsRef.once('value');
+            const currentFirebaseItems = snapshot.val() || {};
+            const currentFirebasePids = new Set(Object.values(currentFirebaseItems).map(item => item.pid));
+
+            for (const pidEntry of pidData) {
+                if (!currentFirebasePids.has(pidEntry.pid)) {
+                    // Item from pid.json does not exist in Firebase, add it
+                    const newId = itemsRef.push().key;
+                    const newItem = {
+                        id: newId,
+                        pid: pidEntry.pid,
+                        name: pidEntry.description,
+                        category: '', // Default empty category
+                        stock: 0,     // Default stock to 0
+                        price: 0      // Default price to 0
+                    };
+                    await itemsRef.child(newId).set(newItem);
+                    console.log(`Added new item from pid.json to Firebase: ${pidEntry.pid}`);
+                }
+            }
+        }
         
         // Inisialisasi aplikasi
         async function initApp() {
             await loadPidData(); // Load PID data first
-            // Initial render and stats update will be handled by Firebase 'value' listeners
+            await populateFirebaseFromPidData(); // Then populate Firebase based on pid.json
+            // Firebase 'value' listeners will handle rendering and stats update
         }
         
         // Jalankan aplikasi
