@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring Dokumen - Genetek</title>
+    <title>Document Monitoring - Genetek</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <!-- Library for Export Excel -->
@@ -279,7 +279,7 @@
         .modal-content-enter-active, .modal-content-leave-active {
             /* transition: opacity 0.15s cubic-bezier(0.25, 0.8, 0.25, 1), transform 0.15s cubic-bezier(0.25, 0.8, 0.25, 1); */
         }
-        #monitoringModalContent, #monitoringDetailModalContent, #deleteModalContent, #filterPanelContent, #successAlertModalContent, #uploadDocumentModalContent, #activityModalContent, #documentInfoModalContent {
+        #monitoringModalContent, #monitoringDetailModalContent, #deleteModalContent, #filterPanelContent, #successAlertModalContent, #uploadDocumentModalContent, #documentInfoModalContent {
             background-color: #ffffff;
             border-radius: 1rem;
             box-shadow: 0 20px 50px var(--shadow-strong);
@@ -320,7 +320,7 @@
         }
 
 
-        #monitoringModalContent h2, #monitoringDetailModalContent h2, #deleteModalContent h2, #filterPanelContent h2, #successAlertModalContent h2, #uploadDocumentModalContent h2, #activityModalContent h2, #documentInfoModalContent h2 {
+        #monitoringModalContent h2, #monitoringDetailModalContent h2, #deleteModalContent h2, #filterPanelContent h2, #successAlertModalContent h2, #uploadDocumentModalContent h2, #documentInfoModalContent h2 {
             color: var(--text-dark);
             font-weight: 800;
             font-size: 1.75rem; /* Smaller */
@@ -670,13 +670,9 @@
         <header class="mb-8 bg-white p-6 rounded-lg shadow-md header">
             <div class="flex justify-between items-start">
                 <div>
-                    <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900">Monitoring Dokumen <i class="fas fa-box-open text-blue-600 ml-2"></i></h1>
+                    <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900">Document Monitoring <i class="fas fa-box-open text-blue-600 ml-2"></i></h1>
                 </div>
                 <div class="logout-btn-container flex space-x-2">
-                    <!-- New Activity Button -->
-                    <button id="activityButton" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
-                        <i class="fas fa-history mr-2"></i> Aktivitas
-                    </button>
                     <button id="authButton" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
                         <i class="fas fa-sign-out-alt mr-2"></i> Logout
                     </button>
@@ -738,42 +734,53 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                         <!-- Column 1: Document Details -->
                         <div>
-                            <h3 class="text-lg font-bold text-gray-900 mb-3">Detail Dokumen</h3>
+                            <h3 class="text-lg font-bold text-gray-900 mb-3">Document Details</h3>
                             <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="documentType">Tipe Dokumen <span class="text-red-500">*</span></label>
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="documentType">Document Type <span class="text-red-500">*</span></label>
                                 <input type="text" id="documentType" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" required>
                             </div>
                             <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="documentNumber">Nomor Dokumen <span class="text-red-500">*</span></label>
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="documentNumber">Document Number <span class="text-red-500">*</span></label>
                                 <input type="text" id="documentNumber" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" required>
                             </div>
                             <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="documentDate">Tanggal Dokumen</label>
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="documentDate">Document Date</label>
                                 <input type="date" id="documentDate" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
                             </div>
                             <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="documentDescription">Deskripsi</label>
-                                <textarea id="documentDescription" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" rows="4" placeholder="Deskripsi dokumen..."></textarea>
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="documentDescription">Description</label>
+                                <textarea id="documentDescription" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" rows="4" placeholder="Document description..."></textarea>
                             </div>
                         </div>
                         <!-- Column 2: Value and Changes -->
                         <div>
-                            <h3 class="text-lg font-bold text-gray-900 mb-3">Nilai & Perubahan</h3>
+                            <h3 class="text-lg font-bold text-gray-900 mb-3">Value & Changes</h3>
                             <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="initialValue">Nilai Harga Awal (Rp)</label>
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="initialValue">Initial Price Value (Rp)</label>
                                 <input type="text" id="initialValue" class="currency-input w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="Rp 0">
                             </div>
                             <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="changeDate">Tanggal Perubahan</label>
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="changeDate">Change Date</label>
                                 <input type="date" id="changeDate" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
                             </div>
                             <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="changeDescription">Deskripsi Perubahan</label>
-                                <textarea id="changeDescription" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" rows="4" placeholder="Deskripsi perubahan..."></textarea>
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="changeDescription">Change Description</label>
+                                <textarea id="changeDescription" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" rows="4" placeholder="Description of change..."></textarea>
                             </div>
                             <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="changedValue">Perubahan Nilai Harga (Rp)</label>
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="changedValue">Changed Price Value (Rp)</label>
                                 <input type="text" id="changedValue" class="currency-input w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="Rp 0">
+                            </div>
+                            <!-- NEW: Changed By Dropdown -->
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="changedBy">Changed By</label>
+                                <select id="changedBy" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                                    <option value="">Select Person</option>
+                                    <option value="Rossiana">Rossiana</option>
+                                    <option value="Maya">Maya</option>
+                                    <option value="Evi">Evi</option>
+                                    <option value="Maida">Maida</option>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -798,22 +805,22 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <!-- Left Column: Main Monitoring Details -->
                     <div>
-                        <h3 class="text-lg font-bold text-gray-900 mb-4">Informasi Dokumen</h3>
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">Document Information</h3>
                         <div class="detail-grid">
                             <div class="detail-item">
-                                <p class="font-semibold">Tipe Dokumen:</p>
+                                <p class="font-semibold">Document Type:</p>
                                 <p id="detailDocumentType">-</p>
                             </div>
                             <div class="detail-item">
-                                <p class="font-semibold">Nomor Dokumen:</p>
+                                <p class="font-semibold">Document Number:</p>
                                 <p id="detailDocumentNumber">-</p>
                             </div>
                             <div class="detail-item">
-                                <p class="font-semibold">Tanggal Dokumen:</p>
+                                <p class="font-semibold">Document Date:</p>
                                 <p id="detailDocumentDate">-</p>
                             </div>
                             <div class="detail-item col-span-full">
-                                <p class="font-semibold">Deskripsi:</p>
+                                <p class="font-semibold">Description:</p>
                                 <p id="detailDocumentDescription">-</p>
                             </div>
                         </div>
@@ -821,23 +828,28 @@
 
                     <!-- Right Column: Value and Changes -->
                     <div>
-                        <h3 class="text-lg font-bold text-gray-900 mb-4">Nilai & Perubahan</h3>
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">Value & Changes</h3>
                         <div class="detail-grid">
                             <div class="detail-item">
-                                <p class="font-semibold">Nilai Harga Awal:</p>
+                                <p class="font-semibold">Initial Price Value:</p>
                                 <p id="detailInitialValue">-</p>
                             </div>
                             <div class="detail-item">
-                                <p class="font-semibold">Tanggal Perubahan:</p>
+                                <p class="font-semibold">Change Date:</p>
                                 <p id="detailChangeDate">-</p>
                             </div>
                             <div class="detail-item col-span-full">
-                                <p class="font-semibold">Deskripsi Perubahan:</p>
+                                <p class="font-semibold">Change Description:</p>
                                 <p id="detailChangeDescription">-</p>
                             </div>
                             <div class="detail-item">
-                                <p class="font-semibold">Perubahan Nilai Harga:</p>
+                                <p class="font-semibold">Changed Price Value:</p>
                                 <p id="detailChangedValue">-</p>
+                            </div>
+                            <!-- NEW: Changed By Detail -->
+                            <div class="detail-item">
+                                <p class="font-semibold">Changed By:</p>
+                                <p id="detailChangedBy">-</p>
                             </div>
                         </div>
                     </div>
@@ -879,28 +891,39 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <!-- Filter: Document Type -->
                     <div>
-                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterDocumentType">Tipe Dokumen</label>
+                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterDocumentType">Document Type</label>
                         <select id="filterDocumentType" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
-                            <option value="all">Semua Tipe Dokumen</option>
+                            <option value="all">All Document Types</option>
                             <!-- Options will be dynamically loaded from Firebase -->
                         </select>
                     </div>
                     <!-- Filter: Document Number -->
                     <div>
-                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterDocumentNumber">Nomor Dokumen</label>
+                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterDocumentNumber">Document Number</label>
                         <select id="filterDocumentNumber" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
-                            <option value="all">Semua Nomor Dokumen</option>
+                            <option value="all">All Document Numbers</option>
                             <!-- Options will be dynamically loaded from Firebase -->
                         </select>
                     </div>
                     <!-- Filter: Date Range (Example) -->
                     <div>
-                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterStartDate">Dari Tanggal</label>
+                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterStartDate">From Date</label>
                         <input type="date" id="filterStartDate" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
                     </div>
                     <div>
-                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterEndDate">Sampai Tanggal</label>
+                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterEndDate">To Date</label>
                         <input type="date" id="filterEndDate" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                    </div>
+                    <!-- NEW: Filter Changed By -->
+                    <div>
+                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterChangedBy">Changed By</label>
+                        <select id="filterChangedBy" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                            <option value="all">All Persons</option>
+                            <option value="Rossiana">Rossiana</option>
+                            <option value="Maya">Maya</option>
+                            <option value="Evi">Evi</option>
+                            <option value="Maida">Maida</option>
+                        </select>
                     </div>
                 </div>
                 <div class="flex justify-end space-x-3 mt-6">
@@ -926,9 +949,9 @@
                 <form id="uploadDocumentForm">
                     <!-- Document Number Search for Upload Document -->
                     <div class="mb-6 border-b pb-4 border-gray-200">
-                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="uploadDoc_documentNumberSearch">Search Nomor Dokumen</label>
+                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="uploadDoc_documentNumberSearch">Search Document Number</label>
                         <div class="relative">
-                            <input type="text" id="uploadDoc_documentNumberSearch" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="Type Nomor Dokumen...">
+                            <input type="text" id="uploadDoc_documentNumberSearch" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="Type Document Number...">
                             <input type="hidden" id="uploadDoc_monitoringId" value="">
                             <div id="uploadDoc_documentNumberSuggestions" class="autocomplete-items suggestions-list"></div>
                         </div>
@@ -940,7 +963,7 @@
                         <label class="block text-gray-700 text-sm font-semibold mb-2" for="uploadDoc_document1">Document Before Change</label>
                         <input type="file" id="uploadDoc_document1" accept=".pdf" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
                         <p id="document1FileName" class="text-sm text-gray-600 mt-1 hidden"></p>
-                        <a id="document1DownloadLink" href="#" target="_blank" class="text-blue-600 hover:underline text-sm mt-1 hidden">View Document 1</a>
+                        <!-- <a id="document1DownloadLink" href="#" target="_blank" class="text-blue-600 hover:underline text-sm mt-1 hidden">View Document 1</a> -->
                     </div>
 
                     <!-- Document Upload 2 -->
@@ -948,7 +971,7 @@
                         <label class="block text-gray-700 text-sm font-semibold mb-2" for="uploadDoc_document2">Document After Change</label>
                         <input type="file" id="uploadDoc_document2" accept=".pdf" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
                         <p id="document2FileName" class="text-sm text-gray-600 mt-1 hidden"></p>
-                        <a id="document2DownloadLink" href="#" target="_blank" class="text-blue-600 hover:underline text-sm mt-1 hidden">View Document 2</a>
+                        <!-- <a id="document2DownloadLink" href="#" target="_blank" class="text-blue-600 hover:underline text-sm mt-1 hidden">View Document 2</a> -->
                     </div>
 
                     <div class="flex justify-end space-x-3 mt-6">
@@ -982,43 +1005,19 @@
             <div class="spinner"></div>
         </div>
 
-        <!-- Activity Modal (NEW) -->
-        <div id="activityModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
-            <div class="bg-white rounded-xl p-8 w-full max-w-3xl shadow-2xl modal-content-enter overflow-y-auto" id="activityModalContent">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900 flex items-center"><i class="fas fa-history mr-3 text-gray-500"></i> Aktivitas Pengguna</h2>
-                    <button type="button" class="text-gray-500 hover:text-gray-700 transition duration-200" id="closeActivityModalBtn">
-                        <i class="fas fa-times text-xl"></i>
-                    </button>
-                </div>
-                <div id="activityList" class="space-y-4 max-h-96 overflow-y-auto pr-2">
-                    <!-- Activity items will be loaded here -->
-                    <div class="empty-state">
-                        <i class="fas fa-clipboard-list"></i>
-                        <p>Tidak ada aktivitas yang tercatat.</p>
-                    </div>
-                </div>
-                <div class="flex justify-end mt-6">
-                    <button type="button" id="clearActivitiesBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105 text-sm">
-                        <i class="fas fa-trash mr-2"></i> Hapus Semua Aktivitas
-                    </button>
-                </div>
-            </div>
-        </div>
-
         <!-- Document Info Modal (NEW) -->
         <div id="documentInfoModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
             <div class="bg-white rounded-xl p-8 w-full max-w-md shadow-2xl modal-content-enter" id="documentInfoModalContent">
                 <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900 flex items-center"><i class="fas fa-info-circle mr-3 text-gray-500"></i> Informasi Dokumen</h2>
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900 flex items-center"><i class="fas fa-info-circle mr-3 text-gray-500"></i> Document Information</h2>
                     <button type="button" class="text-gray-500 hover:text-gray-700 transition duration-200" id="closeDocumentInfoModalBtn">
                         <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
                 <div id="documentInfoContent" class="space-y-3">
-                    <p><span class="font-semibold">Nomor Dokumen:</span> <span id="docInfo_documentNumber"></span></p>
-                    <p><span class="font-semibold">Dokumen Sebelum Perubahan:</span> <span id="docInfo_doc1Name">Tidak ada</span> <a id="docInfo_doc1Link" href="#" target="_blank" class="text-blue-600 hover:underline ml-2 hidden"><i class="fas fa-external-link-alt"></i> Lihat</a></p>
-                    <p><span class="font-semibold">Dokumen Setelah Perubahan:</span> <span id="docInfo_doc2Name">Tidak ada</span> <a id="docInfo_doc2Link" href="#" target="_blank" class="text-blue-600 hover:underline ml-2 hidden"><i class="fas fa-external-link-alt"></i> Lihat</a></p>
+                    <p><span class="font-semibold">Document Number:</span> <span id="docInfo_documentNumber"></span></p>
+                    <p><span class="font-semibold">Document Before Change:</span> <span id="docInfo_doc1Name">None</span></p>
+                    <p><span class="font-semibold">Document After Change:</span> <span id="docInfo_doc2Name">None</span></p>
                 </div>
                 <div class="flex justify-end mt-6">
                     <button type="button" id="closeDocumentInfoBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105 text-sm">
@@ -1047,21 +1046,21 @@
     const monitoringsCollection = db.collection('monitorings');
     const purchaseOrdersCollection = db.collection('purchaseOrders'); // Assuming you have a 'purchaseOrders' collection
     const documentUploadsCollection = db.collection('documentUploads'); // New collection for document upload status
-    const activitiesCollection = db.collection('activities'); // NEW: Collection for user activities
+    // const activitiesCollection = db.collection('activities'); // NEW: Collection for user activities - REMOVED
 
     // Appwrite Configuration
     const client = new Appwrite.Client();
     client
-        .setEndpoint('https://fra.cloud.appwrite.io/v1') // *** DIPERBAIKI: Menggunakan endpoint yang benar ***
+        .setEndpoint('https://fra.cloud.appwrite.io/v1') // *** CORRECTED: Using the correct endpoint ***
         .setProject('68d0d6eb001dc06a95b3'); // Your Project ID
 
     const storage = new Appwrite.Storage(client);
     const database = new Appwrite.Databases(client); // If you plan to use Appwrite Database for document metadata
-    const APPWRITE_DATABASE_ID = '68d0d71600124cfdc86e'; // Ini tidak digunakan dalam kode ini, tapi tidak masalah
+    const APPWRITE_DATABASE_ID = '68d0d71600124cfdc86e'; // This is not used in this code, but it's fine
 
     // Appwrite Hardcoded Config
-    const APPWRITE_ENDPOINT = "https://fra.cloud.appwrite.io/v1"; // endpoint asli Appwrite
-    const PROJECT_ID = '68d0d6eb001dc06a95b3'; // pakai project ID kamu
+    const APPWRITE_ENDPOINT = "https://fra.cloud.appwrite.io/v1"; // Original Appwrite endpoint
+    const PROJECT_ID = '68d0d6eb001dc06a95b3'; // Use your project ID
     const APPWRITE_BUCKET_ID = '68d0d72500025b188805';
 
 
@@ -1079,6 +1078,9 @@
             // For now, we'll use the simulated one.
             return currentUserEmail;
         }
+
+        // --- Activity Logging Function (NEW) ---
+        // REMOVED: logActivity function and all its calls
 
         // --- Generic function to toggle modal visibility ---
         function toggleModal(modalId, show) {
@@ -1142,27 +1144,6 @@
             }
         });
 
-        // --- Activity Logging Function (NEW) ---
-        async function logActivity(action, monitoringId = null, documentNumber = null) {
-            const userEmail = getCurrentUserEmail();
-            if (!userEmail) {
-                console.warn("No user logged in, activity not logged.");
-                return;
-            }
-
-            try {
-                await activitiesCollection.add({
-                    userEmail: userEmail,
-                    action: action,
-                    monitoringId: monitoringId,
-                    documentNumber: documentNumber,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                });
-            } catch (error) {
-                console.error("Error logging activity: ", error);
-            }
-        }
-
         // --- Event Listeners for Modals ---
 
         // Add Monitoring Button
@@ -1171,7 +1152,7 @@
             document.getElementById('monitoringId').value = ''; // Clear ID for new entry
             document.getElementById('monitoringForm').reset(); // Clear form fields
             toggleModal('monitoringModal', true);
-            logActivity('Opened "Add New Monitoring" form'); // Log activity
+            // logActivity('Opened "Add New Monitoring" form'); // REMOVED
         });
 
         // Close Add/Edit Monitoring Modal (using new ID for cancel button)
@@ -1193,6 +1174,7 @@
                 changeDate: document.getElementById('changeDate').value,
                 changeDescription: document.getElementById('changeDescription').value,
                 changedValue: unformatRupiah(document.getElementById('changedValue').value),
+                changedBy: document.getElementById('changedBy').value, // NEW: Get Changed By value
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
@@ -1202,12 +1184,12 @@
                     // Update existing monitoring
                     await monitoringsCollection.doc(monitoringId).update(data);
                     document.getElementById('successAlertMessage').textContent = 'Monitoring updated successfully!';
-                    logActivity(`Updated monitoring for document number: ${documentNumber}`, monitoringId, documentNumber); // Log activity
+                    // logActivity(`Updated monitoring for document number: ${documentNumber}`, monitoringId, documentNumber); // REMOVED
                 } else {
                     // Add new monitoring
                     const newDocRef = await monitoringsCollection.add(data);
                     document.getElementById('successAlertMessage').textContent = 'New monitoring added successfully!';
-                    logActivity(`Added new monitoring for document number: ${documentNumber}`, newDocRef.id, documentNumber); // Log activity
+                    // logActivity(`Added new monitoring for document number: ${documentNumber}`, newDocRef.id, documentNumber); // REMOVED
                 }
                 toggleModal('monitoringModal', false);
                 toggleModal('successAlertModal', true);
@@ -1230,16 +1212,16 @@
             // Clear file inputs and their display
             document.getElementById('uploadDoc_document1').value = '';
             document.getElementById('document1FileName').classList.add('hidden');
-            document.getElementById('document1DownloadLink').classList.add('hidden');
-            document.getElementById('document1DownloadLink').removeAttribute('href');
+            // document.getElementById('document1DownloadLink').classList.add('hidden'); // REMOVED
+            // document.getElementById('document1DownloadLink').removeAttribute('href'); // REMOVED
 
             document.getElementById('uploadDoc_document2').value = '';
             document.getElementById('document2FileName').classList.add('hidden');
-            document.getElementById('document2DownloadLink').classList.add('hidden');
-            document.getElementById('document2DownloadLink').removeAttribute('href');
+            // document.getElementById('document2DownloadLink').classList.add('hidden'); // REMOVED
+            // document.getElementById('document2DownloadLink').removeAttribute('href'); // REMOVED
 
             toggleModal('uploadDocumentModal', true);
-            logActivity('Opened "Upload Document" form'); // Log activity
+            // logActivity('Opened "Upload Document" form'); // REMOVED
         });
 
         // Close Upload Document Modal
@@ -1257,7 +1239,7 @@
             const document2File = document.getElementById('uploadDoc_document2').files[0];
 
             if (!monitoringId) {
-                alert('Please select a valid Nomor Dokumen from the suggestions.');
+                alert('Please select a valid Document Number from the suggestions.');
                 hideGlobalLoading();
                 return;
             }
@@ -1285,7 +1267,7 @@
                         APPWRITE_BUCKET_ID,
                         Appwrite.ID.unique(), // Generate a unique ID for the file
                         document1File,
-                        [Appwrite.Permission.read(Appwrite.Role.any())] // izin publik
+                        [Appwrite.Permission.read(Appwrite.Role.any())] // public permission
                     );
                     document1FileId = file1Response.$id;
                     document1Url = APPWRITE_ENDPOINT + '/storage/buckets/' + APPWRITE_BUCKET_ID + '/files/' + document1FileId + '/view?project=' + PROJECT_ID;
@@ -1300,7 +1282,7 @@
                         APPWRITE_BUCKET_ID,
                         Appwrite.ID.unique(), // Generate a unique ID for the file
                         document2File,
-                        [Appwrite.Permission.read(Appwrite.Role.any())] // izin publik
+                        [Appwrite.Permission.read(Appwrite.Role.any())] // public permission
                     );
                     document2FileId = file2Response.$id;
                     document2Url = APPWRITE_ENDPOINT + '/storage/buckets/' + APPWRITE_BUCKET_ID + '/files/' + document2FileId + '/view?project=' + PROJECT_ID;
@@ -1313,11 +1295,11 @@
                 const uploadRef = documentUploadsCollection.doc(monitoringId);
                 await uploadRef.set(updateData, { merge: true });
 
-                document.getElementById('successAlertMessage').textContent = `Document files for Nomor Dokumen ${documentNumber} saved successfully!`;
+                document.getElementById('successAlertMessage').textContent = `Document files for Document Number ${documentNumber} saved successfully!`;
                 toggleModal('uploadDocumentModal', false);
                 toggleModal('successAlertModal', true);
                 loadMonitorings(); // Reload list to update checkmarks on cards
-                logActivity(`Uploaded documents for document number: ${documentNumber}`, monitoringId, documentNumber); // Log activity
+                // logActivity(`Uploaded documents for document number: ${documentNumber}`, monitoringId, documentNumber); // REMOVED
             } catch (error) {
                 console.error("Error saving document upload status or uploading files: ", error);
                 alert(`Failed to save document upload status or upload files. Error: ${error.message}. Please try again.`);
@@ -1386,17 +1368,18 @@
             try {
                 const uploadDoc = await documentUploadsCollection.doc(monitoringId).get();
                 const document1FileNameDisplay = document.getElementById('document1FileName');
-                const document1DownloadLink = document.getElementById('document1DownloadLink');
+                // const document1DownloadLink = document.getElementById('document1DownloadLink'); // REMOVED
                 const document2FileNameDisplay = document.getElementById('document2FileName');
-                const document2DownloadLink = document.getElementById('document2DownloadLink');
+                // const document2DownloadLink = document.getElementById('document2DownloadLink'); // REMOVED
 
                 // Reset display elements
                 document1FileNameDisplay.classList.add('hidden');
-                document1DownloadLink.classList.add('hidden');
+                // document1DownloadLink.classList.add('hidden'); // REMOVED
+                // document1DownloadLink.removeAttribute('href'); // REMOVED
+
                 document2FileNameDisplay.classList.add('hidden');
-                document2DownloadLink.classList.add('hidden');
-                document1DownloadLink.removeAttribute('href');
-                document2DownloadLink.removeAttribute('href');
+                // document2DownloadLink.classList.add('hidden'); // REMOVED
+                // document2DownloadLink.removeAttribute('href'); // REMOVED
 
 
                 if (uploadDoc.exists) {
@@ -1407,8 +1390,8 @@
                     if (data.document1FileName && data.document1FileId && data.document1Url) {
                         document1FileNameDisplay.textContent = `File: ${data.document1FileName}`;
                         document1FileNameDisplay.classList.remove('hidden');
-                        document1DownloadLink.href = data.document1Url; // Use the stored URL directly
-                        document1DownloadLink.classList.remove('hidden');
+                        // document1DownloadLink.href = data.document1Url; // REMOVED
+                        // document1DownloadLink.classList.remove('hidden'); // REMOVED
                         console.log("Document 1 URL:", data.document1Url); // Debugging
                     } else {
                         console.log("Document 1 not found or incomplete data for monitoringId", monitoringId); // Debugging
@@ -1418,8 +1401,8 @@
                     if (data.document2FileName && data.document2FileId && data.document2Url) {
                         document2FileNameDisplay.textContent = `File: ${data.document2FileName}`;
                         document2FileNameDisplay.classList.remove('hidden');
-                        document2DownloadLink.href = data.document2Url; // Use the stored URL directly
-                        document2DownloadLink.classList.remove('hidden');
+                        // document2DownloadLink.href = data.document2Url; // REMOVED
+                        // document2DownloadLink.classList.remove('hidden'); // REMOVED
                         console.log("Document 2 URL:", data.document2Url); // Debugging
                     } else {
                         console.log("Document 2 not found or incomplete data for monitoringId", monitoringId); // Debugging
@@ -1436,16 +1419,17 @@
         // Filter Panel Button
         document.getElementById('openFilterPanelBtn').addEventListener('click', () => {
             toggleModal('filterPanel', true);
-            logActivity('Opened "Filter" panel'); // Log activity
+            // logActivity('Opened "Filter" panel'); // REMOVED
         });
         document.getElementById('closeFilterPanelBtn').addEventListener('click', () => toggleModal('filterPanel', false)); // Added ID for close button
         document.getElementById('applyFiltersBtn').addEventListener('click', () => { // Added ID for apply button
             // Save current filter values before applying
             document.getElementById('filterDocumentType').dataset.currentValue = document.getElementById('filterDocumentType').value;
             document.getElementById('filterDocumentNumber').dataset.currentValue = document.getElementById('filterDocumentNumber').value;
+            document.getElementById('filterChangedBy').dataset.currentValue = document.getElementById('filterChangedBy').value; // NEW: Store Changed By filter
             loadMonitorings(); // Reload with filters
             toggleModal('filterPanel', false);
-            logActivity('Applied filters'); // Log activity
+            // logActivity('Applied filters'); // REMOVED
         });
         document.getElementById('resetFiltersBtn').addEventListener('click', () => { // Added ID for reset button
             // Reset filter dropdowns
@@ -1453,12 +1437,14 @@
             document.getElementById('filterDocumentNumber').value = 'all';
             document.getElementById('filterStartDate').value = '';
             document.getElementById('filterEndDate').value = '';
+            document.getElementById('filterChangedBy').value = 'all'; // NEW: Reset Changed By filter
             // Clear stored current values
             delete document.getElementById('filterDocumentType').dataset.currentValue;
             delete document.getElementById('filterDocumentNumber').dataset.currentValue;
+            delete document.getElementById('filterChangedBy').dataset.currentValue; // NEW: Clear Changed By stored value
             loadMonitorings(); // Reload without filters
             toggleModal('filterPanel', false);
-            logActivity('Reset filters'); // Log activity
+            // logActivity('Reset filters'); // REMOVED
         });
 
         // Close Success Alert Modal
@@ -1502,7 +1488,7 @@
             alert('Logout button clicked!');
             // In a real app, this would handle actual logout and redirect
             currentUserEmail = null; // Clear current user
-            logActivity('Logged out'); // Log activity
+            // logActivity('Logged out'); // REMOVED
             // window.location.href = 'login.html'; // Example redirect to a login page
         });
         // Updated Back button functionality
@@ -1528,6 +1514,7 @@
                         'Change Date': monitoring.changeDate || '',
                         'Change Description': monitoring.changeDescription || '',
                         'Changed Value (Rp)': formatRupiah(monitoring.changedValue, ''),
+                        'Changed By': monitoring.changedBy || '', // NEW: Export Changed By
                         'Created At': monitoring.createdAt ? new Date(monitoring.createdAt.toDate()).toLocaleString() : '',
                         'Updated At': monitoring.updatedAt ? new Date(monitoring.updatedAt.toDate()).toLocaleString() : ''
                     });
@@ -1541,11 +1528,11 @@
                 const ws = XLSX.utils.json_to_sheet(dataToExport);
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "Monitoring Data");
-                XLSX.writeFile(wb, "Monitoring_Dokumen.xlsx");
+                XLSX.writeFile(wb, "Document_Monitoring.xlsx"); // Changed filename
 
                 document.getElementById('successAlertMessage').textContent = 'Data exported to Excel successfully!';
                 toggleModal('successAlertModal', true);
-                logActivity('Exported monitoring data to Excel'); // Log activity
+                // logActivity('Exported monitoring data to Excel'); // REMOVED
 
             } catch (error) {
                 console.error("Error exporting data to Excel: ", error);
@@ -1570,6 +1557,7 @@
                 const filterDocNumber = document.getElementById('filterDocumentNumber').value;
                 const filterStartDate = document.getElementById('filterStartDate').value;
                 const filterEndDate = document.getElementById('filterEndDate').value;
+                const filterChangedBy = document.getElementById('filterChangedBy').value; // NEW: Get Changed By filter
                 const searchTerm = document.getElementById('searchMonitorings').value.toLowerCase();
 
                 if (filterDocType !== 'all') {
@@ -1577,6 +1565,9 @@
                 }
                 if (filterDocNumber !== 'all') {
                     query = query.where('documentNumber', '==', filterDocNumber);
+                }
+                if (filterChangedBy !== 'all') { // NEW: Apply Changed By filter
+                    query = query.where('changedBy', '==', filterChangedBy);
                 }
 
                 const snapshot = await query.get();
@@ -1644,9 +1635,10 @@
                 <span class="monitoring-card-number">${sequentialNumber}</span> <!-- Display sequential number -->
                 <h3 class="text-lg font-bold text-gray-900 mb-2">${monitoring.documentNumber || 'N/A'}</h3>
                 <div class="deal-details">
-                    <p><i class="fas fa-calendar-alt"></i> Tanggal Dokumen: ${monitoring.documentDate || 'N/A'}</p>
-                    <p><i class="fas fa-file-alt"></i> Deskripsi Dokumen: ${monitoring.documentDescription || 'N/A'}</p>
-                    <p><i class="fas fa-money-bill-wave"></i> Perubahan Nilai Harga: ${formattedChangedValue || 'Rp 0'}</p>
+                    <p><i class="fas fa-calendar-alt"></i> Document Date: ${monitoring.documentDate || 'N/A'}</p>
+                    <p><i class="fas fa-file-alt"></i> Document Description: ${monitoring.documentDescription || 'N/A'}</p>
+                    <p><i class="fas fa-money-bill-wave"></i> Changed Price Value: ${formattedChangedValue || 'Rp 0'}</p>
+                    <p><i class="fas fa-user"></i> Changed By: ${monitoring.changedBy || 'N/A'}</p> <!-- NEW: Display Changed By -->
                 </div>
                 <div class="deal-footer">
                     <div class="deal-footer-left">
@@ -1672,15 +1664,15 @@
             // Event Listeners for card buttons
             card.querySelector('.view-btn').addEventListener('click', () => {
                 viewMonitoringDetails(monitoring.id);
-                logActivity(`Viewed details for document number: ${monitoring.documentNumber}`, monitoring.id, monitoring.documentNumber); // Log activity
+                // logActivity(`Viewed details for document number: ${monitoring.documentNumber}`, monitoring.id, monitoring.documentNumber); // REMOVED
             });
             card.querySelector('.edit-btn').addEventListener('click', () => {
                 editMonitoring(monitoring.id);
-                logActivity(`Opened edit form for document number: ${monitoring.documentNumber}`, monitoring.id, monitoring.documentNumber); // Log activity
+                // logActivity(`Opened edit form for document number: ${monitoring.documentNumber}`, monitoring.id, monitoring.documentNumber); // REMOVED
             });
             card.querySelector('.delete-btn').addEventListener('click', () => {
                 confirmDeleteMonitoring(monitoring.id, monitoring.documentNumber);
-                logActivity(`Opened delete confirmation for document number: ${monitoring.documentNumber}`, monitoring.id, monitoring.documentNumber); // Log activity
+                // logActivity(`Opened delete confirmation for document number: ${monitoring.documentNumber}`, monitoring.id, monitoring.documentNumber); // REMOVED
             });
 
             // Event listener for the new document info button
@@ -1688,12 +1680,12 @@
             if (docInfoButton) { // Ensure button exists before adding listener
                 docInfoButton.addEventListener('click', () => {
                     showDocumentInfo(monitoring.id, monitoring.documentNumber);
-                    logActivity(`Viewed uploaded document info for document number: ${monitoring.documentNumber}`, monitoring.id, monitoring.documentNumber); // Log activity
+                    // logActivity(`Viewed uploaded document info for document number: ${monitoring.documentNumber}`, monitoring.id, monitoring.documentNumber); // REMOVED
                 });
             }
 
 
-            // Panggil fungsi untuk memeriksa status upload dokumen dan menampilkan ceklis
+            // Call function to check document upload status and display checkmark
             checkAndDisplayDocumentUploadStatus(monitoring.id);
 
             return card;
@@ -1713,6 +1705,7 @@
                     document.getElementById('detailChangeDate').textContent = data.changeDate || '-';
                     document.getElementById('detailChangeDescription').textContent = data.changeDescription || '-';
                     document.getElementById('detailChangedValue').textContent = formatRupiah(data.changedValue, 'Rp ') || 'Rp 0';
+                    document.getElementById('detailChangedBy').textContent = data.changedBy || '-'; // NEW: Display Changed By
 
                     toggleModal('monitoringDetailModal', true);
                 } else {
@@ -1746,6 +1739,7 @@
                     document.getElementById('changeDate').value = data.changeDate || '';
                     document.getElementById('changeDescription').value = data.changeDescription || '';
                     document.getElementById('changedValue').value = formatRupiah(data.changedValue, 'Rp ') || '';
+                    document.getElementById('changedBy').value = data.changedBy || ''; // NEW: Set Changed By value
 
                     toggleModal('monitoringModal', true);
                 } else {
@@ -1794,7 +1788,7 @@
                     document.getElementById('successAlertMessage').textContent = 'Monitoring deleted successfully!';
                     loadMonitorings(); // Reload list after deletion
                     fetchAllDocumentNumbers(); // Re-fetch document numbers for autocomplete
-                    logActivity(`Deleted monitoring for document number: ${documentNumber}`, monitoringToDeleteId, documentNumber); // Log activity
+                    // logActivity(`Deleted monitoring for document number: ${documentNumber}`, monitoringToDeleteId, documentNumber); // REMOVED
                 } catch (error) {
                     console.error("Error deleting monitoring: ", error);
                     alert("Failed to delete monitoring. Please try again.");
@@ -1811,21 +1805,26 @@
         async function populateFilterOptions(monitorings) {
             const filterDocumentTypeSelect = document.getElementById('filterDocumentType');
             const filterDocumentNumberSelect = document.getElementById('filterDocumentNumber');
+            const filterChangedBySelect = document.getElementById('filterChangedBy'); // NEW: Get Changed By filter select
 
             // Store current selected values
             const currentFilterDocType = filterDocumentTypeSelect.dataset.currentValue || 'all';
             const currentFilterDocNumber = filterDocumentNumberSelect.dataset.currentValue || 'all';
+            const currentFilterChangedBy = filterChangedBySelect.dataset.currentValue || 'all'; // NEW: Store current Changed By filter
 
             // Clear existing options (except "All")
-            filterDocumentTypeSelect.innerHTML = '<option value="all">Semua Tipe Dokumen</option>';
-            filterDocumentNumberSelect.innerHTML = '<option value="all">Semua Nomor Dokumen</option>';
+            filterDocumentTypeSelect.innerHTML = '<option value="all">All Document Types</option>';
+            filterDocumentNumberSelect.innerHTML = '<option value="all">All Document Numbers</option>';
+            // Do not clear filterChangedBySelect as its options are static
 
             const documentTypes = new Set();
             const documentNumbers = new Set();
+            const changedByPersons = new Set(); // NEW: Collect Changed By persons
 
             monitorings.forEach(m => {
                 if (m.documentType) documentTypes.add(m.documentType);
                 if (m.documentNumber) documentNumbers.add(m.documentNumber);
+                if (m.changedBy) changedByPersons.add(m.changedBy); // NEW: Add to set
             });
 
             Array.from(documentTypes).sort().forEach(type => {
@@ -1845,6 +1844,7 @@
             // Restore selected filter values
             filterDocumentTypeSelect.value = currentFilterDocType;
             filterDocumentNumberSelect.value = currentFilterDocNumber;
+            filterChangedBySelect.value = currentFilterChangedBy; // NEW: Restore Changed By filter
         }
 
         // Function to check document upload status and display checkmark button (MODIFIED)
@@ -1878,20 +1878,20 @@
                 const uploadDoc = await documentUploadsCollection.doc(monitoringId).get();
                 const docInfo_documentNumber = document.getElementById('docInfo_documentNumber');
                 const docInfo_doc1Name = document.getElementById('docInfo_doc1Name');
-                const docInfo_doc1Link = document.getElementById('docInfo_doc1Link');
+                // const docInfo_doc1Link = document.getElementById('docInfo_doc1Link'); // REMOVED
                 const docInfo_doc2Name = document.getElementById('docInfo_doc2Name');
-                const docInfo_doc2Link = document.getElementById('docInfo_doc2Link');
+                // const docInfo_doc2Link = document.getElementById('docInfo_doc2Link'); // REMOVED
 
                 docInfo_documentNumber.textContent = documentNumber;
 
                 // Reset previous info
-                docInfo_doc1Name.textContent = 'Tidak ada';
-                docInfo_doc1Link.classList.add('hidden');
-                docInfo_doc1Link.removeAttribute('href');
+                docInfo_doc1Name.textContent = 'None';
+                // docInfo_doc1Link.classList.add('hidden'); // REMOVED
+                // docInfo_doc1Link.removeAttribute('href'); // REMOVED
 
-                docInfo_doc2Name.textContent = 'Tidak ada';
-                docInfo_doc2Link.classList.add('hidden');
-                docInfo_doc2Link.removeAttribute('href');
+                docInfo_doc2Name.textContent = 'None';
+                // docInfo_doc2Link.classList.add('hidden'); // REMOVED
+                // docInfo_doc2Link.removeAttribute('href'); // REMOVED
 
                 if (uploadDoc.exists) {
                     const data = uploadDoc.data();
@@ -1900,8 +1900,8 @@
                     // Document 1
                     if (data.document1FileName && data.document1FileId && data.document1Url) {
                         docInfo_doc1Name.textContent = data.document1FileName;
-                        docInfo_doc1Link.href = data.document1Url;
-                        docInfo_doc1Link.classList.remove('hidden');
+                        // docInfo_doc1Link.href = data.document1Url; // REMOVED
+                        // docInfo_doc1Link.classList.remove('hidden'); // REMOVED
                         console.log("Doc Info - Document 1 URL:", data.document1Url); // Debugging
                     } else {
                         console.log("Doc Info - Document 1 not found or incomplete data for monitoringId", monitoringId); // Debugging
@@ -1910,8 +1910,8 @@
                     // Document 2
                     if (data.document2FileName && data.document2FileId && data.document2Url) {
                         docInfo_doc2Name.textContent = data.document2FileName;
-                        docInfo_doc2Link.href = data.document2Url;
-                        docInfo_doc2Link.classList.remove('hidden');
+                        // docInfo_doc2Link.href = data.document2Url; // REMOVED
+                        // docInfo_doc2Link.classList.remove('hidden'); // REMOVED
                         console.log("Doc Info - Document 2 URL:", data.document2Url); // Debugging
                     } else {
                         console.log("Doc Info - Document 2 not found or incomplete data for monitoringId", monitoringId); // Debugging
@@ -1932,70 +1932,6 @@
         // Close Document Info Modal
         document.getElementById('closeDocumentInfoModalBtn').addEventListener('click', () => toggleModal('documentInfoModal', false));
         document.getElementById('closeDocumentInfoBtn').addEventListener('click', () => toggleModal('documentInfoModal', false));
-
-
-        // --- Activity Modal Functions (NEW) ---
-        document.getElementById('activityButton').addEventListener('click', async () => {
-            showGlobalLoading();
-            try {
-                const activityListDiv = document.getElementById('activityList');
-                activityListDiv.innerHTML = ''; // Clear previous activities
-
-                const snapshot = await activitiesCollection.orderBy('timestamp', 'desc').limit(50).get(); // Limit to last 50 activities
-                if (snapshot.empty) {
-                    activityListDiv.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-clipboard-list"></i>
-                            <p>Tidak ada aktivitas yang tercatat.</p>
-                        </div>
-                    `;
-                } else {
-                    snapshot.forEach(doc => {
-                        const activity = doc.data();
-                        const timestamp = activity.timestamp ? new Date(activity.timestamp.toDate()).toLocaleString() : 'N/A';
-                        const activityItem = document.createElement('div');
-                        activityItem.className = 'bg-gray-100 p-3 rounded-lg shadow-sm text-sm';
-                        activityItem.innerHTML = `
-                            <p><span class="font-semibold">${activity.userEmail}</span> - ${activity.action}</p>
-                            <p class="text-gray-500 text-xs">${timestamp}</p>
-                        `;
-                        activityListDiv.appendChild(activityItem);
-                    });
-                }
-                toggleModal('activityModal', true);
-                logActivity('Opened "User Activity" log');
-            } catch (error) {
-                console.error("Error loading activities: ", error);
-                alert("Failed to load user activities.");
-            } finally {
-                hideGlobalLoading();
-            }
-        });
-
-        document.getElementById('closeActivityModalBtn').addEventListener('click', () => toggleModal('activityModal', false));
-
-        document.getElementById('clearActivitiesBtn').addEventListener('click', async () => {
-            if (confirm('Are you sure you want to delete all user activities? This action cannot be undone.')) {
-                showGlobalLoading();
-                try {
-                    const snapshot = await activitiesCollection.get();
-                    const batch = db.batch();
-                    snapshot.docs.forEach(doc => {
-                        batch.delete(doc.ref);
-                    });
-                    await batch.commit();
-                    document.getElementById('successAlertMessage').textContent = 'All activities cleared successfully!';
-                    toggleModal('activityModal', false);
-                    toggleModal('successAlertModal', true);
-                    logActivity('Cleared all user activities');
-                } catch (error) {
-                    console.error("Error clearing activities: ", error);
-                    alert("Failed to clear activities.");
-                } finally {
-                    hideGlobalLoading();
-                }
-            }
-        });
 
 
         // --- Initial Load ---
