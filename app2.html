@@ -493,6 +493,8 @@
                 <table>
                     <thead>
                         <tr>
+                            <th>No.</th>
+                            <th>No. Barang</th>
                             <th>Nama Barang</th>
                             <th>Kategori</th>
                             <th>Stok</th>
@@ -568,6 +570,10 @@
             <form id="item-form">
                 <input type="hidden" id="item-id">
                 <div class="form-group">
+                    <label for="item-pid">No. Barang (PID)</label>
+                    <input type="text" id="item-pid" required>
+                </div>
+                <div class="form-group">
                     <label for="item-name">Nama Barang</label>
                     <input type="text" id="item-name" required>
                 </div>
@@ -640,7 +646,8 @@
         // Data barang (disimpan di localStorage)
         let items = JSON.parse(localStorage.getItem('inventoryItems')) || [];
         let history = JSON.parse(localStorage.getItem('inventoryHistory')) || [];
-        
+        let pidData = []; // Data dari pid.json
+
         // Elemen DOM
         const itemsTableBody = document.getElementById('items-table-body');
         const historyTableBody = document.getElementById('history-table-body');
@@ -651,6 +658,7 @@
         const modalTitle = document.getElementById('modal-title');
         const stockModalTitle = document.getElementById('stock-modal-title');
         const itemIdInput = document.getElementById('item-id');
+        const itemPidInput = document.getElementById('item-pid'); // New PID input
         const itemNameInput = document.getElementById('item-name');
         const itemCategoryInput = document.getElementById('item-category');
         const itemStockInput = document.getElementById('item-stock');
@@ -685,6 +693,21 @@
         const availableItemsEl = document.getElementById('available-items');
         const lowStockItemsEl = document.getElementById('low-stock-items');
         const totalValueEl = document.getElementById('total-value');
+
+        // Fungsi untuk memuat data dari pid.json
+        async function loadPidData() {
+            try {
+                const response = await fetch('pid.json'); // Asumsi pid.json berada di root
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                pidData = await response.json();
+                console.log('PID Data loaded:', pidData);
+            } catch (error) {
+                console.error('Error loading PID data:', error);
+                showAlert('Gagal memuat data No. Barang (PID).', 'error');
+            }
+        }
         
         // Fungsi untuk menampilkan alert
         function showAlert(message, type = 'success') {
@@ -720,7 +743,7 @@
             if (itemsToRender.length === 0) {
                 itemsTableBody.innerHTML = `
                     <tr>
-                        <td colspan="6" style="text-align: center; padding: 2rem;">
+                        <td colspan="8" style="text-align: center; padding: 2rem;">
                             Tidak ada data barang. Klik "Tambah Barang" untuk menambahkan.
                         </td>
                     </tr>
@@ -728,12 +751,14 @@
                 return;
             }
             
-            itemsToRender.forEach(item => {
+            itemsToRender.forEach((item, index) => {
                 const totalValue = item.stock * item.price;
                 const isLowStock = item.stock > 0 && item.stock <= 5;
                 
                 const row = document.createElement('tr');
                 row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${item.pid}</td>
                     <td>${item.name}</td>
                     <td>${item.category}</td>
                     <td class="${isLowStock ? 'low-stock' : ''}">${item.stock}</td>
@@ -907,6 +932,7 @@
             if (item) {
                 modalTitle.textContent = 'Edit Barang';
                 itemIdInput.value = item.id;
+                itemPidInput.value = item.pid; // Set PID
                 itemNameInput.value = item.name;
                 itemCategoryInput.value = item.category;
                 itemStockInput.value = item.stock;
@@ -966,17 +992,24 @@
             e.preventDefault();
             
             const id = itemIdInput.value;
+            const pid = itemPidInput.value; // Get PID
             const name = itemNameInput.value;
             const category = itemCategoryInput.value;
             const stock = parseInt(itemStockInput.value);
             const price = parseInt(itemPriceInput.value);
+
+            // Validasi PID unik
+            if (!id && items.some(item => item.pid === pid)) {
+                showAlert('No. Barang (PID) sudah ada. Harap gunakan PID yang berbeda.', 'error');
+                return;
+            }
             
             if (id) {
                 // Edit barang yang sudah ada
                 const index = items.findIndex(item => item.id === id);
                 if (index !== -1) {
                     const oldStock = items[index].stock;
-                    items[index] = { id, name, category, stock, price };
+                    items[index] = { id, pid, name, category, stock, price }; // Update PID
                     
                     // Catat perubahan stok di history jika ada
                     if (stock !== oldStock) {
@@ -992,7 +1025,7 @@
             } else {
                 // Tambah barang baru
                 const newId = Date.now().toString();
-                items.push({ id: newId, name, category, stock, price });
+                items.push({ id: newId, pid, name, category, stock, price }); // Add PID
                 
                 // Catat penambahan barang baru di history
                 if (stock > 0) {
@@ -1060,7 +1093,8 @@
             if (searchTerm) {
                 const filteredItems = items.filter(item => 
                     item.name.toLowerCase().includes(searchTerm) || 
-                    item.category.toLowerCase().includes(searchTerm)
+                    item.category.toLowerCase().includes(searchTerm) ||
+                    item.pid.toLowerCase().includes(searchTerm) // Include PID in search
                 );
                 
                 renderItemsTable(filteredItems);
@@ -1138,9 +1172,21 @@
                 stockModal.style.display = 'none';
             }
         });
+
+        // Event listener untuk input PID agar otomatis mengisi Nama Barang
+        itemPidInput.addEventListener('input', () => {
+            const pidValue = itemPidInput.value;
+            const foundItem = pidData.find(data => data.pid === pidValue);
+            if (foundItem) {
+                itemNameInput.value = foundItem.description;
+            } else {
+                itemNameInput.value = ''; // Clear if PID not found
+            }
+        });
         
         // Inisialisasi aplikasi
-        function initApp() {
+        async function initApp() {
+            await loadPidData(); // Load PID data first
             renderItemsTable();
             updateStats();
             populateItemDropdown();
@@ -1148,11 +1194,11 @@
             // Tambahkan beberapa data contoh jika belum ada
             if (items.length === 0) {
                 items = [
-                    { id: '1', name: 'Laptop ASUS', category: 'Elektronik', stock: 5, price: 8000000 },
-                    { id: '2', name: 'Kemeja Flanel', category: 'Pakaian', stock: 15, price: 250000 },
-                    { id: '3', name: 'Mouse Wireless', category: 'Elektronik', stock: 3, price: 200000 },
-                    { id: '4', name: 'Snack Coklat', category: 'Makanan', stock: 20, price: 15000 },
-                    { id: '5', name: 'Meja Kerja', category: 'Perabotan', stock: 2, price: 1200000 }
+                    { id: '1', pid: 'ELEC001', name: 'Laptop ASUS', category: 'Elektronik', stock: 5, price: 8000000 },
+                    { id: '2', pid: 'CLOTH001', name: 'Kemeja Flanel', category: 'Pakaian', stock: 15, price: 250000 },
+                    { id: '3', pid: 'ELEC002', name: 'Mouse Wireless', category: 'Elektronik', stock: 3, price: 200000 },
+                    { id: '4', pid: 'FOOD001', name: 'Snack Coklat', category: 'Makanan', stock: 20, price: 15000 },
+                    { id: '5', pid: 'FURN001', name: 'Meja Kerja', category: 'Perabotan', stock: 2, price: 1200000 }
                 ];
                 saveItems();
                 renderItemsTable();
@@ -1163,9 +1209,7 @@
             // Tambahkan beberapa history contoh jika belum ada
             if (history.length === 0) {
                 const now = new Date();
-                // Perbaikan: Mengubah nama variabel dari 'oneDay Ago' menjadi 'oneDayAgo'
                 const oneDayAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000));
-                // Perbaikan: Mengubah nama variabel dari 'twoDaysAgo' menjadi 'twoDaysAgo'
                 const twoDaysAgo = new Date(now.getTime() - (2 * 24 * 60 * 60 * 1000));
                 
                 history = [
