@@ -1401,26 +1401,31 @@
 
                 if (uploadDoc.exists) {
                     const data = uploadDoc.data();
+                    console.log("Document Upload Data for monitoringId", monitoringId, ":", data); // Debugging
 
                     // Document 1
-                    if (data.document1FileName && data.document1FileId) {
+                    if (data.document1FileName && data.document1FileId && data.document1Url) {
                         document1FileNameDisplay.textContent = `File: ${data.document1FileName}`;
                         document1FileNameDisplay.classList.remove('hidden');
-                        // Construct Appwrite download URL menggunakan PROJECT_ID statis
-                        const downloadUrl1 = APPWRITE_ENDPOINT + '/storage/buckets/' + APPWRITE_BUCKET_ID + '/files/' + data.document1FileId + '/view?project=' + PROJECT_ID;
-                        document1DownloadLink.href = downloadUrl1;
+                        document1DownloadLink.href = data.document1Url; // Use the stored URL directly
                         document1DownloadLink.classList.remove('hidden');
+                        console.log("Document 1 URL:", data.document1Url); // Debugging
+                    } else {
+                        console.log("Document 1 not found or incomplete data for monitoringId", monitoringId); // Debugging
                     }
 
                     // Document 2
-                    if (data.document2FileName && data.document2FileId) {
+                    if (data.document2FileName && data.document2FileId && data.document2Url) {
                         document2FileNameDisplay.textContent = `File: ${data.document2FileName}`;
                         document2FileNameDisplay.classList.remove('hidden');
-                        // Construct Appwrite download URL menggunakan PROJECT_ID statis
-                        const downloadUrl2 = APPWRITE_ENDPOINT + '/storage/buckets/' + APPWRITE_BUCKET_ID + '/files/' + data.document2FileId + '/view?project=' + PROJECT_ID;
-                        document2DownloadLink.href = downloadUrl2;
+                        document2DownloadLink.href = data.document2Url; // Use the stored URL directly
                         document2DownloadLink.classList.remove('hidden');
+                        console.log("Document 2 URL:", data.document2Url); // Debugging
+                    } else {
+                        console.log("Document 2 not found or incomplete data for monitoringId", monitoringId); // Debugging
                     }
+                } else {
+                    console.log("No document upload entry found for monitoringId", monitoringId); // Debugging
                 }
             } catch (error) {
                 console.error("Error loading document upload status: ", error);
@@ -1851,8 +1856,8 @@
                 if (docInfoButton) {
                     if (uploadDoc.exists) {
                         const data = uploadDoc.data();
-                        // Check if at least one document (document1 or document2) has been uploaded
-                        if (data.document1FileId || data.document2FileId) {
+                        // Check if at least one document (document1 or document2) has been uploaded AND has a URL
+                        if ((data.document1FileId && data.document1Url) || (data.document2FileId && data.document2Url)) {
                             docInfoButton.classList.remove('hidden');
                         } else {
                             docInfoButton.classList.add('hidden');
@@ -1890,12 +1895,16 @@
 
                 if (uploadDoc.exists) {
                     const data = uploadDoc.data();
+                    console.log("Document Info Modal Data for monitoringId", monitoringId, ":", data); // Debugging
 
                     // Document 1
                     if (data.document1FileName && data.document1FileId && data.document1Url) {
                         docInfo_doc1Name.textContent = data.document1FileName;
                         docInfo_doc1Link.href = data.document1Url;
                         docInfo_doc1Link.classList.remove('hidden');
+                        console.log("Doc Info - Document 1 URL:", data.document1Url); // Debugging
+                    } else {
+                        console.log("Doc Info - Document 1 not found or incomplete data for monitoringId", monitoringId); // Debugging
                     }
 
                     // Document 2
@@ -1903,7 +1912,12 @@
                         docInfo_doc2Name.textContent = data.document2FileName;
                         docInfo_doc2Link.href = data.document2Url;
                         docInfo_doc2Link.classList.remove('hidden');
+                        console.log("Doc Info - Document 2 URL:", data.document2Url); // Debugging
+                    } else {
+                        console.log("Doc Info - Document 2 not found or incomplete data for monitoringId", monitoringId); // Debugging
                     }
+                } else {
+                    console.log("No document upload entry found for monitoringId", monitoringId, "in Document Info Modal."); // Debugging
                 }
 
                 toggleModal('documentInfoModal', true);
