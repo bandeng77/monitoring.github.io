@@ -578,6 +578,8 @@
             max-height: 200px; /* Limit dropdown height */
             overflow-y: auto; /* Add scroll if too many items */
             background-color: #fff; /* Ensure white background */
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Add shadow for better visibility */
+            border-radius: 0 0 0.5rem 0.5rem; /* Rounded bottom corners */
         }
 
         .autocomplete-items div {
@@ -1065,10 +1067,12 @@
         // For this example, we'll simulate a logged-in user with a fixed email.
         // IMPORTANT: Replace 'user@example.com' with the actual logged-in user's email
         // obtained from your authentication system (e.g., Firebase Auth, Appwrite Auth).
-        let currentUserEmail = 'user@example.com';
+        let currentUserEmail = 'user@example.com'; // Default simulated user
 
         // Function to get current user email (simulated)
         function getCurrentUserEmail() {
+            // In a real app, this would return the actual logged-in user's email
+            // For now, we'll use the simulated one.
             return currentUserEmail;
         }
 
@@ -1078,8 +1082,15 @@
             if (modal) {
                 if (show) {
                     modal.classList.remove('hidden');
+                    // Optional: Add a class to body to prevent scrolling when modal is open
+                    document.body.classList.add('overflow-hidden');
                 } else {
                     modal.classList.add('hidden');
+                    // Optional: Remove the class from body
+                    document.body.classList.remove('overflow-hidden');
+                    // Hide autocomplete suggestions if any modal is closed
+                    const suggestions = document.getElementById('uploadDoc_documentNumberSuggestions');
+                    if (suggestions) suggestions.innerHTML = '';
                 }
             }
         }
@@ -1212,12 +1223,17 @@
             document.getElementById('uploadDoc_monitoringId').value = ''; // Clear monitoringId
             document.getElementById('selectedMonitoringInfo').classList.add('hidden');
             document.getElementById('uploadDoc_documentNumberSuggestions').innerHTML = '';
-            document.getElementById('uploadDoc_document1').value = ''; // Clear file input
-            document.getElementById('uploadDoc_document2').value = ''; // Clear file input
+            // Clear file inputs and their display
+            document.getElementById('uploadDoc_document1').value = '';
             document.getElementById('document1FileName').classList.add('hidden');
             document.getElementById('document1DownloadLink').classList.add('hidden');
+            document.getElementById('document1DownloadLink').removeAttribute('href');
+
+            document.getElementById('uploadDoc_document2').value = '';
             document.getElementById('document2FileName').classList.add('hidden');
             document.getElementById('document2DownloadLink').classList.add('hidden');
+            document.getElementById('document2DownloadLink').removeAttribute('href');
+
             toggleModal('uploadDocumentModal', true);
             logActivity('Opened "Upload Document" form'); // Log activity
         });
@@ -1312,7 +1328,7 @@
             try {
                 const snapshot = await monitoringsCollection.get(); // Fetch all documents
                 allDocumentNumbers = snapshot.docs.map(doc => ({ id: doc.id, documentNumber: doc.data().documentNumber }));
-                console.log("Fetched all document numbers:", allDocumentNumbers); // Debugging line
+                // console.log("Fetched all document numbers:", allDocumentNumbers); // Debugging line
             } catch (error) {
                 console.error("Error fetching all document numbers for search: ", error);
             }
@@ -1350,6 +1366,16 @@
                 suggestionsContainer.appendChild(div);
             });
         });
+
+        // Hide autocomplete suggestions when clicking outside
+        document.addEventListener('click', function(e) {
+            const suggestionsContainer = document.getElementById('uploadDoc_documentNumberSuggestions');
+            const searchInput = document.getElementById('uploadDoc_documentNumberSearch');
+            if (suggestionsContainer && searchInput && !searchInput.contains(e.target) && !suggestionsContainer.contains(e.target)) {
+                suggestionsContainer.innerHTML = '';
+            }
+        });
+
 
         // Function to load existing upload document status for a selected Monitoring
         async function loadUploadDocumentStatus(monitoringId) {
@@ -1431,11 +1457,13 @@
 
         // --- Global Loading Overlay ---
         function showGlobalLoading() {
-            document.getElementById('global-loading-overlay').classList.add('show');
+            document.getElementById('global-loading-overlay').classList.remove('hidden');
+            document.body.classList.add('overflow-hidden'); // Prevent scrolling
         }
 
         function hideGlobalLoading() {
-            document.getElementById('global-loading-overlay').classList.remove('show');
+            document.getElementById('global-loading-overlay').classList.add('hidden');
+            document.body.classList.remove('overflow-hidden'); // Allow scrolling
         }
 
         // --- Ripple Effect for Buttons ---
@@ -1648,10 +1676,13 @@
 
             // Event listener for the new document info button
             const docInfoButton = card.querySelector(`#doc-info-btn-${monitoring.id}`);
-            docInfoButton.addEventListener('click', () => {
-                showDocumentInfo(monitoring.id, monitoring.documentNumber);
-                logActivity(`Viewed uploaded document info for document number: ${monitoring.documentNumber}`, monitoring.id, monitoring.documentNumber); // Log activity
-            });
+            if (docInfoButton) { // Ensure button exists before adding listener
+                docInfoButton.addEventListener('click', () => {
+                    showDocumentInfo(monitoring.id, monitoring.documentNumber);
+                    logActivity(`Viewed uploaded document info for document number: ${monitoring.documentNumber}`, monitoring.id, monitoring.documentNumber); // Log activity
+                });
+            }
+
 
             // Panggil fungsi untuk memeriksa status upload dokumen dan menampilkan ceklis
             checkAndDisplayDocumentUploadStatus(monitoring.id);
@@ -1735,7 +1766,19 @@
 
                     await monitoringsCollection.doc(monitoringToDeleteId).delete();
                     // Also delete associated document uploads if any
-                    await documentUploadsCollection.doc(monitoringToDeleteId).delete().catch(e => console.warn("No associated document uploads to delete or error deleting: ", e));
+                    // It's good practice to also delete the files from Appwrite Storage
+                    const uploadDoc = await documentUploadsCollection.doc(monitoringToDeleteId).get();
+                    if (uploadDoc.exists) {
+                        const uploadData = uploadDoc.data();
+                        if (uploadData.document1FileId) {
+                            try { await storage.deleteFile(APPWRITE_BUCKET_ID, uploadData.document1FileId); } catch (e) { console.warn("Error deleting Appwrite file 1:", e); }
+                        }
+                        if (uploadData.document2FileId) {
+                            try { await storage.deleteFile(APPWRITE_BUCKET_ID, uploadData.document2FileId); } catch (e) { console.warn("Error deleting Appwrite file 2:", e); }
+                        }
+                        await documentUploadsCollection.doc(monitoringToDeleteId).delete();
+                    }
+
 
                     toggleModal('deleteModal', false);
                     toggleModal('successAlertModal', true);
@@ -1761,8 +1804,8 @@
             const filterDocumentNumberSelect = document.getElementById('filterDocumentNumber');
 
             // Store current selected values
-            const currentFilterDocType = filterDocumentTypeSelect.value;
-            const currentFilterDocNumber = filterDocumentNumberSelect.value;
+            const currentFilterDocType = filterDocumentTypeSelect.dataset.currentValue || 'all';
+            const currentFilterDocNumber = filterDocumentNumberSelect.dataset.currentValue || 'all';
 
             // Clear existing options (except "All")
             filterDocumentTypeSelect.innerHTML = '<option value="all">Semua Tipe Dokumen</option>';
@@ -1791,12 +1834,8 @@
             });
 
             // Restore selected filter values
-            if (currentFilterDocType && Array.from(documentTypes).includes(currentFilterDocType)) {
-                filterDocumentTypeSelect.value = currentFilterDocType;
-            }
-            if (currentFilterDocNumber && Array.from(documentNumbers).includes(currentFilterDocNumber)) {
-                filterDocumentNumberSelect.value = currentFilterDocNumber;
-            }
+            filterDocumentTypeSelect.value = currentFilterDocType;
+            filterDocumentNumberSelect.value = currentFilterDocNumber;
         }
 
         // Function to check document upload status and display checkmark button (MODIFIED)
@@ -1838,4 +1877,112 @@
 
                 // Reset previous info
                 docInfo_doc1Name.textContent = 'Tidak ada';
-                
+                docInfo_doc1Link.classList.add('hidden');
+                docInfo_doc1Link.removeAttribute('href');
+
+                docInfo_doc2Name.textContent = 'Tidak ada';
+                docInfo_doc2Link.classList.add('hidden');
+                docInfo_doc2Link.removeAttribute('href');
+
+                if (uploadDoc.exists) {
+                    const data = uploadDoc.data();
+
+                    // Document 1
+                    if (data.document1FileName && data.document1FileId && data.document1Url) {
+                        docInfo_doc1Name.textContent = data.document1FileName;
+                        docInfo_doc1Link.href = data.document1Url;
+                        docInfo_doc1Link.classList.remove('hidden');
+                    }
+
+                    // Document 2
+                    if (data.document2FileName && data.document2FileId && data.document2Url) {
+                        docInfo_doc2Name.textContent = data.document2FileName;
+                        docInfo_doc2Link.href = data.document2Url;
+                        docInfo_doc2Link.classList.remove('hidden');
+                    }
+                }
+
+                toggleModal('documentInfoModal', true);
+            } catch (error) {
+                console.error("Error showing document info: ", error);
+                alert("Failed to load document information.");
+            } finally {
+                hideGlobalLoading();
+            }
+        }
+
+        // Close Document Info Modal
+        document.getElementById('closeDocumentInfoModalBtn').addEventListener('click', () => toggleModal('documentInfoModal', false));
+        document.getElementById('closeDocumentInfoBtn').addEventListener('click', () => toggleModal('documentInfoModal', false));
+
+
+        // --- Activity Modal Functions (NEW) ---
+        document.getElementById('activityButton').addEventListener('click', async () => {
+            showGlobalLoading();
+            try {
+                const activityListDiv = document.getElementById('activityList');
+                activityListDiv.innerHTML = ''; // Clear previous activities
+
+                const snapshot = await activitiesCollection.orderBy('timestamp', 'desc').limit(50).get(); // Limit to last 50 activities
+                if (snapshot.empty) {
+                    activityListDiv.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-clipboard-list"></i>
+                            <p>Tidak ada aktivitas yang tercatat.</p>
+                        </div>
+                    `;
+                } else {
+                    snapshot.forEach(doc => {
+                        const activity = doc.data();
+                        const timestamp = activity.timestamp ? new Date(activity.timestamp.toDate()).toLocaleString() : 'N/A';
+                        const activityItem = document.createElement('div');
+                        activityItem.className = 'bg-gray-100 p-3 rounded-lg shadow-sm text-sm';
+                        activityItem.innerHTML = `
+                            <p><span class="font-semibold">${activity.userEmail}</span> - ${activity.action}</p>
+                            <p class="text-gray-500 text-xs">${timestamp}</p>
+                        `;
+                        activityListDiv.appendChild(activityItem);
+                    });
+                }
+                toggleModal('activityModal', true);
+                logActivity('Opened "User Activity" log');
+            } catch (error) {
+                console.error("Error loading activities: ", error);
+                alert("Failed to load user activities.");
+            } finally {
+                hideGlobalLoading();
+            }
+        });
+
+        document.getElementById('closeActivityModalBtn').addEventListener('click', () => toggleModal('activityModal', false));
+
+        document.getElementById('clearActivitiesBtn').addEventListener('click', async () => {
+            if (confirm('Are you sure you want to delete all user activities? This action cannot be undone.')) {
+                showGlobalLoading();
+                try {
+                    const snapshot = await activitiesCollection.get();
+                    const batch = db.batch();
+                    snapshot.docs.forEach(doc => {
+                        batch.delete(doc.ref);
+                    });
+                    await batch.commit();
+                    document.getElementById('successAlertMessage').textContent = 'All activities cleared successfully!';
+                    toggleModal('activityModal', false);
+                    toggleModal('successAlertModal', true);
+                    logActivity('Cleared all user activities');
+                } catch (error) {
+                    console.error("Error clearing activities: ", error);
+                    alert("Failed to clear activities.");
+                } finally {
+                    hideGlobalLoading();
+                }
+            }
+        });
+
+
+        // --- Initial Load ---
+        loadMonitorings(); // Load monitorings when the page loads
+    });
+</script>
+</body>
+</html>
