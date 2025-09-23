@@ -11,6 +11,7 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script> <!-- Tambahkan Firebase Auth SDK -->
     <!-- Appwrite SDK -->
     <script src="https://cdn.jsdelivr.net/npm/appwrite@11.0.0"></script>
 
@@ -279,7 +280,7 @@
         .modal-content-enter-active, .modal-content-leave-active {
             /* transition: opacity 0.15s cubic-bezier(0.25, 0.8, 0.25, 1), transform 0.15s cubic-bezier(0.25, 0.8, 0.25, 1); */
         }
-        #monitoringModalContent, #monitoringDetailModalContent, #deleteModalContent, #filterPanelContent, #successAlertModalContent, #uploadDocumentModalContent {
+        #monitoringModalContent, #monitoringDetailModalContent, #deleteModalContent, #filterPanelContent, #successAlertModalContent, #uploadDocumentModalContent, #activityModalContent {
             background-color: #ffffff;
             border-radius: 1rem;
             box-shadow: 0 20px 50px var(--shadow-strong);
@@ -320,7 +321,7 @@
         }
 
 
-        #monitoringModalContent h2, #monitoringDetailModalContent h2, #deleteModalContent h2, #filterPanelContent h2, #successAlertModalContent h2, #uploadDocumentModalContent h2 {
+        #monitoringModalContent h2, #monitoringDetailModalContent h2, #deleteModalContent h2, #filterPanelContent h2, #successAlertModalContent h2, #uploadDocumentModalContent h2, #activityModalContent h2 {
             color: var(--text-dark);
             font-weight: 800;
             font-size: 1.75rem; /* Smaller */
@@ -648,10 +649,17 @@
         }
 
         /* Checkmark icon for uploaded documents */
-        .document-uploaded-checkmark {
+        .document-status-btn { /* Changed from .document-uploaded-checkmark */
             color: var(--accent-green); /* Green color for checkmark */
             font-size: 1.2rem; /* Slightly larger icon */
             margin-right: 0.5rem; /* Space between checkmark and action buttons */
+            background-color: transparent; /* Make button background transparent */
+            border: none; /* Remove button border */
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+        .document-status-btn:hover {
+            color: var(--primary-dark-blue); /* Darker green on hover */
         }
 
         /* New container for status/checkmark on the left side of the footer */
@@ -662,7 +670,7 @@
         }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800">
+<body class="bg-gray-50 text-gray-800 hidden"> <!-- Body is hidden until authenticated -->
     <div class="max-w-7xl mx-auto px-4 py-8">
         <!-- Header -->
         <header class="mb-8 bg-white p-6 rounded-lg shadow-md header">
@@ -670,7 +678,10 @@
                 <div>
                     <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900">Monitoring Dokumen <i class="fas fa-box-open text-blue-600 ml-2"></i></h1>
                 </div>
-                <div class="logout-btn-container">
+                <div class="logout-btn-container flex items-center space-x-3">
+                    <button id="activityBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
+                        <i class="fas fa-history mr-2"></i> Aktivitas
+                    </button>
                     <button id="authButton" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
                         <i class="fas fa-sign-out-alt mr-2"></i> Logout
                     </button>
@@ -939,7 +950,7 @@
 
                     <!-- Document Upload 2 -->
                     <div class="mb-4">
-                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="uploadDoc_document2">Document Before Change</label>
+                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="uploadDoc_document2">Document After Change</label> <!-- Label changed -->
                         <input type="file" id="uploadDoc_document2" accept=".pdf" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
                         <p id="document2FileName" class="text-sm text-gray-600 mt-1 hidden"></p>
                         <a id="document2DownloadLink" href="#" target="_blank" class="text-blue-600 hover:underline text-sm mt-1 hidden">View Document 2</a>
@@ -968,6 +979,27 @@
                 <button type="button" id="closeSuccessAlertBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105">
                     OK
                 </button>
+            </div>
+        </div>
+
+        <!-- Activity Log Modal -->
+        <div id="activityModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+            <div class="bg-white rounded-xl p-8 w-full max-w-2xl shadow-2xl modal-content-enter" id="activityModalContent">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900 flex items-center"><i class="fas fa-history mr-3 text-gray-500"></i> Log Aktivitas</h2>
+                    <button type="button" id="closeActivityModalBtn" class="text-gray-500 hover:text-gray-700 transition duration-200">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div id="activityLogContent" class="max-h-96 overflow-y-auto text-sm text-gray-700">
+                    <!-- Activity logs will be loaded here -->
+                    <p>Tidak ada aktivitas yang tercatat.</p>
+                </div>
+                <div class="flex justify-end mt-6">
+                    <button type="button" id="clearActivityLogBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105 text-sm">
+                        Clear Log
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -1007,8 +1039,47 @@
     const APPWRITE_DATABASE_ID = '68d0d71600124cfdc86e'; // Ini tidak digunakan dalam kode ini, tapi tidak masalah
     const APPWRITE_BUCKET_ID = '68d0d72500025b188805';
 
+    // Daftar email yang diizinkan untuk login
+    const ALLOWED_EMAILS = [
+        'maida@genetek.co.id',
+        'maya@genetek.co.id',
+        'evi@genetek.co.id',
+        'rossiana.yl@genetek.co.id',
+        'sarju@genetek.co.id'
+    ];
+
+    // Referensi koleksi aktivitas di Firestore
+    const activityLogCollection = db.collection('activityLog');
+
 
     document.addEventListener('DOMContentLoaded', function() {
+        // --- Autentikasi Firebase ---
+        firebase.auth().onAuthStateChanged(function(user) {
+            if (user) {
+                // User is signed in.
+                if (ALLOWED_EMAILS.includes(user.email)) {
+                    console.log("User logged in:", user.email);
+                    // Tampilkan konten aplikasi
+                    document.body.classList.remove('hidden');
+                    // Log aktivitas login
+                    logActivity(`User ${user.email} logged in.`);
+                    loadMonitorings(); // Load data setelah user terautentikasi
+                } else {
+                    // User not in allowed list, sign out
+                    firebase.auth().signOut().then(() => {
+                        alert("Akses ditolak. Email Anda tidak diizinkan.");
+                        window.location.href = 'login.html'; // Redirect ke halaman login
+                    }).catch((error) => {
+                        console.error("Error signing out disallowed user:", error);
+                    });
+                }
+            } else {
+                // No user is signed in.
+                console.log("No user logged in, redirecting to login page.");
+                window.location.href = 'login.html'; // Redirect ke halaman login
+            }
+        });
+
         // Generic function to toggle modal visibility
         function toggleModal(modalId, show) {
             const modal = document.getElementById(modalId);
@@ -1064,6 +1135,22 @@
             }
         });
 
+        // --- Fungsi untuk mencatat aktivitas ---
+        async function logActivity(description) {
+            const user = firebase.auth().currentUser;
+            if (user && ALLOWED_EMAILS.includes(user.email)) {
+                try {
+                    await activityLogCollection.add({
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        userEmail: user.email,
+                        description: description
+                    });
+                } catch (error) {
+                    console.error("Error logging activity:", error);
+                }
+            }
+        }
+
         // --- Event Listeners for Modals ---
 
         // Add Monitoring Button
@@ -1083,6 +1170,7 @@
             showGlobalLoading();
 
             const monitoringId = document.getElementById('monitoringId').value;
+            const documentNumber = document.getElementById('documentNumber').value;
             const data = {
                 documentType: document.getElementById('documentType').value,
                 documentNumber: document.getElementById('documentNumber').value,
@@ -1101,10 +1189,12 @@
                     // Update existing monitoring
                     await monitoringsCollection.doc(monitoringId).update(data);
                     document.getElementById('successAlertMessage').textContent = 'Monitoring updated successfully!';
+                    logActivity(`Updated monitoring for Document Number: ${documentNumber}`);
                 } else {
                     // Add new monitoring
                     await monitoringsCollection.add(data);
                     document.getElementById('successAlertMessage').textContent = 'New monitoring added successfully!';
+                    logActivity(`Added new monitoring for Document Number: ${documentNumber}`);
                 }
                 toggleModal('monitoringModal', false);
                 toggleModal('successAlertModal', true);
@@ -1118,7 +1208,7 @@
             }
         });
 
-        // Upload Document Button (formerly Document Checklist)
+        // Upload Document Button
         document.getElementById('uploadDocumentBtn').addEventListener('click', () => {
             document.getElementById('uploadDocumentForm').reset();
             document.getElementById('uploadDoc_monitoringId').value = ''; // Clear monitoringId
@@ -1178,7 +1268,6 @@
                         document1File
                     );
                     document1FileId = file1Response.$id;
-                    // Menggunakan client.endpoint (properti) bukan client.getEndpoint() (metode)
                     document1Url = client.endpoint + '/storage/buckets/' + APPWRITE_BUCKET_ID + '/files/' + document1FileId + '/view?project=' + client.config.project;
                     updateData.document1FileId = document1FileId;
                     updateData.document1FileName = document1File.name;
@@ -1193,7 +1282,6 @@
                         document2File
                     );
                     document2FileId = file2Response.$id;
-                    // Menggunakan client.endpoint (properti) bukan client.getEndpoint() (metode)
                     document2Url = client.endpoint + '/storage/buckets/' + APPWRITE_BUCKET_ID + '/files/' + document2FileId + '/view?project=' + client.config.project;
                     updateData.document2FileId = document2FileId;
                     updateData.document2FileName = document2File.name;
@@ -1208,6 +1296,7 @@
                 toggleModal('uploadDocumentModal', false);
                 toggleModal('successAlertModal', true);
                 loadMonitorings(); // Reload list to update checkmarks on cards
+                logActivity(`Uploaded documents for Document Number: ${documentNumber}`);
             } catch (error) {
                 console.error("Error saving document upload status or uploading files: ", error);
                 alert(`Failed to save document upload status or upload files. Error: ${error.message}. Please try again.`);
@@ -1366,7 +1455,24 @@
         });
 
         // --- Placeholder for other buttons ---
-        document.getElementById('authButton').addEventListener('click', () => alert('Logout button clicked!'));
+        // Event Listener untuk tombol Logout
+        document.getElementById('authButton').addEventListener('click', async () => {
+            showGlobalLoading();
+            try {
+                const user = firebase.auth().currentUser;
+                if (user) {
+                    logActivity(`User ${user.email} logged out.`);
+                }
+                await firebase.auth().signOut();
+                window.location.href = 'login.html'; // Redirect ke halaman login setelah logout
+            } catch (error) {
+                console.error("Error during logout:", error);
+                alert("Failed to logout. Please try again.");
+            } finally {
+                hideGlobalLoading();
+            }
+        });
+
         // Updated Back button functionality
         document.getElementById('backButton').addEventListener('click', () => {
             window.location.href = 'index.html'; // Redirect to index.html
@@ -1407,6 +1513,7 @@
 
                 document.getElementById('successAlertMessage').textContent = 'Data exported to Excel successfully!';
                 toggleModal('successAlertModal', true);
+                logActivity("Exported monitoring data to Excel.");
 
             } catch (error) {
                 console.error("Error exporting data to Excel: ", error);
@@ -1511,7 +1618,10 @@
                 </div>
                 <div class="deal-footer">
                     <div class="deal-footer-left">
-                        <i class="fas fa-check-circle document-uploaded-checkmark hidden" id="checkmark-${monitoring.id}"></i> <!-- Checkmark icon moved here -->
+                        <!-- Checkmark icon changed to a button -->
+                        <button class="document-status-btn hidden text-green-500 hover:text-green-700 p-1 rounded-full bg-green-100" id="documentStatusBtn-${monitoring.id}" title="View Uploaded Documents">
+                            <i class="fas fa-check-circle text-lg"></i>
+                        </button>
                     </div>
                     <div class="deal-actions">
                         <button class="view-btn text-blue-600 hover:text-blue-800 p-1" title="View Details">
@@ -1532,7 +1642,14 @@
             card.querySelector('.edit-btn').addEventListener('click', () => editMonitoring(monitoring.id));
             card.querySelector('.delete-btn').addEventListener('click', () => confirmDeleteMonitoring(monitoring.id, monitoring.documentNumber));
 
-            // Panggil fungsi untuk memeriksa status upload dokumen dan menampilkan ceklis
+            // Event Listener untuk tombol status dokumen
+            const documentStatusBtn = card.querySelector(`#documentStatusBtn-${monitoring.id}`);
+            if (documentStatusBtn) { // Pastikan tombol ada sebelum menambahkan event listener
+                documentStatusBtn.addEventListener('click', () => showUploadedFileNames(monitoring.id));
+            }
+
+
+            // Panggil fungsi untuk memeriksa status upload dokumen dan menampilkan tombol
             checkAndDisplayDocumentUploadStatus(monitoring.id);
 
             return card;
@@ -1609,12 +1726,16 @@
             if (monitoringToDeleteId) {
                 showGlobalLoading();
                 try {
+                    const docToDelete = await monitoringsCollection.doc(monitoringToDeleteId).get();
+                    const documentNumberToDelete = docToDelete.exists ? docToDelete.data().documentNumber : 'N/A';
+
                     await monitoringsCollection.doc(monitoringToDeleteId).delete();
                     toggleModal('deleteModal', false);
                     toggleModal('successAlertModal', true);
                     document.getElementById('successAlertMessage').textContent = 'Monitoring deleted successfully!';
                     loadMonitorings(); // Reload list after deletion
                     fetchAllDocumentNumbers(); // Re-fetch document numbers for autocomplete
+                    logActivity(`Deleted monitoring for Document Number: ${documentNumberToDelete}`);
                 } catch (error) {
                     console.error("Error deleting monitoring: ", error);
                     alert("Failed to delete monitoring. Please try again.");
@@ -1671,30 +1792,123 @@
             }
         }
 
-        // Function to check document upload status and display checkmark
+        // Function to check document upload status and display checkmark button
         async function checkAndDisplayDocumentUploadStatus(monitoringId) {
             try {
                 const uploadDoc = await documentUploadsCollection.doc(monitoringId).get();
-                const checkmarkIcon = document.getElementById(`checkmark-${monitoringId}`);
+                const documentStatusBtn = document.getElementById(`documentStatusBtn-${monitoringId}`);
 
-                if (checkmarkIcon && uploadDoc.exists) {
+                if (documentStatusBtn && uploadDoc.exists) {
                     const data = uploadDoc.data();
                     // Check if at least one document (document1 or document2) has been uploaded
                     if (data.document1FileId || data.document2FileId) {
-                        checkmarkIcon.classList.remove('hidden');
+                        documentStatusBtn.classList.remove('hidden');
                     } else {
-                        checkmarkIcon.classList.add('hidden');
+                        documentStatusBtn.classList.add('hidden');
                     }
-                } else if (checkmarkIcon) {
-                    checkmarkIcon.classList.add('hidden'); // Hide if no upload document entry exists
+                } else if (documentStatusBtn) {
+                    documentStatusBtn.classList.add('hidden'); // Hide if no upload document entry exists
                 }
             } catch (error) {
                 console.error("Error checking document upload status: ", error);
             }
         }
 
-        // Initial load of monitorings
-        loadMonitorings();
+        // Fungsi baru untuk menampilkan nama file yang diunggah
+        async function showUploadedFileNames(monitoringId) {
+            showGlobalLoading();
+            try {
+                const uploadDoc = await documentUploadsCollection.doc(monitoringId).get();
+                if (uploadDoc.exists) {
+                    const data = uploadDoc.data();
+                    let message = `Dokumen yang diunggah untuk Nomor Dokumen: ${data.documentNumber || 'N/A'}\n\n`;
+                    let hasFiles = false;
+
+                    if (data.document1FileName) {
+                        message += `1. Document Before Change: ${data.document1FileName}\n`;
+                        hasFiles = true;
+                    }
+                    if (data.document2FileName) {
+                        message += `2. Document After Change: ${data.document2FileName}\n`;
+                        hasFiles = true;
+                    }
+
+                    if (!hasFiles) {
+                        message = "Tidak ada dokumen yang diunggah untuk entri ini.";
+                    }
+
+                    document.getElementById('successAlertMessage').textContent = message;
+                    toggleModal('successAlertModal', true); // Menggunakan modal sukses untuk menampilkan info
+                } else {
+                    document.getElementById('successAlertMessage').textContent = "Tidak ada dokumen yang diunggah untuk entri ini.";
+                    toggleModal('successAlertModal', true);
+                }
+            } catch (error) {
+                console.error("Error showing uploaded file names:", error);
+                alert("Gagal menampilkan nama file yang diunggah.");
+            } finally {
+                hideGlobalLoading();
+            }
+        }
+
+        // --- Activity Log Modal Functions ---
+        document.getElementById('activityBtn').addEventListener('click', () => {
+            loadActivityLog();
+            toggleModal('activityModal', true);
+        });
+
+        document.getElementById('closeActivityModalBtn').addEventListener('click', () => {
+            toggleModal('activityModal', false);
+        });
+
+        document.getElementById('clearActivityLogBtn').addEventListener('click', async () => {
+            if (confirm("Apakah Anda yakin ingin menghapus semua log aktivitas?")) {
+                showGlobalLoading();
+                try {
+                    const snapshot = await activityLogCollection.get();
+                    const batch = db.batch();
+                    snapshot.docs.forEach(doc => {
+                        batch.delete(doc.ref);
+                    });
+                    await batch.commit();
+                    document.getElementById('activityLogContent').innerHTML = '<p>Tidak ada aktivitas yang tercatat.</p>';
+                    logActivity("Activity log cleared.");
+                    document.getElementById('successAlertMessage').textContent = 'Log aktivitas berhasil dihapus!';
+                    toggleModal('successAlertModal', true);
+                } catch (error) {
+                    console.error("Error clearing activity log:", error);
+                    alert("Gagal menghapus log aktivitas.");
+                } finally {
+                    hideGlobalLoading();
+                }
+            }
+        });
+
+        async function loadActivityLog() {
+            const activityLogContent = document.getElementById('activityLogContent');
+            activityLogContent.innerHTML = '<p>Memuat aktivitas...</p>';
+            try {
+                const snapshot = await activityLogCollection.orderBy('timestamp', 'desc').limit(50).get(); // Ambil 50 aktivitas terbaru
+                if (snapshot.empty) {
+                    activityLogContent.innerHTML = '<p>Tidak ada aktivitas yang tercatat.</p>';
+                    return;
+                }
+                let logHtml = '';
+                snapshot.forEach(doc => {
+                    const activity = doc.data();
+                    const date = activity.timestamp ? new Date(activity.timestamp.toDate()).toLocaleString() : 'N/A';
+                    logHtml += `<p><strong>[${date}]</strong> ${activity.userEmail}: ${activity.description}</p>`;
+                });
+                activityLogContent.innerHTML = logHtml;
+            } catch (error) {
+                console.error("Error loading activity log:", error);
+                activityLogContent.innerHTML = '<p class="text-red-500">Gagal memuat log aktivitas.</p>';
+            }
+        }
+
+
+        // Initial load of monitorings (moved inside onAuthStateChanged)
+        // loadMonitorings();
 
         // Search functionality
         document.getElementById('searchMonitorings').addEventListener('keyup', loadMonitorings);
