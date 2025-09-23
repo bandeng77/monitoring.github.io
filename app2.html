@@ -761,7 +761,6 @@
         const itemIdInput = document.getElementById('item-id');
         const itemPidDisplay = document.getElementById('item-pid-display');
         const itemNameDisplayEdit = document.getElementById('item-name-display-edit');
-        // const itemCategoryInput = document.getElementById('item-category'); // Dihapus
         const itemStockInput = document.getElementById('item-stock');
         const itemPriceInput = document.getElementById('item-price');
         const stockTypeInput = document.getElementById('stock-type');
@@ -806,15 +805,22 @@
         // Fungsi untuk memuat data dari pid.json
         async function loadPidData() {
             try {
-                const response = await fetch('pid.json'); // Asumsi pid.json berada di root
+                // Pastikan pid.json berada di root direktori yang sama dengan file HTML ini
+                const response = await fetch('pid.json'); 
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    // Jika respons tidak OK (misal 404 Not Found), lempar error
+                    throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
                 }
-                pidData = await response.json();
-                console.log('PID Data loaded:', pidData);
+                const data = await response.json();
+                // Memastikan setiap item memiliki stok numerik, mengubah '-' menjadi 0
+                pidData = data.map(item => ({
+                    ...item,
+                    stok: item.stok === '-' ? 0 : parseInt(item.stok) || 0 // Mengubah '-' menjadi 0, dan memastikan numerik
+                }));
+                console.log('PID Data loaded and processed:', pidData);
             } catch (error) {
                 console.error('Error loading PID data:', error);
-                showAlert('Gagal memuat data No. Barang (PID).', 'error');
+                showAlert(`Gagal memuat data No. Barang (PID): ${error.message}`, 'error');
             }
         }
         
@@ -1036,7 +1042,6 @@
                 itemIdInput.value = item.id;
                 itemPidDisplay.value = item.pid; // Set selected PID
                 itemNameDisplayEdit.value = item.name; // Set displayed name
-                // itemCategoryInput.value = item.category || ''; // Dihapus
                 itemStockInput.value = item.stock || 0; // Set default if null
                 itemPriceInput.value = item.price || 0; // Set default if null
                 
@@ -1083,7 +1088,6 @@
             const id = itemIdInput.value;
             const pid = itemPidDisplay.value; // PID dari display field
             const name = itemNameDisplayEdit.value; // Nama dari display field
-            // const category = itemCategoryInput.value; // Dihapus
             const stock = parseInt(itemStockInput.value);
             const price = parseInt(itemPriceInput.value);
 
@@ -1097,7 +1101,6 @@
             const existingItem = items.find(item => item.id === id);
             if (existingItem) {
                 const oldStock = existingItem.stock || 0;
-                // const updatedItem = { id, pid, name, category, stock, price }; // Dihapus kategori
                 const updatedItem = { id, pid, name, stock, price };
                 await itemsRef.child(id).set(updatedItem);
                 
@@ -1168,7 +1171,6 @@
             if (searchTerm) {
                 const filteredItems = items.filter(item => 
                     item.name.toLowerCase().includes(searchTerm) || 
-                    // (item.category && item.category.toLowerCase().includes(searchTerm)) || // Dihapus
                     item.pid.toLowerCase().includes(searchTerm)
                 );
                 // Reset halaman ke 1 setelah pencarian
@@ -1292,29 +1294,41 @@
         // Fungsi untuk mengisi Firebase dengan data dari pid.json jika belum ada
         async function populateFirebaseFromPidData() {
             if (pidData.length === 0) {
-                console.warn("pid.json data not loaded yet.");
-                return;
+                console.warn("pid.json data not loaded or is empty. Skipping Firebase population.");
+                return; // Jangan lanjutkan jika pidData kosong
             }
 
             // Get current items from Firebase once
             const snapshot = await itemsRef.once('value');
             const currentFirebaseItems = snapshot.val() || {};
+            // Membuat Set dari PID yang sudah ada di Firebase untuk pencarian cepat
             const currentFirebasePids = new Set(Object.values(currentFirebaseItems).map(item => item.pid));
 
             for (const pidEntry of pidData) {
+                // Hanya tambahkan jika PID belum ada di Firebase
                 if (!currentFirebasePids.has(pidEntry.pid)) {
-                    // Item from pid.json does not exist in Firebase, add it
                     const newId = itemsRef.push().key;
                     const newItem = {
                         id: newId,
                         pid: pidEntry.pid,
-                        name: pidEntry.description,
-                        // category: '', // Dihapus
-                        stock: pidEntry.stok || 0, // Ambil stok dari pid.json, default 0 jika tidak ada
-                        price: 0      // Default price to 0
+                        name: pidEntry.description, // Menggunakan 'description' dari pid.json sebagai 'name'
+                        stock: pidEntry.stok,       // Menggunakan nilai 'stok' yang sudah diproses
+                        price: 0                    // Default price to 0
                     };
                     await itemsRef.child(newId).set(newItem);
                     console.log(`Added new item from pid.json to Firebase: ${pidEntry.pid}`);
+                } else {
+                    // Opsional: Jika Anda ingin memperbarui stok atau nama barang dari pid.json
+                    // untuk item yang sudah ada di Firebase, Anda bisa menambahkan logika di sini.
+                    // Contoh:
+                    // const existingItemKey = Object.keys(currentFirebaseItems).find(key => currentFirebaseItems[key].pid === pidEntry.pid);
+                    // if (existingItemKey) {
+                    //     await itemsRef.child(existingItemKey).update({
+                    //         name: pidEntry.description,
+                    //         stock: pidEntry.stok // Ini akan menimpa stok yang ada di Firebase
+                    //     });
+                    //     console.log(`Updated existing item ${pidEntry.pid} from pid.json.`);
+                    // }
                 }
             }
         }
