@@ -1209,7 +1209,16 @@
     let uniqueHSCodes = new Set();
     let uniqueStatuses = new Set();
 
-    const ADMIN_EMAIL = 'maida@genetek.co.id';
+    // ==================== MODIFIKASI DI SINI ====================
+    // Daftar email yang diizinkan untuk login
+    const AUTHORIZED_EMAILS = [
+        'maida@genetek.co.id',
+        'maya@genetek.co.id',
+        'evi@genetek.co.id',
+        'rossiana.yl@genetek.co.id',
+        'sarju@genetek.co.id'
+    ];
+    // ============================================================
 
     // ==================== MAIN FUNCTIONS ====================
 
@@ -1234,8 +1243,10 @@
         if (user && window.location.pathname.includes('app.html')) {
             try {
                 showGlobalLoading();
-                if (user.email === ADMIN_EMAIL) {
-                    currentUserRole = 'admin';
+                // ==================== MODIFIKASI DI SINI ====================
+                // Memeriksa apakah email pengguna ada dalam daftar yang diizinkan
+                if (AUTHORIZED_EMAILS.includes(user.email)) {
+                    currentUserRole = 'admin'; // Semua user yang diizinkan akan dianggap admin untuk saat ini
                     await usersCollection.doc(user.uid).set({
                         role: 'admin',
                         email: user.email
@@ -1246,6 +1257,7 @@
                     window.location.href = 'login.html';
                     return;
                 }
+                // ============================================================
 
                 console.log("Current role:", currentUserRole);
                 // Call new function to load product catalog
