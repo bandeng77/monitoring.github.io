@@ -404,6 +404,71 @@
             background-color: #fee2e2;
             color: #991b1b;
         }
+
+        /* Pagination styles */
+        .pagination-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .pagination-controls .btn {
+            padding: 0.5rem 1rem;
+        }
+
+        .pagination-info {
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+
+        .items-per-page-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Autocomplete styles */
+        .autocomplete-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .autocomplete-items {
+            position: absolute;
+            border: 1px solid var(--gray-200);
+            border-bottom: none;
+            border-top: none;
+            z-index: 99;
+            /*position the autocomplete items to be the same width as the container:*/
+            top: 100%;
+            left: 0;
+            right: 0;
+        }
+
+        .autocomplete-items div {
+            padding: 10px;
+            cursor: pointer;
+            background-color: #fff; 
+            border-bottom: 1px solid var(--gray-200); 
+        }
+
+        /*when hovering an item:*/
+        .autocomplete-items div:hover {
+            background-color: var(--gray-100); 
+        }
+
+        /*when navigating through the items using the arrow keys:*/
+        .autocomplete-active {
+            background-color: var(--primary) !important; 
+            color: #ffffff; 
+        }
         
         @media (max-width: 768px) {
             .dashboard {
@@ -425,6 +490,11 @@
             }
             
             .filter-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .pagination-controls {
                 flex-direction: column;
                 align-items: stretch;
             }
@@ -478,11 +548,7 @@
                     <input type="text" id="search-input" placeholder="Cari barang...">
                 </div>
                 <div style="display: flex; gap: 1rem;">
-                    <!-- Tombol "Tambah Barang" akan tetap ada untuk menambahkan item baru yang tidak ada di pid.json,
-                         atau untuk mengedit detail item yang sudah ada dari pid.json -->
-                    <button class="btn" id="add-item-btn">
-                        <span>➕</span> Tambah Barang
-                    </button>
+                    <!-- Tombol "Tambah Barang" dihapus -->
                     <button class="btn btn-info" id="stock-in-btn">
                         <span>⬇️</span> Stok Masuk
                     </button>
@@ -512,6 +578,25 @@
                         <!-- Data akan diisi melalui JavaScript -->
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Pagination Controls -->
+            <div class="pagination-controls">
+                <div class="items-per-page-group">
+                    <label for="items-per-page">Tampilkan:</label>
+                    <select id="items-per-page" class="filter-select">
+                        <option value="10">10</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="1000">1000</option>
+                    </select>
+                    <span>item per halaman</span>
+                </div>
+                <div>
+                    <button class="btn" id="prev-page-btn">Sebelumnya</button>
+                    <span class="pagination-info">Halaman <span id="current-page">1</span> dari <span id="total-pages">1</span></span>
+                    <button class="btn" id="next-page-btn">Berikutnya</button>
+                </div>
             </div>
         </div>
         
@@ -565,25 +650,22 @@
         </div>
     </main>
 
-    <!-- Modal untuk menambah/mengedit barang -->
+    <!-- Modal untuk mengedit barang (modal tambah barang dihapus) -->
     <div class="modal" id="item-modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 id="modal-title">Tambah Barang Baru</h2>
+                <h2 id="modal-title">Edit Barang</h2>
                 <button class="close-modal" id="close-modal">&times;</button>
             </div>
             <form id="item-form">
                 <input type="hidden" id="item-id">
                 <div class="form-group">
-                    <label for="item-pid-select">Pilih No. Barang</label>
-                    <select id="item-pid-select" required>
-                        <option value="">Pilih No. Barang</option>
-                        <!-- Options will be populated from pid.json -->
-                    </select>
+                    <label for="item-pid-display">No. Barang</label>
+                    <input type="text" id="item-pid-display" readonly> <!-- Display only -->
                 </div>
                 <div class="form-group">
-                    <label for="item-name-display">Nama Barang</label>
-                    <input type="text" id="item-name-display" readonly> <!-- Display only -->
+                    <label for="item-name-display-edit">Nama Barang</label>
+                    <input type="text" id="item-name-display-edit" readonly> <!-- Display only -->
                 </div>
                 <div class="form-group">
                     <label for="item-category">Kategori</label>
@@ -624,11 +706,13 @@
             </div>
             <form id="stock-form">
                 <input type="hidden" id="stock-type">
+                <input type="hidden" id="selected-stock-item-id"> <!-- Hidden field to store selected item ID -->
                 <div class="form-group">
-                    <label for="stock-item">Pilih Barang</label>
-                    <select id="stock-item" required>
-                        <option value="">Pilih Barang</option>
-                    </select>
+                    <label for="stock-item-search">Cari Barang</label>
+                    <div class="autocomplete-container">
+                        <input type="text" id="stock-item-search" placeholder="Ketik No. Barang atau Nama Barang..." required>
+                        <div id="autocomplete-list" class="autocomplete-items"></div>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="stock-quantity">Jumlah</label>
@@ -659,7 +743,6 @@
             storageBucket: "monitoring-acc.firebasestorage.app",
             messagingSenderId: "898707897888",
             appId: "1:898707897888:web:8cfe6f77cd784d8c1ec645",
-            // URL Realtime Database yang benar
             databaseURL: "https://monitoring-acc-default-rtdb.asia-southeast1.firebasedatabase.app/"
         };
 
@@ -674,6 +757,11 @@
         let history = [];
         let pidData = []; // Data dari pid.json
         
+        // Variabel Paginasi
+        let currentPage = 1;
+        let itemsPerPage = 10; // Default
+        let currentFilteredItems = []; // Untuk menyimpan hasil filter pencarian sebelum paginasi
+
         // Elemen DOM
         const itemsTableBody = document.getElementById('items-table-body');
         const historyTableBody = document.getElementById('history-table-body');
@@ -684,22 +772,27 @@
         const modalTitle = document.getElementById('modal-title');
         const stockModalTitle = document.getElementById('stock-modal-title');
         const itemIdInput = document.getElementById('item-id');
-        const itemPidSelect = document.getElementById('item-pid-select'); // Changed to select
-        const itemNameDisplay = document.getElementById('item-name-display'); // Display only
+        // const itemPidSelect = document.getElementById('item-pid-select'); // Dihapus
+        // const itemNameDisplay = document.getElementById('item-name-display'); // Dihapus
+        const itemPidDisplay = document.getElementById('item-pid-display'); // Baru untuk modal edit
+        const itemNameDisplayEdit = document.getElementById('item-name-display-edit'); // Baru untuk modal edit
         const itemCategoryInput = document.getElementById('item-category');
         const itemStockInput = document.getElementById('item-stock');
         const itemPriceInput = document.getElementById('item-price');
         const stockTypeInput = document.getElementById('stock-type');
-        const stockItemInput = document.getElementById('stock-item');
+        // const stockItemInput = document.getElementById('stock-item'); // Dihapus
+        const stockItemSearchInput = document.getElementById('stock-item-search'); // Baru
+        const selectedStockItemIdInput = document.getElementById('selected-stock-item-id'); // Baru
+        const autocompleteList = document.getElementById('autocomplete-list'); // Baru
         const stockQuantityInput = document.getElementById('stock-quantity');
         const stockDestinationInput = document.getElementById('stock-destination');
         const stockNotesInput = document.getElementById('stock-notes');
         const destinationGroup = document.getElementById('destination-group');
         const destinationLabel = document.getElementById('destination-label');
         
-        const addItemBtn = document.getElementById('add-item-btn');
+        // const addItemBtn = document.getElementById('add-item-btn'); // Dihapus
         const stockInBtn = document.getElementById('stock-in-btn');
-        const stockOutBtn = document = document.getElementById('stock-out-btn');
+        const stockOutBtn = document.getElementById('stock-out-btn');
         const closeModalBtn = document.getElementById('close-modal');
         const closeStockModalBtn = document.getElementById('close-stock-modal');
         const cancelBtn = document.getElementById('cancel-btn');
@@ -713,6 +806,13 @@
         const alertContainer = document.getElementById('alert-container');
         const tabs = document.querySelectorAll('.tab');
         const tabContents = document.querySelectorAll('.tab-content');
+
+        // Elemen Paginasi
+        const itemsPerPageSelect = document.getElementById('items-per-page');
+        const prevPageBtn = document.getElementById('prev-page-btn');
+        const nextPageBtn = document.getElementById('next-page-btn');
+        const currentPageSpan = document.getElementById('current-page');
+        const totalPagesSpan = document.getElementById('total-pages');
         
         // Statistik
         const totalItemsEl = document.getElementById('total-items');
@@ -729,23 +829,23 @@
                 }
                 pidData = await response.json();
                 console.log('PID Data loaded:', pidData);
-                populatePidSelect(); // Populate the select dropdown after loading
+                // populatePidSelect(); // Tidak perlu lagi karena modal tambah barang dihapus
             } catch (error) {
                 console.error('Error loading PID data:', error);
                 showAlert('Gagal memuat data No. Barang (PID).', 'error');
             }
         }
 
-        // Fungsi untuk mengisi dropdown PID di modal tambah/edit
-        function populatePidSelect() {
-            itemPidSelect.innerHTML = '<option value="">Pilih No. Barang</option>';
-            pidData.forEach(data => {
-                const option = document.createElement('option');
-                option.value = data.pid;
-                option.textContent = data.pid;
-                itemPidSelect.appendChild(option);
-            });
-        }
+        // Fungsi untuk mengisi dropdown PID di modal tambah/edit (dihapus karena modal tambah barang dihapus)
+        // function populatePidSelect() {
+        //     itemPidSelect.innerHTML = '<option value="">Pilih No. Barang</option>';
+        //     pidData.forEach(data => {
+        //         const option = document.createElement('option');
+        //         option.value = data.pid;
+        //         option.textContent = data.pid;
+        //         itemPidSelect.appendChild(option);
+        //     });
+        // }
         
         // Fungsi untuk menampilkan alert
         function showAlert(message, type = 'success') {
@@ -764,9 +864,9 @@
         // Fungsi untuk memperbarui statistik
         function updateStats() {
             const totalItems = items.length;
-            const availableItems = items.filter(item => item.stock > 0).length;
-            const lowStockItems = items.filter(item => item.stock > 0 && item.stock <= 5).length;
-            const totalValue = items.reduce((sum, item) => sum + (item.stock * item.price), 0);
+            const availableItems = items.filter(item => (item.stock || 0) > 0).length;
+            const lowStockItems = items.filter(item => (item.stock || 0) > 0 && (item.stock || 0) <= 5).length;
+            const totalValue = items.reduce((sum, item) => sum + ((item.stock || 0) * (item.price || 0)), 0);
             
             totalItemsEl.textContent = totalItems;
             availableItemsEl.textContent = availableItems;
@@ -774,44 +874,64 @@
             totalValueEl.textContent = `Rp ${totalValue.toLocaleString('id-ID')}`;
         }
         
-        // Fungsi untuk merender tabel barang
+        // Fungsi untuk merender tabel barang (dengan paginasi)
         function renderItemsTable(itemsToRender = items) {
+            currentFilteredItems = itemsToRender; // Simpan item yang sudah difilter untuk paginasi
+            const totalItemsCount = currentFilteredItems.length;
+            const totalPages = Math.ceil(totalItemsCount / itemsPerPage);
+
+            // Pastikan currentPage tidak melebihi totalPages
+            if (currentPage > totalPages && totalPages > 0) {
+                currentPage = totalPages;
+            } else if (totalPages === 0) {
+                currentPage = 1;
+            }
+
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const itemsForCurrentPage = currentFilteredItems.slice(startIndex, endIndex);
+
             itemsTableBody.innerHTML = '';
             
-            if (itemsToRender.length === 0) {
+            if (itemsForCurrentPage.length === 0) {
                 itemsTableBody.innerHTML = `
                     <tr>
                         <td colspan="8" style="text-align: center; padding: 2rem;">
-                            Tidak ada data barang. Klik "Tambah Barang" untuk menambahkan.
+                            Tidak ada data barang.
                         </td>
                     </tr>
                 `;
-                return;
+            } else {
+                itemsForCurrentPage.forEach((item, index) => {
+                    const totalValue = (item.stock || 0) * (item.price || 0);
+                    const isLowStock = (item.stock || 0) > 0 && (item.stock || 0) <= 5;
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${startIndex + index + 1}</td> <!-- Nomor urut global -->
+                        <td>${item.pid}</td>
+                        <td>${item.name}</td>
+                        <td>${item.category || '-'}</td>
+                        <td class="${isLowStock ? 'low-stock' : ''}">${item.stock || 0}</td>
+                        <td>Rp ${item.price ? item.price.toLocaleString('id-ID') : '0'}</td>
+                        <td>Rp ${totalValue ? totalValue.toLocaleString('id-ID') : '0'}</td>
+                        <td class="action-cell">
+                            <button class="action-btn edit-btn" data-id="${item.id}">✏️</button>
+                            <button class="action-btn history-btn" data-id="${item.id}">📊</button>
+                            <button class="action-btn delete-btn" data-id="${item.id}">🗑️</button>
+                        </td>
+                    `;
+                    
+                    itemsTableBody.appendChild(row);
+                });
             }
             
-            itemsToRender.forEach((item, index) => {
-                const totalValue = (item.stock || 0) * (item.price || 0); // Ensure calculation with 0 if null/undefined
-                const isLowStock = (item.stock || 0) > 0 && (item.stock || 0) <= 5;
-                
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${index + 1}</td>
-                    <td>${item.pid}</td>
-                    <td>${item.name}</td>
-                    <td>${item.category || '-'}</td> <!-- Display default if category is null/undefined -->
-                    <td class="${isLowStock ? 'low-stock' : ''}">${item.stock || 0}</td> <!-- Display default if stock is null/undefined -->
-                    <td>Rp ${item.price ? item.price.toLocaleString('id-ID') : '0'}</td> <!-- Display default if price is null/undefined -->
-                    <td>Rp ${totalValue ? totalValue.toLocaleString('id-ID') : '0'}</td> <!-- Display default if totalValue is null/undefined -->
-                    <td class="action-cell">
-                        <button class="action-btn edit-btn" data-id="${item.id}">✏️</button>
-                        <button class="action-btn history-btn" data-id="${item.id}">📊</button>
-                        <button class="action-btn delete-btn" data-id="${item.id}">🗑️</button>
-                    </td>
-                `;
-                
-                itemsTableBody.appendChild(row);
-            });
-            
+            // Update pagination controls
+            currentPageSpan.textContent = currentPage;
+            totalPagesSpan.textContent = totalPages;
+            prevPageBtn.disabled = currentPage === 1;
+            nextPageBtn.disabled = currentPage === totalPages || totalPages === 0;
+
             // Tambahkan event listener untuk tombol
             document.querySelectorAll('.edit-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
@@ -925,35 +1045,35 @@
             });
         }
         
-        // Fungsi untuk mengisi dropdown barang
-        function populateItemDropdown() {
-            stockItemInput.innerHTML = '<option value="">Pilih Barang</option>';
-            items.forEach(item => {
-                const option = document.createElement('option');
-                option.value = item.id;
-                option.textContent = `${item.name} (Stok: ${item.stock || 0})`;
-                stockItemInput.appendChild(option);
-            });
+        // Fungsi untuk mengisi dropdown barang (dihapus karena diganti search input)
+        // function populateItemDropdown() {
+        //     stockItemInput.innerHTML = '<option value="">Pilih Barang</option>';
+        //     items.forEach(item => {
+        //         const option = document.createElement('option');
+        //         option.value = item.id;
+        //         option.textContent = `${item.name} (Stok: ${item.stock || 0})`;
+        //         stockItemInput.appendChild(option);
+        //     });
             
-            // Juga isi filter barang di tab history
-            itemFilter.innerHTML = '<option value="all">Semua Barang</option>';
-            items.forEach(item => {
-                const option = document.createElement('option');
-                option.value = item.id;
-                option.textContent = item.name;
-                itemFilter.appendChild(option);
-            });
-        }
+        //     // Juga isi filter barang di tab history
+        //     itemFilter.innerHTML = '<option value="all">Semua Barang</option>';
+        //     items.forEach(item => {
+        //         const option = document.createElement('option');
+        //         option.value = item.id;
+        //         option.textContent = item.name;
+        //         itemFilter.appendChild(option);
+        //     });
+        // }
         
-        // Fungsi untuk membuka modal tambah barang
-        function openAddModal() {
-            modalTitle.textContent = 'Tambah Barang Baru';
-            itemForm.reset();
-            itemIdInput.value = '';
-            itemPidSelect.value = ''; // Clear selected PID
-            itemNameDisplay.value = ''; // Clear displayed name
-            itemModal.style.display = 'flex';
-        }
+        // Fungsi untuk membuka modal tambah barang (dihapus)
+        // function openAddModal() {
+        //     modalTitle.textContent = 'Tambah Barang Baru';
+        //     itemForm.reset();
+        //     itemIdInput.value = '';
+        //     itemPidSelect.value = ''; // Clear selected PID
+        //     itemNameDisplay.value = ''; // Clear displayed name
+        //     itemModal.style.display = 'flex';
+        // }
         
         // Fungsi untuk membuka modal stok masuk/keluar
         function openStockModal(type) {
@@ -961,7 +1081,10 @@
             stockModalTitle.textContent = type === 'in' ? 'Stok Masuk' : 'Stok Keluar';
             destinationLabel.textContent = type === 'in' ? 'Pemasok' : 'Tujuan Pengiriman';
             stockForm.reset();
-            populateItemDropdown();
+            stockItemSearchInput.value = ''; // Clear search input
+            selectedStockItemIdInput.value = ''; // Clear selected item ID
+            autocompleteList.innerHTML = ''; // Clear autocomplete list
+            // populateItemDropdown(); // Dihapus
             stockModal.style.display = 'flex';
         }
         
@@ -972,8 +1095,8 @@
             if (item) {
                 modalTitle.textContent = 'Edit Barang';
                 itemIdInput.value = item.id;
-                itemPidSelect.value = item.pid; // Set selected PID
-                itemNameDisplay.value = item.name; // Set displayed name
+                itemPidDisplay.value = item.pid; // Set selected PID
+                itemNameDisplayEdit.value = item.name; // Set displayed name
                 itemCategoryInput.value = item.category || ''; // Set default if null
                 itemStockInput.value = item.stock || 0; // Set default if null
                 itemPriceInput.value = item.price || 0; // Set default if null
@@ -1014,59 +1137,42 @@
             await newHistoryRef.set(record);
         }
         
-        // Event listener untuk form barang
+        // Event listener untuk form barang (sekarang hanya untuk edit)
         itemForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const id = itemIdInput.value;
-            const pid = itemPidSelect.value; // Get PID from select
-            const name = itemNameDisplay.value; // Get name from display field
+            const pid = itemPidDisplay.value; // PID dari display field
+            const name = itemNameDisplayEdit.value; // Nama dari display field
             const category = itemCategoryInput.value;
             const stock = parseInt(itemStockInput.value);
             const price = parseInt(itemPriceInput.value);
 
-            if (!pid) {
-                showAlert('Pilih No. Barang terlebih dahulu.', 'error');
+            // Validasi dasar (PID dan Nama Barang tidak bisa kosong karena readonly)
+            if (!id || !pid || !name) {
+                showAlert('Terjadi kesalahan. Item tidak valid.', 'error');
                 return;
             }
             
-            if (id) {
-                // Edit barang yang sudah ada
-                const existingItem = items.find(item => item.id === id);
-                if (existingItem) {
-                    const oldStock = existingItem.stock || 0;
-                    const updatedItem = { id, pid, name, category, stock, price };
-                    await itemsRef.child(id).set(updatedItem);
+            // Ini selalu edit karena tombol tambah barang sudah dihapus
+            const existingItem = items.find(item => item.id === id);
+            if (existingItem) {
+                const oldStock = existingItem.stock || 0;
+                const updatedItem = { id, pid, name, category, stock, price };
+                await itemsRef.child(id).set(updatedItem);
+                
+                // Catat perubahan stok di history jika ada
+                if (stock !== oldStock) {
+                    const changeType = stock > oldStock ? 'in' : 'out';
+                    const changeQuantity = Math.abs(stock - oldStock);
+                    const destination = changeType === 'in' ? 'Penyesuaian stok (tambah)' : 'Penyesuaian stok (kurang)';
                     
-                    // Catat perubahan stok di history jika ada
-                    if (stock !== oldStock) {
-                        const changeType = stock > oldStock ? 'in' : 'out';
-                        const changeQuantity = Math.abs(stock - oldStock);
-                        const destination = changeType === 'in' ? 'Penyesuaian stok (tambah)' : 'Penyesuaian stok (kurang)';
-                        
-                        await addHistoryRecord(changeType, id, name, changeQuantity, destination, 'Penyesuaian stok manual');
-                    }
-                    
-                    showAlert('Barang berhasil diupdate');
+                    await addHistoryRecord(changeType, id, name, changeQuantity, destination, 'Penyesuaian stok manual');
                 }
+                
+                showAlert('Barang berhasil diupdate');
             } else {
-                // Tambah barang baru
-                // Check if PID already exists in current inventory
-                if (items.some(item => item.pid === pid)) {
-                    showAlert('No. Barang (PID) sudah ada di inventori. Harap pilih PID yang berbeda atau edit item yang sudah ada.', 'error');
-                    return;
-                }
-
-                const newId = itemsRef.push().key; // Generate unique key from Firebase
-                const newItem = { id: newId, pid, name, category, stock, price };
-                await itemsRef.child(newId).set(newItem);
-                
-                // Catat penambahan barang baru di history
-                if (stock > 0) {
-                    await addHistoryRecord('in', newId, name, stock, 'Barang baru', 'Penambahan barang baru ke inventori');
-                }
-                
-                showAlert('Barang berhasil ditambahkan');
+                showAlert('Item tidak ditemukan untuk diupdate.', 'error');
             }
             
             itemModal.style.display = 'none';
@@ -1077,15 +1183,20 @@
             e.preventDefault();
             
             const type = stockTypeInput.value;
-            const itemId = stockItemInput.value;
+            const itemId = selectedStockItemIdInput.value; // Ambil dari hidden input
             const quantity = parseInt(stockQuantityInput.value);
             const destination = stockDestinationInput.value;
             const notes = stockNotesInput.value;
             
+            if (!itemId) {
+                showAlert('Pilih barang terlebih dahulu dari daftar pencarian.', 'error');
+                return;
+            }
+
             const item = items.find(item => item.id === itemId);
             
             if (!item) {
-                showAlert('Pilih barang terlebih dahulu', 'error');
+                showAlert('Barang tidak ditemukan.', 'error');
                 return;
             }
             
@@ -1117,13 +1228,16 @@
             if (searchTerm) {
                 const filteredItems = items.filter(item => 
                     item.name.toLowerCase().includes(searchTerm) || 
-                    (item.category && item.category.toLowerCase().includes(searchTerm)) || // Check if category exists
+                    (item.category && item.category.toLowerCase().includes(searchTerm)) || 
                     item.pid.toLowerCase().includes(searchTerm)
                 );
-                
+                // Reset halaman ke 1 setelah pencarian
+                currentPage = 1;
                 renderItemsTable(filteredItems);
             } else {
-                renderItemsTable();
+                // Jika pencarian kosong, tampilkan semua item dan reset halaman
+                currentPage = 1;
+                renderItemsTable(items);
             }
         });
         
@@ -1167,7 +1281,7 @@
         });
         
         // Event listener untuk tombol dan modal
-        addItemBtn.addEventListener('click', openAddModal);
+        // addItemBtn.addEventListener('click', openAddModal); // Dihapus
         stockInBtn.addEventListener('click', () => openStockModal('in'));
         stockOutBtn.addEventListener('click', () => openStockModal('out'));
         
@@ -1195,18 +1309,22 @@
             if (e.target === stockModal) {
                 stockModal.style.display = 'none';
             }
-        });
-
-        // Event listener untuk itemPidSelect agar otomatis mengisi Nama Barang
-        itemPidSelect.addEventListener('change', () => {
-            const pidValue = itemPidSelect.value;
-            const foundItem = pidData.find(data => data.pid === pidValue);
-            if (foundItem) {
-                itemNameDisplay.value = foundItem.description;
-            } else {
-                itemNameDisplay.value = ''; // Clear if PID not found
+            // Tutup autocomplete jika klik di luar
+            if (e.target !== stockItemSearchInput && e.target.parentNode !== autocompleteList) {
+                autocompleteList.innerHTML = '';
             }
         });
+
+        // Event listener untuk itemPidSelect agar otomatis mengisi Nama Barang (dihapus)
+        // itemPidSelect.addEventListener('change', () => {
+        //     const pidValue = itemPidSelect.value;
+        //     const foundItem = pidData.find(data => data.pid === pidValue);
+        //     if (foundItem) {
+        //         itemNameDisplay.value = foundItem.description;
+        //     } else {
+        //         itemNameDisplay.value = ''; // Clear if PID not found
+        //     }
+        // });
 
         // Sinkronisasi data inventori dari Firebase
         itemsRef.on('value', (snapshot) => {
@@ -1215,9 +1333,21 @@
             for (let key in data) {
                 items.push(data[key]);
             }
-            renderItemsTable();
+            // Panggil renderItemsTable tanpa argumen untuk menggunakan 'items' global
+            // dan menerapkan paginasi pada semua item (atau yang sudah difilter oleh searchInput)
+            const searchTerm = searchInput.value.toLowerCase();
+            if (searchTerm) {
+                const filteredItems = items.filter(item => 
+                    item.name.toLowerCase().includes(searchTerm) || 
+                    (item.category && item.category.toLowerCase().includes(searchTerm)) || 
+                    item.pid.toLowerCase().includes(searchTerm)
+                );
+                renderItemsTable(filteredItems);
+            } else {
+                renderItemsTable(items);
+            }
             updateStats();
-            populateItemDropdown();
+            // populateItemDropdown(); // Dihapus karena diganti search input
         });
 
         // Sinkronisasi data history dari Firebase
@@ -1263,6 +1393,101 @@
             }
         }
         
+        // Event Listeners untuk Paginasi
+        itemsPerPageSelect.addEventListener('change', () => {
+            itemsPerPage = parseInt(itemsPerPageSelect.value);
+            currentPage = 1; // Reset ke halaman pertama setiap kali items per page berubah
+            renderItemsTable(currentFilteredItems); // Render ulang dengan filter yang sedang aktif
+        });
+
+        prevPageBtn.addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                renderItemsTable(currentFilteredItems);
+            }
+        });
+
+        nextPageBtn.addEventListener('click', () => {
+            const totalPages = Math.ceil(currentFilteredItems.length / itemsPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderItemsTable(currentFilteredItems);
+            }
+        });
+
+        // Autocomplete untuk input pencarian barang di modal stok
+        let currentFocus = -1; // Untuk navigasi keyboard
+
+        stockItemSearchInput.addEventListener("input", function(e) {
+            const val = this.value;
+            closeAllLists(); // Tutup daftar autocomplete yang sudah ada
+            if (!val) { return false; }
+            currentFocus = -1;
+
+            const a = document.createElement("div");
+            a.setAttribute("id", this.id + "autocomplete-list");
+            a.setAttribute("class", "autocomplete-items");
+            this.parentNode.appendChild(a);
+
+            const searchLower = val.toLowerCase();
+
+            items.forEach(item => {
+                const itemText = `${item.pid} - ${item.name} (Stok: ${item.stock || 0})`;
+                if (itemText.toLowerCase().includes(searchLower)) {
+                    const b = document.createElement("div");
+                    // Highlight bagian yang cocok
+                    b.innerHTML = itemText.replace(new RegExp(val, "gi"), (match) => `<strong>${match}</strong>`);
+                    b.innerHTML += `<input type='hidden' value='${item.id}' data-item-name='${item.name}' data-item-pid='${item.pid}'>`;
+                    b.addEventListener("click", function(e) {
+                        stockItemSearchInput.value = itemText;
+                        selectedStockItemIdInput.value = this.getElementsByTagName("input")[0].value;
+                        closeAllLists();
+                    });
+                    a.appendChild(b);
+                }
+            });
+        });
+
+        stockItemSearchInput.addEventListener("keydown", function(e) {
+            let x = document.getElementById(this.id + "autocomplete-list");
+            if (x) x = x.getElementsByTagName("div");
+            if (e.keyCode == 40) { // Panah bawah
+                currentFocus++;
+                addActive(x);
+            } else if (e.keyCode == 38) { // Panah atas
+                currentFocus--;
+                addActive(x);
+            } else if (e.keyCode == 13) { // Enter
+                e.preventDefault();
+                if (currentFocus > -1) {
+                    if (x) x[currentFocus].click();
+                }
+            }
+        });
+
+        function addActive(x) {
+            if (!x) return false;
+            removeActive(x);
+            if (currentFocus >= x.length) currentFocus = 0;
+            if (currentFocus < 0) currentFocus = (x.length - 1);
+            x[currentFocus].classList.add("autocomplete-active");
+        }
+
+        function removeActive(x) {
+            for (let i = 0; i < x.length; i++) {
+                x[i].classList.remove("autocomplete-active");
+            }
+        }
+
+        function closeAllLists(elmnt) {
+            const x = document.getElementsByClassName("autocomplete-items");
+            for (let i = 0; i < x.length; i++) {
+                if (elmnt != x[i] && elmnt != stockItemSearchInput) {
+                    x[i].parentNode.removeChild(x[i]);
+                }
+            }
+        }
+
         // Inisialisasi aplikasi
         async function initApp() {
             await loadPidData(); // Load PID data first
