@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Manajemen Stok Barang dengan History</title>
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #06b6d4;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-700: #374151;
+            --gray-900: #111827;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f9fafb;
+            color: var(--gray-900);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        header {
+            background: linear-gradient(to right, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 1.5rem 0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo-icon {
+            font-size: 1.8rem;
+        }
+        
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+        
+        .tabs {
+            display: flex;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 1.5rem 0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .tab {
+            padding: 1rem 1.5rem;
+            background: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            flex: 1;
+            text-align: center;
+            transition: background-color 0.2s;
+        }
+        
+        .tab.active {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .tab:hover:not(.active) {
+            background-color: var(--gray-100);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        main {
+            padding: 1rem 0 2rem;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-title {
+            color: var(--gray-700);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .action-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: white;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .search-box input {
+            border: none;
+            outline: none;
+            padding: 0.5rem;
+            width: 250px;
+        }
+        
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 0.6rem 1.2rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .btn-danger {
+            background-color: var(--danger);
+        }
+        
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
+        
+        .btn-success {
+            background-color: var(--success);
+        }
+        
+        .btn-success:hover {
+            background-color: #059669;
+        }
+        
+        .btn-warning {
+            background-color: var(--warning);
+        }
+        
+        .btn-warning:hover {
+            background-color: #d97706;
+        }
+        
+        .btn-info {
+            background-color: var(--info);
+        }
+        
+        .btn-info:hover {
+            background-color: #0891b2;
+        }
+        
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+        
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        
+        th {
+            background-color: var(--gray-100);
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+        
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
+        tr:hover {
+            background-color: #f9fafb;
+        }
+        
+        .low-stock {
+            color: var(--danger);
+            font-weight: 600;
+        }
+        
+        .action-cell {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1rem;
+            color: var(--gray-700);
+        }
+        
+        .action-btn:hover {
+            color: var(--primary);
+        }
+        
+        .history-in {
+            color: var(--success);
+            font-weight: 600;
+        }
+        
+        .history-out {
+            color: var(--danger);
+            font-weight: 600;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            padding: 2rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray-700);
+        }
+        
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--gray-200);
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+        }
+        
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        
+        .alert {
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1.5rem;
+        }
+        
+        .alert-success {
+            background-color: #ecfdf5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        
+        .alert-error {
+            background-color: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+        
+        .filter-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .filter-select {
+            padding: 0.5rem;
+            border-radius: 6px;
+            border: 1px solid var(--gray-300);
+        }
+        
+        .history-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .badge-in {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        
+        .badge-out {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .search-box input {
+                width: 100%;
+            }
+            
+            .action-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+            
+            .filter-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <span class="logo-icon">📦</span>
+                    <h1>Manajemen Stok Barang dengan History</h1>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="tabs">
+            <button class="tab active" data-tab="inventory">Inventori Barang</button>
+            <button class="tab" data-tab="history">History Pergerakan</button>
+        </div>
+        
+        <div class="tab-content active" id="inventory-tab">
+            <div class="dashboard">
+                <div class="stat-card">
+                    <div class="stat-title">Total Barang</div>
+                    <div class="stat-value" id="total-items">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Barang Tersedia</div>
+                    <div class="stat-value" id="available-items">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Stok Rendah</div>
+                    <div class="stat-value" id="low-stock-items">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Total Nilai Stok</div>
+                    <div class="stat-value" id="total-value">Rp 0</div>
+                </div>
+            </div>
+
+            <div class="action-bar">
+                <div class="search-box">
+                    <span>🔍</span>
+                    <input type="text" id="search-input" placeholder="Cari barang...">
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <button class="btn" id="add-item-btn">
+                        <span>➕</span> Tambah Barang
+                    </button>
+                    <button class="btn btn-info" id="stock-in-btn">
+                        <span>⬇️</span> Stok Masuk
+                    </button>
+                    <button class="btn btn-warning" id="stock-out-btn">
+                        <span>⬆️</span> Stok Keluar
+                    </button>
+                </div>
+            </div>
+
+            <div id="alert-container"></div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nama Barang</th>
+                            <th>Kategori</th>
+                            <th>Stok</th>
+                            <th>Harga</th>
+                            <th>Total Nilai</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="items-table-body">
+                        <!-- Data akan diisi melalui JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="history-tab">
+            <div class="action-bar">
+                <div class="search-box">
+                    <span>🔍</span>
+                    <input type="text" id="history-search-input" placeholder="Cari history...">
+                </div>
+                <div class="filter-bar">
+                    <div class="filter-group">
+                        <label for="type-filter">Tipe:</label>
+                        <select id="type-filter" class="filter-select">
+                            <option value="all">Semua</option>
+                            <option value="in">Stok Masuk</option>
+                            <option value="out">Stok Keluar</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="date-filter">Tanggal:</label>
+                        <input type="date" id="date-filter" class="filter-select">
+                    </div>
+                    <div class="filter-group">
+                        <label for="item-filter">Barang:</label>
+                        <select id="item-filter" class="filter-select">
+                            <option value="all">Semua Barang</option>
+                        </select>
+                    </div>
+                    <button class="btn" id="reset-filters-btn">Reset Filter</button>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tanggal</th>
+                            <th>Barang</th>
+                            <th>Tipe</th>
+                            <th>Jumlah</th>
+                            <th>Tujuan/Pemasok</th>
+                            <th>Keterangan</th>
+                            <th>User</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-table-body">
+                        <!-- Data history akan diisi melalui JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal untuk menambah/mengedit barang -->
+    <div class="modal" id="item-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Tambah Barang Baru</h2>
+                <button class="close-modal" id="close-modal">&times;</button>
+            </div>
+            <form id="item-form">
+                <input type="hidden" id="item-id">
+                <div class="form-group">
+                    <label for="item-name">Nama Barang</label>
+                    <input type="text" id="item-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="item-category">Kategori</label>
+                    <select id="item-category" required>
+                        <option value="">Pilih Kategori</option>
+                        <option value="Elektronik">Elektronik</option>
+                        <option value="Pakaian">Pakaian</option>
+                        <option value="Makanan">Makanan</option>
+                        <option value="Perabotan">Perabotan</option>
+                        <option value="Olahraga">Olahraga</option>
+                        <option value="Lainnya">Lainnya</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="item-stock">Jumlah Stok</label>
+                        <input type="number" id="item-stock" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="item-price">Harga (Rp)</label>
+                        <input type="number" id="item-price" min="0" step="100" required>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-danger" id="cancel-btn">Batal</button>
+                    <button type="submit" class="btn btn-success">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal untuk stok masuk/keluar -->
+    <div class="modal" id="stock-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="stock-modal-title">Stok Masuk</h2>
+                <button class="close-modal" id="close-stock-modal">&times;</button>
+            </div>
+            <form id="stock-form">
+                <input type="hidden" id="stock-type">
+                <div class="form-group">
+                    <label for="stock-item">Pilih Barang</label>
+                    <select id="stock-item" required>
+                        <option value="">Pilih Barang</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="stock-quantity">Jumlah</label>
+                    <input type="number" id="stock-quantity" min="1" required>
+                </div>
+                <div class="form-group" id="destination-group">
+                    <label for="stock-destination" id="destination-label">Pemasok</label>
+                    <input type="text" id="stock-destination" required>
+                </div>
+                <div class="form-group">
+                    <label for="stock-notes">Keterangan</label>
+                    <textarea id="stock-notes" rows="3"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-danger" id="cancel-stock-btn">Batal</button>
+                    <button type="submit" class="btn btn-success">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Data barang (disimpan di localStorage)
+        let items = JSON.parse(localStorage.getItem('inventoryItems')) || [];
+        let history = JSON.parse(localStorage.getItem('inventoryHistory')) || [];
+        
+        // Elemen DOM
+        const itemsTableBody = document.getElementById('items-table-body');
+        const historyTableBody = document.getElementById('history-table-body');
+        const itemForm = document.getElementById('item-form');
+        const stockForm = document.getElementById('stock-form');
+        const itemModal = document.getElementById('item-modal');
+        const stockModal = document.getElementById('stock-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const stockModalTitle = document.getElementById('stock-modal-title');
+        const itemIdInput = document.getElementById('item-id');
+        const itemNameInput = document.getElementById('item-name');
+        const itemCategoryInput = document.getElementById('item-category');
+        const itemStockInput = document.getElementById('item-stock');
+        const itemPriceInput = document.getElementById('item-price');
+        const stockTypeInput = document.getElementById('stock-type');
+        const stockItemInput = document.getElementById('stock-item');
+        const stockQuantityInput = document.getElementById('stock-quantity');
+        const stockDestinationInput = document.getElementById('stock-destination');
+        const stockNotesInput = document.getElementById('stock-notes');
+        const destinationGroup = document.getElementById('destination-group');
+        const destinationLabel = document.getElementById('destination-label');
+        
+        const addItemBtn = document.getElementById('add-item-btn');
+        const stockInBtn = document.getElementById('stock-in-btn');
+        const stockOutBtn = document.getElementById('stock-out-btn');
+        const closeModalBtn = document.getElementById('close-modal');
+        const closeStockModalBtn = document.getElementById('close-stock-modal');
+        const cancelBtn = document.getElementById('cancel-btn');
+        const cancelStockBtn = document.getElementById('cancel-stock-btn');
+        const searchInput = document.getElementById('search-input');
+        const historySearchInput = document.getElementById('history-search-input');
+        const typeFilter = document.getElementById('type-filter');
+        const dateFilter = document.getElementById('date-filter');
+        const itemFilter = document.getElementById('item-filter');
+        const resetFiltersBtn = document.getElementById('reset-filters-btn');
+        const alertContainer = document.getElementById('alert-container');
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        // Statistik
+        const totalItemsEl = document.getElementById('total-items');
+        const availableItemsEl = document.getElementById('available-items');
+        const lowStockItemsEl = document.getElementById('low-stock-items');
+        const totalValueEl = document.getElementById('total-value');
+        
+        // Fungsi untuk menampilkan alert
+        function showAlert(message, type = 'success') {
+            const alertEl = document.createElement('div');
+            alertEl.className = `alert alert-${type}`;
+            alertEl.textContent = message;
+            
+            alertContainer.appendChild(alertEl);
+            
+            // Hapus alert setelah 3 detik
+            setTimeout(() => {
+                alertEl.remove();
+            }, 3000);
+        }
+        
+        // Fungsi untuk memperbarui statistik
+        function updateStats() {
+            const totalItems = items.length;
+            const availableItems = items.filter(item => item.stock > 0).length;
+            const lowStockItems = items.filter(item => item.stock > 0 && item.stock <= 5).length;
+            const totalValue = items.reduce((sum, item) => sum + (item.stock * item.price), 0);
+            
+            totalItemsEl.textContent = totalItems;
+            availableItemsEl.textContent = availableItems;
+            lowStockItemsEl.textContent = lowStockItems;
+            totalValueEl.textContent = `Rp ${totalValue.toLocaleString('id-ID')}`;
+        }
+        
+        // Fungsi untuk merender tabel barang
+        function renderItemsTable(itemsToRender = items) {
+            itemsTableBody.innerHTML = '';
+            
+            if (itemsToRender.length === 0) {
+                itemsTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 2rem;">
+                            Tidak ada data barang. Klik "Tambah Barang" untuk menambahkan.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            itemsToRender.forEach(item => {
+                const totalValue = item.stock * item.price;
+                const isLowStock = item.stock > 0 && item.stock <= 5;
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.name}</td>
+                    <td>${item.category}</td>
+                    <td class="${isLowStock ? 'low-stock' : ''}">${item.stock}</td>
+                    <td>Rp ${item.price.toLocaleString('id-ID')}</td>
+                    <td>Rp ${totalValue.toLocaleString('id-ID')}</td>
+                    <td class="action-cell">
+                        <button class="action-btn edit-btn" data-id="${item.id}">✏️</button>
+                        <button class="action-btn history-btn" data-id="${item.id}">📊</button>
+                        <button class="action-btn delete-btn" data-id="${item.id}">🗑️</button>
+                    </td>
+                `;
+                
+                itemsTableBody.appendChild(row);
+            });
+            
+            // Tambahkan event listener untuk tombol
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = e.target.dataset.id;
+                    editItem(id);
+                });
+            });
+            
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = e.target.dataset.id;
+                    deleteItem(id);
+                });
+            });
+            
+            document.querySelectorAll('.history-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = e.target.dataset.id;
+                    const item = items.find(item => item.id === id);
+                    if (item) {
+                        itemFilter.value = id;
+                        document.querySelector('[data-tab="history"]').click();
+                        renderHistoryTable();
+                    }
+                });
+            });
+        }
+        
+        // Fungsi untuk merender tabel history
+        function renderHistoryTable(historyToRender = history) {
+            historyTableBody.innerHTML = '';
+            
+            if (historyToRender.length === 0) {
+                historyTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 2rem;">
+                            Tidak ada data history.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            // Filter history berdasarkan kriteria
+            let filteredHistory = [...historyToRender];
+            
+            // Filter berdasarkan tipe
+            if (typeFilter.value !== 'all') {
+                filteredHistory = filteredHistory.filter(record => record.type === typeFilter.value);
+            }
+            
+            // Filter berdasarkan tanggal
+            if (dateFilter.value) {
+                filteredHistory = filteredHistory.filter(record => {
+                    const recordDate = new Date(record.timestamp).toISOString().split('T')[0];
+                    return recordDate === dateFilter.value;
+                });
+            }
+            
+            // Filter berdasarkan barang
+            if (itemFilter.value !== 'all') {
+                filteredHistory = filteredHistory.filter(record => record.itemId === itemFilter.value);
+            }
+            
+            // Filter berdasarkan pencarian
+            if (historySearchInput.value) {
+                const searchTerm = historySearchInput.value.toLowerCase();
+                filteredHistory = filteredHistory.filter(record => 
+                    record.itemName.toLowerCase().includes(searchTerm) ||
+                    record.destination.toLowerCase().includes(searchTerm) ||
+                    record.notes.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            // Urutkan dari yang terbaru
+            filteredHistory.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            if (filteredHistory.length === 0) {
+                historyTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 2rem;">
+                            Tidak ada data yang sesuai dengan filter.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            filteredHistory.forEach(record => {
+                const date = new Date(record.timestamp);
+                const formattedDate = `${date.toLocaleDateString('id-ID')} ${date.toLocaleTimeString('id-ID')}`;
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${formattedDate}</td>
+                    <td>${record.itemName}</td>
+                    <td>
+                        <span class="history-badge ${record.type === 'in' ? 'badge-in' : 'badge-out'}">
+                            ${record.type === 'in' ? 'MASUK' : 'KELUAR'}
+                        </span>
+                    </td>
+                    <td class="${record.type === 'in' ? 'history-in' : 'history-out'}">
+                        ${record.type === 'in' ? '+' : '-'}${record.quantity}
+                    </td>
+                    <td>${record.destination}</td>
+                    <td>${record.notes || '-'}</td>
+                    <td>${record.user}</td>
+                `;
+                
+                historyTableBody.appendChild(row);
+            });
+        }
+        
+        // Fungsi untuk mengisi dropdown barang
+        function populateItemDropdown() {
+            stockItemInput.innerHTML = '<option value="">Pilih Barang</option>';
+            items.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.id;
+                option.textContent = `${item.name} (Stok: ${item.stock})`;
+                stockItemInput.appendChild(option);
+            });
+            
+            // Juga isi filter barang di tab history
+            itemFilter.innerHTML = '<option value="all">Semua Barang</option>';
+            items.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.id;
+                option.textContent = item.name;
+                itemFilter.appendChild(option);
+            });
+        }
+        
+        // Fungsi untuk membuka modal tambah barang
+        function openAddModal() {
+            modalTitle.textContent = 'Tambah Barang Baru';
+            itemForm.reset();
+            itemIdInput.value = '';
+            itemModal.style.display = 'flex';
+        }
+        
+        // Fungsi untuk membuka modal stok masuk/keluar
+        function openStockModal(type) {
+            stockTypeInput.value = type;
+            stockModalTitle.textContent = type === 'in' ? 'Stok Masuk' : 'Stok Keluar';
+            destinationLabel.textContent = type === 'in' ? 'Pemasok' : 'Tujuan Pengiriman';
+            stockForm.reset();
+            populateItemDropdown();
+            stockModal.style.display = 'flex';
+        }
+        
+        // Fungsi untuk membuka modal edit barang
+        function editItem(id) {
+            const item = items.find(item => item.id === id);
+            
+            if (item) {
+                modalTitle.textContent = 'Edit Barang';
+                itemIdInput.value = item.id;
+                itemNameInput.value = item.name;
+                itemCategoryInput.value = item.category;
+                itemStockInput.value = item.stock;
+                itemPriceInput.value = item.price;
+                
+                itemModal.style.display = 'flex';
+            }
+        }
+        
+        // Fungsi untuk menghapus barang
+        function deleteItem(id) {
+            if (confirm('Apakah Anda yakin ingin menghapus barang ini?')) {
+                // Tambahkan ke history
+                const item = items.find(item => item.id === id);
+                if (item) {
+                    addHistoryRecord('out', item.id, item.name, item.stock, 'Dihapus dari sistem', 'Barang dihapus dari inventori');
+                }
+                
+                items = items.filter(item => item.id !== id);
+                saveItems();
+                renderItemsTable();
+                updateStats();
+                showAlert('Barang berhasil dihapus');
+            }
+        }
+        
+        // Fungsi untuk menambahkan record history
+        function addHistoryRecord(type, itemId, itemName, quantity, destination, notes) {
+            const record = {
+                id: Date.now().toString(),
+                type,
+                itemId,
+                itemName,
+                quantity,
+                destination,
+                notes,
+                user: 'Admin', // Dalam implementasi nyata, ini bisa diambil dari info login
+                timestamp: new Date().toISOString()
+            };
+            
+            history.unshift(record); // Tambahkan di awal array
+            saveHistory();
+        }
+        
+        // Fungsi untuk menyimpan barang ke localStorage
+        function saveItems() {
+            localStorage.setItem('inventoryItems', JSON.stringify(items));
+        }
+        
+        // Fungsi untuk menyimpan history ke localStorage
+        function saveHistory() {
+            localStorage.setItem('inventoryHistory', JSON.stringify(history));
+        }
+        
+        // Event listener untuk form barang
+        itemForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const id = itemIdInput.value;
+            const name = itemNameInput.value;
+            const category = itemCategoryInput.value;
+            const stock = parseInt(itemStockInput.value);
+            const price = parseInt(itemPriceInput.value);
+            
+            if (id) {
+                // Edit barang yang sudah ada
+                const index = items.findIndex(item => item.id === id);
+                if (index !== -1) {
+                    const oldStock = items[index].stock;
+                    items[index] = { id, name, category, stock, price };
+                    
+                    // Catat perubahan stok di history jika ada
+                    if (stock !== oldStock) {
+                        const changeType = stock > oldStock ? 'in' : 'out';
+                        const changeQuantity = Math.abs(stock - oldStock);
+                        const destination = changeType === 'in' ? 'Penyesuaian stok (tambah)' : 'Penyesuaian stok (kurang)';
+                        
+                        addHistoryRecord(changeType, id, name, changeQuantity, destination, 'Penyesuaian stok manual');
+                    }
+                    
+                    showAlert('Barang berhasil diupdate');
+                }
+            } else {
+                // Tambah barang baru
+                const newId = Date.now().toString();
+                items.push({ id: newId, name, category, stock, price });
+                
+                // Catat penambahan barang baru di history
+                if (stock > 0) {
+                    addHistoryRecord('in', newId, name, stock, 'Barang baru', 'Penambahan barang baru ke inventori');
+                }
+                
+                showAlert('Barang berhasil ditambahkan');
+            }
+            
+            saveItems();
+            renderItemsTable();
+            updateStats();
+            populateItemDropdown();
+            itemModal.style.display = 'none';
+        });
+        
+        // Event listener untuk form stok
+        stockForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const type = stockTypeInput.value;
+            const itemId = stockItemInput.value;
+            const quantity = parseInt(stockQuantityInput.value);
+            const destination = stockDestinationInput.value;
+            const notes = stockNotesInput.value;
+            
+            const item = items.find(item => item.id === itemId);
+            
+            if (!item) {
+                showAlert('Pilih barang terlebih dahulu', 'error');
+                return;
+            }
+            
+            if (type === 'out' && quantity > item.stock) {
+                showAlert('Stok tidak mencukupi', 'error');
+                return;
+            }
+            
+            // Update stok barang
+            if (type === 'in') {
+                item.stock += quantity;
+            } else {
+                item.stock -= quantity;
+            }
+            
+            // Catat di history
+            addHistoryRecord(type, itemId, item.name, quantity, destination, notes);
+            
+            saveItems();
+            renderItemsTable();
+            updateStats();
+            showAlert(`Stok berhasil ${type === 'in' ? 'ditambahkan' : 'dikurangi'}`);
+            stockModal.style.display = 'none';
+            
+            // Jika sedang di tab history, perbarui juga
+            if (document.getElementById('history-tab').classList.contains('active')) {
+                renderHistoryTable();
+            }
+        });
+        
+        // Event listener untuk pencarian barang
+        searchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            
+            if (searchTerm) {
+                const filteredItems = items.filter(item => 
+                    item.name.toLowerCase().includes(searchTerm) || 
+                    item.category.toLowerCase().includes(searchTerm)
+                );
+                
+                renderItemsTable(filteredItems);
+            } else {
+                renderItemsTable();
+            }
+        });
+        
+        // Event listener untuk pencarian history
+        historySearchInput.addEventListener('input', () => {
+            renderHistoryTable();
+        });
+        
+        // Event listener untuk filter
+        typeFilter.addEventListener('change', renderHistoryTable);
+        dateFilter.addEventListener('change', renderHistoryTable);
+        itemFilter.addEventListener('change', renderHistoryTable);
+        
+        // Event listener untuk reset filter
+        resetFiltersBtn.addEventListener('click', () => {
+            typeFilter.value = 'all';
+            dateFilter.value = '';
+            itemFilter.value = 'all';
+            historySearchInput.value = '';
+            renderHistoryTable();
+        });
+        
+        // Event listener untuk tabs
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabId = tab.dataset.tab;
+                
+                // Update active tab
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                // Update active content
+                tabContents.forEach(content => content.classList.remove('active'));
+                document.getElementById(`${tabId}-tab`).classList.add('active');
+                
+                // Jika pindah ke tab history, render ulang
+                if (tabId === 'history') {
+                    renderHistoryTable();
+                }
+            });
+        });
+        
+        // Event listener untuk tombol dan modal
+        addItemBtn.addEventListener('click', openAddModal);
+        stockInBtn.addEventListener('click', () => openStockModal('in'));
+        stockOutBtn.addEventListener('click', () => openStockModal('out'));
+        
+        closeModalBtn.addEventListener('click', () => {
+            itemModal.style.display = 'none';
+        });
+        
+        closeStockModalBtn.addEventListener('click', () => {
+            stockModal.style.display = 'none';
+        });
+        
+        cancelBtn.addEventListener('click', () => {
+            itemModal.style.display = 'none';
+        });
+        
+        cancelStockBtn.addEventListener('click', () => {
+            stockModal.style.display = 'none';
+        });
+        
+        // Tutup modal jika klik di luar konten modal
+        window.addEventListener('click', (e) => {
+            if (e.target === itemModal) {
+                itemModal.style.display = 'none';
+            }
+            if (e.target === stockModal) {
+                stockModal.style.display = 'none';
+            }
+        });
+        
+        // Inisialisasi aplikasi
+        function initApp() {
+            renderItemsTable();
+            updateStats();
+            populateItemDropdown();
+            
+            // Tambahkan beberapa data contoh jika belum ada
+            if (items.length === 0) {
+                items = [
+                    { id: '1', name: 'Laptop ASUS', category: 'Elektronik', stock: 5, price: 8000000 },
+                    { id: '2', name: 'Kemeja Flanel', category: 'Pakaian', stock: 15, price: 250000 },
+                    { id: '3', name: 'Mouse Wireless', category: 'Elektronik', stock: 3, price: 200000 },
+                    { id: '4', name: 'Snack Coklat', category: 'Makanan', stock: 20, price: 15000 },
+                    { id: '5', name: 'Meja Kerja', category: 'Perabotan', stock: 2, price: 1200000 }
+                ];
+                saveItems();
+                renderItemsTable();
+                updateStats();
+                populateItemDropdown();
+            }
+            
+            // Tambahkan beberapa history contoh jika belum ada
+            if (history.length === 0) {
+                const now = new Date();
+                // Perbaikan: Mengubah nama variabel dari 'oneDay Ago' menjadi 'oneDayAgo'
+                const oneDayAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000));
+                // Perbaikan: Mengubah nama variabel dari 'twoDaysAgo' menjadi 'twoDaysAgo'
+                const twoDaysAgo = new Date(now.getTime() - (2 * 24 * 60 * 60 * 1000));
+                
+                history = [
+                    {
+                        id: '1',
+                        type: 'in',
+                        itemId: '1',
+                        itemName: 'Laptop ASUS',
+                        quantity: 5,
+                        destination: 'PT. Supplier Elektronik',
+                        notes: 'Pembelian awal',
+                        user: 'Admin',
+                        timestamp: twoDaysAgo.toISOString()
+                    },
+                    {
+                        id: '2',
+                        type: 'out',
+                        itemId: '1',
+                        itemName: 'Laptop ASUS',
+                        quantity: 2,
+                        destination: 'Customer: Budi Santoso',
+                        notes: 'Penjualan offline',
+                        user: 'Admin',
+                        timestamp: oneDayAgo.toISOString()
+                    },
+                    {
+                        id: '3',
+                        type: 'in',
+                        itemId: '3',
+                        itemName: 'Mouse Wireless',
+                        quantity: 10,
+                        destination: 'PT. Aksesori Komputer',
+                        notes: 'Stok tambahan',
+                        user: 'Admin',
+                        timestamp: now.toISOString()
+                    }
+                ];
+                saveHistory();
+            }
+        }
+        
+        // Jalankan aplikasi
+        initApp();
+    </script>
+</body>
+</html>
