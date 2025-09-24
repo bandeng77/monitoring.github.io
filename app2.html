@@ -683,6 +683,11 @@
             margin-top: 1rem; /* Add margin to separate from other filters */
         }
 
+        /* Styles for new stock columns */
+        .stock-detail-col {
+            min-width: 80px; /* Adjust as needed */
+        }
+
         @media (max-width: 768px) {
             .dashboard {
                 grid-template-columns: 1fr;
@@ -817,7 +822,10 @@
                             <th>No.</th>
                             <th>Item No.</th>
                             <th>Item Name</th>
-                            <th>Stock</th>
+                            <th class="stock-detail-col">Stock</th>
+                            <th class="stock-detail-col">Stock In</th>
+                            <th class="stock-detail-col">Stock Out</th>
+                            <th class="stock-detail-col">Balance</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -884,6 +892,7 @@
                             <th>Quantity</th>
                             <th>Destination/Supplier</th>
                             <th>Notes</th>
+                            <th>Actions</th> <!-- New column for delete button -->
                         </tr>
                     </thead>
                     <tbody id="history-table-body">
@@ -1166,6 +1175,37 @@
             paginationButtonsContainer.appendChild(lastPageBtn);
         }
 
+        // Function to calculate stock details (Opening Balance, Stock In, Stock Out)
+        function calculateStockDetails(itemId) {
+            let totalStockIn = 0;
+            let totalStockOut = 0;
+
+            // Filter history for the specific item
+            const itemHistory = history.filter(record => record.itemId === itemId);
+
+            // Calculate total Stock In and Stock Out from all history records
+            itemHistory.forEach(record => {
+                if (record.type === 'in') {
+                    totalStockIn += record.quantity;
+                } else if (record.type === 'out') {
+                    totalStockOut += record.quantity;
+                }
+            });
+
+            // Get the current balance for the item
+            const currentItem = items.find(item => item.id === itemId);
+            const currentBalance = currentItem ? (currentItem.stock || 0) : 0;
+
+            // Calculate opening balance: currentBalance - totalStockIn + totalStockOut
+            const openingBalance = currentBalance - totalStockIn + totalStockOut;
+
+            return {
+                openingBalance: openingBalance,
+                totalStockIn: totalStockIn,
+                totalStockOut: totalStockOut
+            };
+        }
+
         // Function to render the item table (with pagination)
         function renderItemsTable(itemsToRender = items) {
             currentFilteredItems = itemsToRender; 
@@ -1187,7 +1227,7 @@
             if (itemsForCurrentPage.length === 0) {
                 itemsTableBody.innerHTML = `
                     <tr>
-                        <td colspan="5" style="text-align: center; padding: 2rem;">
+                        <td colspan="8" style="text-align: center; padding: 2rem;">
                             No item data.
                         </td>
                     </tr>
@@ -1196,11 +1236,17 @@
                 itemsForCurrentPage.forEach((item, index) => {
                     const isLowStock = (item.stock || 0) > 0 && (item.stock || 0) <= 5;
                     
+                    // Calculate stock details for each item
+                    const stockDetails = calculateStockDetails(item.id);
+
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td>${startIndex + index + 1}</td>
                         <td>${item.pid}</td>
                         <td>${item.name}</td>
+                        <td>${stockDetails.openingBalance}</td>
+                        <td>${stockDetails.totalStockIn}</td>
+                        <td>${stockDetails.totalStockOut}</td>
                         <td class="${isLowStock ? 'low-stock' : ''}">${item.stock || 0}</td>
                         <td>
                             <button class="action-btn edit-btn" data-id="${item.id}" title="Edit">✏️</button>
@@ -1255,7 +1301,7 @@
             if (historyToRender.length === 0) {
                 historyTableBody.innerHTML = `
                     <tr>
-                        <td colspan="7" style="text-align: center; padding: 2rem;">
+                        <td colspan="8" style="text-align: center; padding: 2rem;">
                             No history data.
                         </td>
                     </tr>
@@ -1321,7 +1367,7 @@
             if (filteredHistory.length === 0) {
                 historyTableBody.innerHTML = `
                     <tr>
-                        <td colspan="7" style="text-align: center; padding: 2rem;">
+                        <td colspan="8" style="text-align: center; padding: 2rem;">
                             No data matching the filters.
                         </td>
                     </tr>
@@ -1351,9 +1397,20 @@
                     </td>
                     <td>${record.destination}</td>
                     <td>${record.notes || '-'}</td>
+                    <td>
+                        <button class="action-btn delete-history-btn" data-id="${record.id}" title="Delete History">🗑️</button>
+                    </td>
                 `;
                 
                 historyTableBody.appendChild(row);
+            });
+
+            // Add event listeners for new delete history buttons
+            document.querySelectorAll('.delete-history-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = e.target.dataset.id;
+                    deleteHistoryRecord(id);
+                });
             });
         }
         
@@ -1386,14 +1443,62 @@
         
         // Function to delete an item
         async function deleteItem(id) {
-            if (confirm('Are you sure you want to delete this item?')) {
+            if (confirm('Are you sure you want to delete this item? This will also remove all related history records.')) {
                 const item = items.find(item => item.id === id);
                 if (item) {
-                    await addHistoryRecord('out', item.id, item.name, item.stock || 0, 'Deleted from system', 'Item deleted from inventory');
+                    // Optionally add a history record for item deletion
+                    // await addHistoryRecord('out', item.id, item.name, item.stock || 0, 'System', 'Item deleted from inventory');
                     
+                    // Delete item from inventory
                     await itemsRef.child(id).remove();
-                    showAlert('Item deleted successfully');
+
+                    // Delete all history records related to this item
+                    const itemHistorySnapshot = await historyRef.orderByChild('itemId').equalTo(id).once('value');
+                    const updates = {};
+                    itemHistorySnapshot.forEach(childSnapshot => {
+                        updates[childSnapshot.key] = null; // Set to null to delete
+                    });
+                    if (Object.keys(updates).length > 0) {
+                        await historyRef.update(updates);
+                    }
+
+                    showAlert('Item and its history deleted successfully');
                 }
+            }
+        }
+
+        // Function to delete a single history record
+        async function deleteHistoryRecord(id) {
+            if (confirm('Are you sure you want to delete this history record? This action cannot be undone.')) {
+                const recordToDelete = history.find(record => record.id === id);
+                if (!recordToDelete) {
+                    showAlert('History record not found.', 'error');
+                    return;
+                }
+
+                // Get the item associated with this history record
+                const item = items.find(item => item.id === recordToDelete.itemId);
+                if (!item) {
+                    showAlert('Associated item not found. History record will be deleted.', 'warning');
+                    await historyRef.child(id).remove();
+                    showAlert('History record deleted successfully.');
+                    return;
+                }
+
+                // Revert stock change if this history record is deleted
+                let newStock = item.stock || 0;
+                if (recordToDelete.type === 'in') {
+                    newStock -= recordToDelete.quantity;
+                } else if (recordToDelete.type === 'out') {
+                    newStock += recordToDelete.quantity;
+                }
+
+                // Update item stock in Firebase
+                await itemsRef.child(item.id).update({ stock: newStock });
+
+                // Delete the history record
+                await historyRef.child(id).remove();
+                showAlert('History record deleted and stock adjusted successfully.');
             }
         }
         
@@ -1541,6 +1646,8 @@
                 
                 if (tabId === 'history') {
                     renderHistoryTable();
+                } else if (tabId === 'inventory') {
+                    renderItemsTable(); // Re-render inventory table to update stock details
                 }
             });
         });
@@ -1613,6 +1720,8 @@
             for (let key in data) {
                 history.push(data[key]);
             }
+            // Re-render both tables when history changes, as inventory stock details depend on history
+            renderItemsTable(); 
             if (document.getElementById('history-tab').classList.contains('active')) {
                 renderHistoryTable();
             }
