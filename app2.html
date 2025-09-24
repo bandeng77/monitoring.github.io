@@ -1034,10 +1034,12 @@
                             <th>Item No.</th>
                             <th>Item Name</th>
                             <th>Type</th>
+                            <th>Stock</th> <!-- New column for Stock -->
                             <th>Quantity</th>
+                            <th>Last Quantity</th> 
                             <th>Destination/Supplier</th>
                             <th>Notes</th>
-                            <th>Actions</th> <!-- New column for delete button -->
+                            <th>Actions</th> 
                         </tr>
                     </thead>
                     <tbody id="history-table-body">
@@ -1096,9 +1098,15 @@
                         <div id="autocomplete-list" class="autocomplete-items"></div>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label for="stock-quantity">Quantity</label>
-                    <input type="number" id="stock-quantity" min="1" required>
+                <div class="form-row"> 
+                    <div class="form-group">
+                        <label for="stock-quantity">Quantity</label>
+                        <input type="number" id="stock-quantity" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="stock-last-quantity">Last Quantity</label>
+                        <input type="text" id="stock-last-quantity" readonly>
+                    </div>
                 </div>
                 <div class="form-group" id="destination-group">
                     <label for="stock-destination" id="destination-label">Supplier</label>
@@ -1161,7 +1169,9 @@
         const stockItemSearchInput = document.getElementById('stock-item-search');
         const selectedStockItemIdInput = document.getElementById('selected-stock-item-id');
         const autocompleteList = document.getElementById('autocomplete-list');
+        // const stockCurrentStockInput = document.getElementById('stock-current-stock'); // Removed
         const stockQuantityInput = document.getElementById('stock-quantity');
+        const stockLastQuantityInput = document.getElementById('stock-last-quantity'); 
         const stockDestinationInput = document.getElementById('stock-destination');
         const stockNotesInput = document.getElementById('stock-notes');
         const destinationGroup = document.getElementById('destination-group');
@@ -1216,6 +1226,9 @@
 
         // Export Inventory Excel Button
         const exportInventoryExcelBtn = document.getElementById('export-inventory-excel-btn');
+
+        // Variable to store the current stock of the selected item in the stock modal
+        let currentSelectedItemStock = 0;
 
 
         // Function to load data from pid.json
@@ -1353,38 +1366,65 @@
             let totalStockIn = 0;
             let totalStockOut = 0;
 
-            // Filter history for the specific item
-            let itemHistory = history.filter(record => record.itemId === itemId);
+            // Get the current balance for the item
+            const currentItem = items.find(item => item.id === itemId);
+            const currentBalance = currentItem ? (currentItem.stock || 0) : 0;
 
-            // Apply date range filter to history records
+            let openingBalance = currentBalance; // Default to current balance if no filter
+
+            // If a filter start date is provided, calculate the balance *before* that date
+            if (filterStartDate) {
+                const startOfFilterDay = new Date(filterStartDate);
+                startOfFilterDay.setHours(0, 0, 0, 0); // Start of the filter day
+
+                // Calculate balance at the end of the day *before* filterStartDate
+                // Iterate through all history records for the item
+                history.filter(record => record.itemId === itemId)
+                       .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)) // Sort by timestamp ascending
+                       .forEach(record => {
+                           const recordDate = new Date(record.timestamp);
+                           // If the record happened *before* the filter start day, it contributes to the opening balance
+                           if (recordDate < startOfFilterDay) {
+                               if (record.type === 'in') {
+                                   openingBalance -= record.quantity; // Subtract 'in' to get previous balance
+                               } else if (record.type === 'out') {
+                                   openingBalance += record.quantity; // Add 'out' to get previous balance
+                               }
+                           }
+                       });
+            }
+
+            // Filter history for the specific item within the date range for Stock In/Out calculation
+            let itemHistoryInDateRange = history.filter(record => record.itemId === itemId);
+
             if (filterStartDate && filterEndDate) {
                 const start = new Date(filterStartDate);
                 start.setHours(0, 0, 0, 0);
                 const end = new Date(filterEndDate);
                 end.setHours(23, 59, 59, 999);
 
-                itemHistory = itemHistory.filter(record => {
+                itemHistoryInDateRange = itemHistoryInDateRange.filter(record => {
                     const recordDate = new Date(record.timestamp);
                     return recordDate >= start && recordDate <= end;
                 });
             } else if (filterStartDate) {
                 const start = new Date(filterStartDate);
                 start.setHours(0, 0, 0, 0);
-                itemHistory = itemHistory.filter(record => {
+                itemHistoryInDateRange = itemHistoryInDateRange.filter(record => {
                     const recordDate = new Date(record.timestamp);
                     return recordDate >= start;
                 });
             } else if (filterEndDate) {
                 const end = new Date(filterEndDate);
                 end.setHours(23, 59, 59, 999);
-                itemHistory = itemHistory.filter(record => {
+                itemHistoryInDateRange = itemHistoryInDateRange.filter(record => {
                     const recordDate = new Date(record.timestamp);
                     return recordDate <= end;
                 });
             }
 
             // Calculate total Stock In and Stock Out from filtered history records
-            itemHistory.forEach(record => {
+            itemHistoryInDateRange.forEach(record => {
                 if (record.type === 'in') {
                     totalStockIn += record.quantity;
                 } else if (record.type === 'out') {
@@ -1392,45 +1432,8 @@
                 }
             });
 
-            // Get the current balance for the item
-            const currentItem = items.find(item => item.id === itemId);
-            const currentBalance = currentItem ? (currentItem.stock || 0) : 0;
-
-            // Calculate opening balance: currentBalance - totalStockIn + totalStockOut
-            // This opening balance is relative to the *filtered* history.
-            // For the main inventory table, we want the actual opening balance before any movements.
-            // Let's adjust this to reflect the balance *before* the filterStartDate.
-            let actualOpeningBalance = currentBalance; // Start with current balance
-            
-            // If a filter start date is provided, calculate the balance *before* that date
-            if (filterStartDate) {
-                const startOfFilter = new Date(filterStartDate);
-                startOfFilter.setHours(0, 0, 0, 0);
-                const historyAfterFilterStart = history.filter(record => 
-                    record.itemId === itemId && new Date(record.timestamp) >= startOfFilter
-                );
-                // To get the balance *before* the filter start date,
-                // we subtract all 'in' movements and add all 'out' movements that occurred *after or on* the filter start date.
-                historyAfterFilterStart.forEach(record => {
-                    if (record.type === 'in') {
-                        actualOpeningBalance -= record.quantity;
-                    } else if (record.type === 'out') {
-                        actualOpeningBalance += record.quantity;
-                    }
-                });
-            } else {
-                // If no start date filter, opening balance is the current balance.
-                // The "Stock In" and "Stock Out" columns will then reflect all movements.
-            }
-
-
-            // The balance shown in the table should be the current stock,
-            // but the "Opening Balance" should reflect the stock at the start of the filtered period.
-            // The "Stock In" and "Stock Out" columns should reflect movements *within* the filtered period.
-            // The "Balance" column should always show the current actual stock.
-
             return {
-                openingBalance: actualOpeningBalance, // Stock at the beginning of the filtered period
+                openingBalance: openingBalance, // Stock at the beginning of the filtered period (end of day before start date)
                 totalStockIn: totalStockIn, // Stock in within the filtered period
                 totalStockOut: totalStockOut, // Stock out within the filtered period
                 currentBalance: currentBalance // Actual current stock
@@ -1458,10 +1461,6 @@
             // Apply Date Range Filter for Inventory
             const selectedInventoryStartDate = inventoryStartDateFilter.value;
             const selectedInventoryEndDate = inventoryEndDateFilter.value;
-
-            // For inventory table, date filters affect the 'Opening Balance', 'Stock In', 'Stock Out' calculations,
-            // but not which items are displayed unless an item had no activity in the period.
-            // We'll pass these dates to calculateStockDetails.
 
             currentFilteredItems = filteredItems; 
             const totalItemsCount = currentFilteredItems.length;
@@ -1563,7 +1562,7 @@
             if (historyToRender.length === 0) {
                 historyTableBody.innerHTML = `
                     <tr>
-                        <td colspan="8" style="text-align: center; padding: 2rem;">
+                        <td colspan="10" style="text-align: center; padding: 2rem;">
                             No history data.
                         </td>
                     </tr>
@@ -1629,7 +1628,7 @@
             if (filteredHistory.length === 0) {
                 historyTableBody.innerHTML = `
                     <tr>
-                        <td colspan="8" style="text-align: center; padding: 2rem;">
+                        <td colspan="10" style="text-align: center; padding: 2rem;">
                             No data matching the filters.
                         </td>
                     </tr>
@@ -1643,6 +1642,72 @@
                 
                 const relatedItem = items.find(item => item.id === record.itemId);
                 const itemNo = relatedItem ? relatedItem.pid : 'N/A';
+
+                // Calculate Stock (before this transaction) and Last Quantity (after this transaction)
+                let stockBeforeTransaction = relatedItem ? (relatedItem.stock || 0) : 0;
+                let lastQuantity = relatedItem ? (relatedItem.stock || 0) : 0;
+
+                // To get stockBeforeTransaction:
+                // Start with the current stock of the item.
+                // Then, "revert" all transactions that happened *after or at the same time* as the current record.
+                // This gives us the stock level right before the current record.
+                history.filter(h => h.itemId === record.itemId && new Date(h.timestamp) >= new Date(record.timestamp))
+                       .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)) // Sort descending by timestamp
+                       .forEach(h => {
+                           if (h.type === 'in') {
+                               stockBeforeTransaction -= h.quantity;
+                           } else if (h.type === 'out') {
+                               stockBeforeTransaction += h.quantity;
+                           }
+                       });
+                
+                // lastQuantity is simply stockBeforeTransaction + quantity (if in) or - quantity (if out)
+                if (record.type === 'in') {
+                    lastQuantity = stockBeforeTransaction + record.quantity;
+                } else if (record.type === 'out') {
+                    lastQuantity = stockBeforeTransaction - record.quantity;
+                }
+
+                // If date filters are applied, the "Stock" column should reflect the stock at the start of the filtered period.
+                // The "Last Quantity" should reflect the stock after the transaction within the filtered period.
+                if (selectedStartDate) {
+                    const startOfFilterDay = new Date(selectedStartDate);
+                    startOfFilterDay.setHours(0, 0, 0, 0);
+
+                    let stockAtStartOfFilter = relatedItem ? (relatedItem.stock || 0) : 0;
+                    // Revert all transactions that happened *after or on* the filter start date
+                    history.filter(h => h.itemId === record.itemId && new Date(h.timestamp) >= startOfFilterDay)
+                           .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)) // Sort descending to revert correctly
+                           .forEach(h => {
+                               if (h.type === 'in') {
+                                   stockAtStartOfFilter -= h.quantity;
+                               } else if (h.type === 'out') {
+                                   stockAtStartOfFilter += h.quantity;
+                               }
+                           });
+                    stockBeforeTransaction = stockAtStartOfFilter; // This is the stock at the beginning of the filtered period
+
+                    // Now, apply transactions *within* the filtered period up to the current record
+                    let tempStockForLastQuantity = stockAtStartOfFilter;
+                    history.filter(h => h.itemId === record.itemId && new Date(h.timestamp) < new Date(record.timestamp) && new Date(h.timestamp) >= startOfFilterDay)
+                           .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)) // Sort ascending
+                           .forEach(h => {
+                               if (h.type === 'in') {
+                                   tempStockForLastQuantity += h.quantity;
+                               } else if (h.type === 'out') {
+                                   tempStockForLastQuantity -= h.quantity;
+                               }
+                           });
+                    // The stock right before the current record
+                    stockBeforeTransaction = tempStockForLastQuantity;
+
+                    // The stock after the current record
+                    if (record.type === 'in') {
+                        lastQuantity = stockBeforeTransaction + record.quantity;
+                    } else if (record.type === 'out') {
+                        lastQuantity = stockBeforeTransaction - record.quantity;
+                    }
+                }
                 
                 const row = document.createElement('tr');
                 row.innerHTML = `
@@ -1654,9 +1719,11 @@
                             ${record.type === 'in' ? 'STOCK IN' : 'STOCK OUT'}
                         </span>
                     </td>
+                    <td>${stockBeforeTransaction}</td> <!-- Display Stock before transaction -->
                     <td class="${record.type === 'in' ? 'history-in' : 'history-out'}">
                         ${record.type === 'in' ? '+' : '-'}${record.quantity}
                     </td>
+                    <td>${lastQuantity}</td> <!-- Display Last Quantity -->
                     <td>${record.destination}</td>
                     <td>${record.notes || '-'}</td>
                     <td>
@@ -1685,6 +1752,9 @@
             stockItemSearchInput.value = ''; 
             selectedStockItemIdInput.value = ''; 
             autocompleteList.innerHTML = ''; 
+            // stockCurrentStockInput.value = ''; // Removed
+            stockLastQuantityInput.value = ''; // Clear Last Quantity
+            currentSelectedItemStock = 0; // Reset current selected item stock
             stockModal.style.display = 'flex';
         }
         
@@ -1844,6 +1914,20 @@
             
             showAlert(`Stock successfully ${type === 'in' ? 'added' : 'reduced'}`);
             stockModal.style.display = 'none';
+        });
+
+        // Event listener for stock quantity input to update Last Quantity
+        stockQuantityInput.addEventListener('input', () => {
+            const quantity = parseInt(stockQuantityInput.value) || 0;
+            const type = stockTypeInput.value;
+            let calculatedLastQuantity = currentSelectedItemStock;
+
+            if (type === 'in') {
+                calculatedLastQuantity += quantity;
+            } else if (type === 'out') {
+                calculatedLastQuantity -= quantity;
+            }
+            stockLastQuantityInput.value = calculatedLastQuantity;
         });
         
         // Event listener for item search (main search input)
@@ -2037,10 +2121,16 @@
                 if (itemText.toLowerCase().includes(searchLower)) {
                     const b = document.createElement("div");
                     b.innerHTML = itemText.replace(new RegExp(val, "gi"), (match) => `<strong>${match}</strong>`);
-                    b.innerHTML += `<input type='hidden' value='${item.id}' data-item-name='${item.name}' data-item-pid='${item.pid}'>`;
+                    b.innerHTML += `<input type='hidden' value='${item.id}' data-item-name='${item.name}' data-item-pid='${item.pid}' data-item-stock='${item.stock || 0}'>`;
                     b.addEventListener("click", function(e) {
                         stockItemSearchInput.value = itemText;
-                        selectedStockItemIdInput.value = this.getElementsByTagName("input")[0].value;
+                        const selectedId = this.getElementsByTagName("input")[0].value;
+                        const selectedStock = parseInt(this.getElementsByTagName("input")[0].dataset.itemStock);
+                        selectedStockItemIdInput.value = selectedId;
+                        currentSelectedItemStock = selectedStock; // Store the current stock
+                        // stockCurrentStockInput.value = currentSelectedItemStock; // Removed
+                        stockLastQuantityInput.value = currentSelectedItemStock; // Initialize Last Quantity with current stock
+                        stockQuantityInput.value = ''; // Clear quantity input
                         closeAllLists();
                     });
                     a.appendChild(b);
