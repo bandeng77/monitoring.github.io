@@ -757,7 +757,8 @@
                     <thead>
                         <tr>
                             <th>Date</th>
-                            <th>Item</th>
+                            <th>Item No.</th> <!-- Kolom baru -->
+                            <th>Item Name</th> <!-- Nama kolom diubah -->
                             <th>Type</th>
                             <th>Quantity</th>
                             <th>Destination/Supplier</th>
@@ -1123,7 +1124,7 @@
             if (historyToRender.length === 0) {
                 historyTableBody.innerHTML = `
                     <tr>
-                        <td colspan="5" style="text-align: center; padding: 2rem;">
+                        <td colspan="6" style="text-align: center; padding: 2rem;"> <!-- colspan diubah menjadi 6 -->
                             No history data.
                         </td>
                     </tr>
@@ -1144,17 +1145,13 @@
                 });
             }
             
-            // Removed item filter logic
-            // if (itemFilter.value !== 'all') {
-            //     filteredHistory = filteredHistory.filter(record => record.itemId === itemFilter.value);
-            // }
-            
             if (historySearchInput.value) {
                 const searchTerm = historySearchInput.value.toLowerCase();
                 filteredHistory = filteredHistory.filter(record => 
                     record.itemName.toLowerCase().includes(searchTerm) ||
                     record.destination.toLowerCase().includes(searchTerm) ||
-                    record.notes.toLowerCase().includes(searchTerm)
+                    record.notes.toLowerCase().includes(searchTerm) ||
+                    (items.find(item => item.id === record.itemId)?.pid || '').toLowerCase().includes(searchTerm) // Tambahkan pencarian berdasarkan Item No.
                 );
             }
             
@@ -1163,7 +1160,7 @@
             if (filteredHistory.length === 0) {
                 historyTableBody.innerHTML = `
                     <tr>
-                        <td colspan="5" style="text-align: center; padding: 2rem;">
+                        <td colspan="6" style="text-align: center; padding: 2rem;"> <!-- colspan diubah menjadi 6 -->
                             No data matching the filters.
                         </td>
                     </tr>
@@ -1175,10 +1172,15 @@
                 const date = new Date(record.timestamp);
                 const formattedDate = `${date.toLocaleDateString('en-US')} ${date.toLocaleTimeString('en-US')}`;
                 
+                // Cari item yang sesuai untuk mendapatkan Item No. (pid)
+                const relatedItem = items.find(item => item.id === record.itemId);
+                const itemNo = relatedItem ? relatedItem.pid : 'N/A'; // 'N/A' jika tidak ditemukan
+                
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${formattedDate}</td>
-                    <td>${record.itemName}</td>
+                    <td>${itemNo}</td> <!-- Tambahkan Item No. -->
+                    <td>${record.itemName}</td> <!-- Ubah menjadi Item Name -->
                     <td>
                         <span class="history-badge ${record.type === 'in' ? 'badge-in' : 'badge-out'}">
                             ${record.type === 'in' ? 'IN' : 'OUT'}
