@@ -176,7 +176,7 @@
             box-shadow: 0 6px 15px var(--shadow-light); /* Clearer shadow */
             font-size: 0.875rem;
             width: calc(25% - 0.75rem); /* Adjusted for 4 columns */
-            min-width: 220px; /* Slightly smaller min-width to fit 4 columns */
+            /* min-width: 220px; <-- Hapus baris ini */
             box-sizing: border-box;
             opacity: 0; /* Animation: Start invisible */
             transform: translateY(20px); /* Animation: Start slightly below */
@@ -483,7 +483,7 @@
         }
 
         /* Media Queries for responsiveness */
-        /* Media queries for .deal-card have been removed to force 4 columns */
+        /* Media queries for .deal-card have been removed to force 4 columns and allow shrinking */
 
         @media (max-width: 1024px) { /* For tablets, 2 columns */
             /* Adjust main PO form grid columns for tablets */
