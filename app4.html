@@ -60,11 +60,11 @@
             font-size: 2.25rem; /* Larger */
             font-weight: 800;
         }
-        .header .logout-btn-container {
-            position: absolute;
-            top: 1.75rem;
-            right: 2rem;
-        }
+        /* .header .logout-btn-container { */
+        /*     position: absolute; */
+        /*     top: 1.75rem; */
+        /*     right: 2rem; */
+        /* } */
         .header button {
             font-weight: 600;
             border-radius: 0.65rem;
@@ -513,11 +513,11 @@
             .header h1 {
                 font-size: 1.75rem;
             }
-            .header .logout-btn-container {
-                position: static; /* Revert to normal position on mobile */
-                margin-top: 1rem;
-                width: 100%;
-            }
+            /* .header .logout-btn-container { */
+            /*     position: static; /\* Revert to normal position on mobile *\/ */
+            /*     margin-top: 1rem; */
+            /*     width: 100%; */
+            /* } */
             .header > div:last-child { /* This is the div containing buttons below the title */
                 margin-top: 1rem;
                 width: 100%;
@@ -657,11 +657,7 @@
                 <div>
                     <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900">Document Monitoring <i class="fas fa-box-open text-blue-600 ml-2"></i></h1>
                 </div>
-                <div class="logout-btn-container flex space-x-2">
-                    <button id="authButton" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
-                        <i class="fas fa-sign-out-alt mr-2"></i> Logout
-                    </button>
-                </div>
+                <!-- Logout button container removed -->
             </div>
 
             <!-- Buttons below title -->
@@ -1049,11 +1045,11 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         // --- User Authentication (Simulated) ---
-        let currentUserEmail = 'user@example.com'; // Default simulated user
+        // let currentUserEmail = 'user@example.com'; // Default simulated user
 
-        function getCurrentUserEmail() {
-            return currentUserEmail;
-        }
+        // function getCurrentUserEmail() {
+        //     return currentUserEmail;
+        // }
 
         // --- Generic function to toggle modal visibility ---
         function toggleModal(modalId, show) {
@@ -1407,10 +1403,10 @@
         });
 
         // --- Placeholder for other buttons ---
-        document.getElementById('authButton').addEventListener('click', () => {
-            alert('Logout button clicked!');
-            currentUserEmail = null;
-        });
+        // document.getElementById('authButton').addEventListener('click', () => {
+        //     alert('Logout button clicked!');
+        //     currentUserEmail = null;
+        // });
         document.getElementById('backButton').addEventListener('click', () => {
             window.location.href = 'index.html';
         });
