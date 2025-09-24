@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Manajemen Stok Barang dengan History</title>
+    <title>Stock Management System with History</title>
     <style>
         :root {
             --primary: #3b82f6;
@@ -18,6 +18,9 @@
             --gray-400: #9ca3af;
             --gray-700: #374151;
             --gray-900: #111827;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
         
         * {
@@ -31,6 +34,9 @@
             background-color: #f9fafb;
             color: var(--gray-900);
             line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
         
         .container {
@@ -43,13 +49,15 @@
             background: linear-gradient(to right, var(--primary), var(--primary-dark));
             color: white;
             padding: 1.5rem 0;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow-md);
         }
         
         .header-content {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
         }
         
         .logo {
@@ -66,6 +74,26 @@
             font-size: 1.8rem;
             font-weight: 600;
         }
+
+        .back-button {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 6px;
+            padding: 0.6rem 1.2rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none; /* For anchor tag */
+        }
+
+        .back-button:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.6);
+        }
         
         .tabs {
             display: flex;
@@ -73,7 +101,7 @@
             border-radius: 8px;
             overflow: hidden;
             margin: 1.5rem 0;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow-sm);
         }
         
         .tab {
@@ -84,7 +112,7 @@
             font-weight: 500;
             flex: 1;
             text-align: center;
-            transition: background-color 0.2s;
+            transition: background-color 0.2s ease, color 0.2s ease;
         }
         
         .tab.active {
@@ -98,14 +126,21 @@
         
         .tab-content {
             display: none;
+            animation: fadeIn 0.3s ease-out;
         }
         
         .tab-content.active {
             display: block;
         }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
         
         main {
-            padding: 1rem 0 2rem;
+            padding: 1rem 20px 2rem; /* Perubahan di sini */
+            flex-grow: 1;
         }
         
         .dashboard {
@@ -119,7 +154,13 @@
             background: white;
             border-radius: 8px;
             padding: 1.5rem;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-md);
         }
         
         .stat-title {
@@ -149,14 +190,17 @@
             background: white;
             border-radius: 8px;
             padding: 0.5rem 1rem;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow-sm);
+            flex-grow: 1;
+            max-width: 350px;
         }
         
         .search-box input {
             border: none;
             outline: none;
             padding: 0.5rem;
-            width: 250px;
+            width: 100%;
+            font-size: 1rem;
         }
         
         .btn {
@@ -167,14 +211,16 @@
             padding: 0.6rem 1.2rem;
             font-weight: 500;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: background-color 0.2s ease, transform 0.1s ease;
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            text-decoration: none;
         }
         
         .btn:hover {
             background-color: var(--primary-dark);
+            transform: translateY(-1px);
         }
         
         .btn-danger {
@@ -213,7 +259,7 @@
             background: white;
             border-radius: 8px;
             overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow-sm);
             margin-bottom: 2rem;
             overflow-x: auto;
         }
@@ -221,7 +267,7 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 800px;
+            min-width: 700px; /* Adjusted min-width after removing columns */
         }
         
         th, td {
@@ -235,6 +281,7 @@
             font-weight: 600;
             position: sticky;
             top: 0;
+            z-index: 1; /* Ensure header is above content when scrolling */
         }
         
         tr:last-child td {
@@ -261,10 +308,13 @@
             cursor: pointer;
             font-size: 1.1rem;
             color: var(--gray-700);
+            transition: color 0.2s ease, transform 0.1s ease;
+            padding: 0.2rem;
         }
         
         .action-btn:hover {
             color: var(--primary);
+            transform: scale(1.1);
         }
         
         .history-in {
@@ -288,6 +338,7 @@
             z-index: 1000;
             justify-content: center;
             align-items: center;
+            animation: fadeInModal 0.3s ease-out;
         }
         
         .modal-content {
@@ -296,9 +347,20 @@
             width: 90%;
             max-width: 500px;
             padding: 2rem;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            box-shadow: var(--shadow-lg);
             max-height: 90vh;
             overflow-y: auto;
+            animation: slideInModal 0.3s ease-out;
+        }
+
+        @keyframes fadeInModal {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideInModal {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
         
         .modal-header {
@@ -306,14 +368,21 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--gray-200);
+            padding-bottom: 1rem;
         }
         
         .close-modal {
             background: none;
             border: none;
-            font-size: 1.5rem;
+            font-size: 1.8rem;
             cursor: pointer;
             color: var(--gray-700);
+            transition: color 0.2s ease;
+        }
+
+        .close-modal:hover {
+            color: var(--danger);
         }
         
         .form-group {
@@ -324,14 +393,22 @@
             display: block;
             margin-bottom: 0.5rem;
             font-weight: 500;
+            color: var(--gray-700);
         }
         
         input, select, textarea {
             width: 100%;
             padding: 0.75rem;
-            border: 1px solid var(--gray-200);
+            border: 1px solid var(--gray-300);
             border-radius: 6px;
             font-size: 1rem;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+            outline: none;
         }
         
         .form-row {
@@ -348,12 +425,20 @@
             justify-content: flex-end;
             gap: 1rem;
             margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--gray-200);
         }
         
         .alert {
             padding: 1rem;
             border-radius: 6px;
             margin-bottom: 1.5rem;
+            animation: slideInFromTop 0.3s ease-out;
+        }
+
+        @keyframes slideInFromTop {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
         
         .alert-success {
@@ -374,6 +459,10 @@
             margin-bottom: 1.5rem;
             flex-wrap: wrap;
             align-items: center;
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: var(--shadow-sm);
         }
         
         .filter-group {
@@ -386,6 +475,7 @@
             padding: 0.5rem;
             border-radius: 6px;
             border: 1px solid var(--gray-300);
+            font-size: 0.9rem;
         }
         
         .history-badge {
@@ -393,6 +483,7 @@
             border-radius: 9999px;
             font-size: 0.75rem;
             font-weight: 600;
+            display: inline-block;
         }
         
         .badge-in {
@@ -405,62 +496,102 @@
             color: #991b1b;
         }
 
-        /* Pagination styles - MODIFIED */
+        /* Pagination styles */
         .pagination-controls {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-top: 1rem;
             margin-bottom: 1rem;
-            padding: 0.5rem 1rem; /* Lebih tipis */
+            padding: 0.5rem 1rem;
             background: white;
             border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow-sm);
             flex-wrap: wrap;
             gap: 0.5rem;
-            font-size: 0.8rem; /* Lebih kecil */
+            font-size: 0.8rem;
         }
 
         .pagination-controls .btn {
-            padding: 0.3rem 0.6rem; /* Lebih kecil */
-            font-size: 0.8rem; /* Lebih kecil */
-            min-width: 28px; /* Agar tidak terlalu kecil */
+            padding: 0.3rem 0.6rem;
+            font-size: 0.8rem;
+            min-width: 28px;
             justify-content: center;
-            border-radius: 4px; /* Sedikit lebih kecil */
+            border-radius: 4px;
         }
 
         .pagination-controls .btn.active-page {
-            background-color: var(--primary-dark); /* Warna untuk halaman aktif */
+            background-color: var(--primary-dark);
         }
 
         .pagination-info {
             font-weight: 500;
             color: var(--gray-700);
-            font-size: 0.8rem; /* Lebih kecil */
-            white-space: nowrap; /* Mencegah teks pecah */
+            font-size: 0.8rem;
+            white-space: nowrap;
         }
 
         .items-per-page-group {
             display: flex;
             align-items: center;
             gap: 0.4rem;
-            font-size: 0.8rem; /* Lebih kecil */
+            font-size: 0.8rem;
         }
 
         .items-per-page-group label {
             margin-bottom: 0;
-            font-size: 0.8rem; /* Lebih kecil */
+            font-size: 0.8rem;
         }
 
         .filter-select {
-            padding: 0.2rem 0.4rem; /* Lebih kecil */
-            font-size: 0.8rem; /* Lebih kecil */
+            padding: 0.2rem 0.4rem;
+            font-size: 0.8rem;
         }
 
         .pagination-buttons {
             display: flex;
-            gap: 0.2rem; /* Jarak antar tombol halaman */
+            gap: 0.2rem;
             align-items: center;
+        }
+
+        /* Autocomplete styles */
+        .autocomplete-container {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .autocomplete-items {
+            position: absolute;
+            border: 1px solid var(--gray-300);
+            border-bottom: none;
+            border-top: none;
+            z-index: 99;
+            top: 100%;
+            left: 0;
+            right: 0;
+            max-height: 200px;
+            overflow-y: auto;
+            background-color: white;
+            box-shadow: var(--shadow-md);
+            border-radius: 6px;
+        }
+
+        .autocomplete-items div {
+            padding: 10px;
+            cursor: pointer;
+            background-color: #fff; 
+            border-bottom: 1px solid var(--gray-200); 
+            transition: background-color 0.2s ease;
+        }
+
+        .autocomplete-items div:hover {
+            background-color: var(--gray-100);
+        }
+
+        .autocomplete-active {
+            background-color: var(--primary-dark) !important;
+            color: #ffffff;
         }
         
         @media (max-width: 768px) {
@@ -468,8 +599,8 @@
                 grid-template-columns: 1fr;
             }
             
-            .search-box input {
-                width: 100%;
+            .search-box {
+                max-width: 100%;
             }
             
             .action-bar {
@@ -492,7 +623,14 @@
                 align-items: stretch;
             }
             .pagination-buttons {
-                justify-content: center; /* Pusatkan tombol paginasi di mobile */
+                justify-content: center;
+            }
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .header-content .back-button {
+                margin-top: 1rem;
             }
         }
     </style>
@@ -506,69 +644,68 @@
             <div class="header-content">
                 <div class="logo">
                     <span class="logo-icon">📦</span>
-                    <h1>Manajemen Stok Barang dengan History</h1>
+                    <h1>Stock Management System with History</h1>
                 </div>
+                <a href="index.html" class="back-button">
+                    <span>🏠</span> Back to Home
+                </a>
             </div>
         </div>
     </header>
 
-    <main class="container">
+    <main> <!-- Kelas 'container' dihapus di sini -->
         <div class="tabs">
-            <button class="tab active" data-tab="inventory">Inventori Barang</button>
-            <button class="tab" data-tab="history">History Pergerakan</button>
+            <button class="tab active" data-tab="inventory">Inventory Items</button>
+            <button class="tab" data-tab="history">Movement History</button>
         </div>
         
         <div class="tab-content active" id="inventory-tab">
             <div class="dashboard">
                 <div class="stat-card">
-                    <div class="stat-title">Total Barang</div>
+                    <div class="stat-title">Total Items</div>
                     <div class="stat-value" id="total-items">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-title">Barang Tersedia</div>
+                    <div class="stat-title">Available Items</div>
                     <div class="stat-value" id="available-items">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-title">Stok Rendah</div>
+                    <div class="stat-title">Low Stock</div>
                     <div class="stat-value" id="low-stock-items">0</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-title">Total Nilai Stok</div>
-                    <div class="stat-value" id="total-value">Rp 0</div>
-                </div>
+                <!-- Removed Total Value Stat Card -->
             </div>
 
             <div class="action-bar">
                 <div class="search-box">
                     <span>🔍</span>
-                    <input type="text" id="search-input" placeholder="Cari barang...">
+                    <input type="text" id="search-input" placeholder="Search item...">
                 </div>
                 <div style="display: flex; gap: 1rem;">
                     <button class="btn btn-info" id="stock-in-btn">
-                        <span>⬇️</span> Stok Masuk
+                        <span>⬇️</span> Stock In
                     </button>
                     <button class="btn btn-warning" id="stock-out-btn">
-                        <span>⬆️</span> Stok Keluar
+                        <span>⬆️</span> Stock Out
                     </button>
                 </div>
             </div>
 
             <div id="alert-container"></div>
 
-            <!-- Pagination Controls - MOVED TO TOP AND MODIFIED -->
             <div class="pagination-controls">
                 <div class="items-per-page-group">
-                    <label for="items-per-page">Tampilkan:</label>
+                    <label for="items-per-page">Show:</label>
                     <select id="items-per-page" class="filter-select">
                         <option value="10">10</option>
                         <option value="50">50</option>
                         <option value="100">100</option>
                         <option value="1000">1000</option>
                     </select>
-                    <span>item per halaman</span>
+                    <span>items per page</span>
                 </div>
                 <div class="pagination-buttons" id="pagination-buttons-container">
-                    <!-- Tombol paginasi akan di-render di sini oleh JavaScript -->
+                    <!-- Pagination buttons will be rendered here by JavaScript -->
                 </div>
             </div>
 
@@ -577,16 +714,15 @@
                     <thead>
                         <tr>
                             <th>No.</th>
-                            <th>No. Barang</th>
-                            <th>Nama Barang</th>
-                            <th>Stok</th>
-                            <th>Harga</th>
-                            <th>Total Nilai</th>
-                            <th>Aksi</th>
+                            <th>Item No.</th>
+                            <th>Item Name</th>
+                            <th>Stock</th>
+                            <!-- Removed Price and Total Value columns -->
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="items-table-body">
-                        <!-- Data akan diisi melalui JavaScript -->
+                        <!-- Data will be populated by JavaScript -->
                     </tbody>
                 </table>
             </div>
@@ -596,28 +732,23 @@
             <div class="action-bar">
                 <div class="search-box">
                     <span>🔍</span>
-                    <input type="text" id="history-search-input" placeholder="Cari history...">
+                    <input type="text" id="history-search-input" placeholder="Search history...">
                 </div>
                 <div class="filter-bar">
                     <div class="filter-group">
-                        <label for="type-filter">Tipe:</label>
+                        <label for="type-filter">Type:</label>
                         <select id="type-filter" class="filter-select">
-                            <option value="all">Semua</option>
-                            <option value="in">Stok Masuk</option>
-                            <option value="out">Stok Keluar</option>
+                            <option value="all">All</option>
+                            <option value="in">Stock In</option>
+                            <option value="out">Stock Out</option>
                         </select>
                     </div>
                     <div class="filter-group">
-                        <label for="date-filter">Tanggal:</label>
+                        <label for="date-filter">Date:</label>
                         <input type="date" id="date-filter" class="filter-select">
                     </div>
-                    <div class="filter-group">
-                        <label for="item-filter">Barang:</label>
-                        <select id="item-filter" class="filter-select">
-                            <option value="all">Semua Barang</option>
-                        </select>
-                    </div>
-                    <button class="btn" id="reset-filters-btn">Reset Filter</button>
+                    <!-- Removed Item Filter -->
+                    <button class="btn" id="reset-filters-btn">Reset Filters</button>
                 </div>
             </div>
             
@@ -625,90 +756,87 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>Tanggal</th>
-                            <th>Barang</th>
-                            <th>Tipe</th>
-                            <th>Jumlah</th>
-                            <th>Tujuan/Pemasok</th>
-                            <th>Keterangan</th>
-                            <th>User</th>
+                            <th>Date</th>
+                            <th>Item</th>
+                            <th>Type</th>
+                            <th>Quantity</th>
+                            <th>Destination/Supplier</th>
+                            <th>Notes</th>
+                            <!-- Removed User column -->
                         </tr>
                     </thead>
                     <tbody id="history-table-body">
-                        <!-- Data history akan diisi melalui JavaScript -->
+                        <!-- History data will be populated by JavaScript -->
                     </tbody>
                 </table>
             </div>
         </div>
     </main>
 
-    <!-- Modal untuk mengedit barang -->
+    <!-- Modal for editing item -->
     <div class="modal" id="item-modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 id="modal-title">Edit Barang</h2>
+                <h2 id="modal-title">Edit Item</h2>
                 <button class="close-modal" id="close-modal">&times;</button>
             </div>
             <form id="item-form">
                 <input type="hidden" id="item-id">
                 <div class="form-group">
-                    <label for="item-pid-display">No. Barang</label>
+                    <label for="item-pid-display">Item No.</label>
                     <input type="text" id="item-pid-display" readonly> <!-- Display only -->
                 </div>
                 <div class="form-group">
-                    <label for="item-name-display-edit">Nama Barang</label>
+                    <label for="item-name-display-edit">Item Name</label>
                     <input type="text" id="item-name-display-edit" readonly> <!-- Display only -->
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="item-stock">Jumlah Stok</label>
+                        <label for="item-stock">Stock Quantity</label>
                         <input type="number" id="item-stock" min="0" required>
                     </div>
-                    <div class="form-group">
-                        <label for="item-price">Harga (Rp)</label>
-                        <input type="number" id="item-price" min="0" step="100" required>
-                    </div>
+                    <!-- Removed Price input -->
                 </div>
                 <div class="form-actions">
-                    <button type="button" class="btn btn-danger" id="cancel-btn">Batal</button>
-                    <button type="submit" class="btn btn-success">Simpan</button>
+                    <button type="button" class="btn btn-danger" id="cancel-btn">Cancel</button>
+                    <button type="submit" class="btn btn-success">Save</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Modal untuk stok masuk/keluar -->
+    <!-- Modal for stock in/out -->
     <div class="modal" id="stock-modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 id="stock-modal-title">Stok Masuk</h2>
+                <h2 id="stock-modal-title">Stock In</h2>
                 <button class="close-modal" id="close-stock-modal">&times;</button>
             </div>
             <form id="stock-form">
                 <input type="hidden" id="stock-type">
                 <input type="hidden" id="selected-stock-item-id"> <!-- Hidden field to store selected item ID -->
                 <div class="form-group">
-                    <label for="stock-item-search">Cari Barang</label>
+                    <label for="stock-item-search">Search Item</label>
                     <div class="autocomplete-container">
-                        <input type="text" id="stock-item-search" placeholder="Ketik No. Barang atau Nama Barang..." required>
+                        <input type="text" id="stock-item-search" placeholder="Type Item No. or Item Name..." required>
                         <div id="autocomplete-list" class="autocomplete-items"></div>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="stock-quantity">Jumlah</label>
+                    <label for="stock-quantity">Quantity</label>
                     <input type="number" id="stock-quantity" min="1" required>
                 </div>
                 <div class="form-group" id="destination-group">
-                    <label for="stock-destination" id="destination-label">Pemasok</label>
+                    <label for="stock-destination" id="destination-label">Supplier</label>
                     <input type="text" id="stock-destination" required>
                 </div>
                 <div class="form-group">
-                    <label for="stock-notes">Keterangan</label>
+                    <label for="stock-notes">Notes</label>
                     <textarea id="stock-notes" rows="3"></textarea>
                 </div>
                 <div class="form-actions">
-                    <button type="button" class="btn btn-danger" id="cancel-stock-btn">Batal</button>
-                    <button type="submit" class="btn btn-success">Simpan</button>
+                    <button type="button" class="btn btn-danger" id="cancel-stock-btn">Cancel</button>
+                    <button type="submit" class="btn btn-success">Save</button>
                 </div>
             </form>
         </div>
@@ -735,14 +863,14 @@
         // Data barang (akan disinkronkan dengan Firebase)
         let items = [];
         let history = [];
-        let pidData = []; // Data dari pid.json
+        let pidData = []; // Data from pid.json
         
-        // Variabel Paginasi
+        // Pagination Variables
         let currentPage = 1;
         let itemsPerPage = 10; // Default
-        let currentFilteredItems = []; // Untuk menyimpan hasil filter pencarian sebelum paginasi
+        let currentFilteredItems = []; // To store filtered search results before pagination
 
-        // Elemen DOM
+        // DOM Elements
         const itemsTableBody = document.getElementById('items-table-body');
         const historyTableBody = document.getElementById('history-table-body');
         const itemForm = document.getElementById('item-form');
@@ -755,9 +883,9 @@
         const itemPidDisplay = document.getElementById('item-pid-display');
         const itemNameDisplayEdit = document.getElementById('item-name-display-edit');
         const itemStockInput = document.getElementById('item-stock');
-        const itemPriceInput = document="item-price";
+        // const itemPriceInput = document.getElementById('item-price'); // Removed
         const stockTypeInput = document.getElementById('stock-type');
-        const stockItemSearchInput = document.getElementById('stock-item-search');
+        const stockItemSearchInput = document.getElementById('stock-item-search'); // Perbaikan di sini
         const selectedStockItemIdInput = document.getElementById('selected-stock-item-id');
         const autocompleteList = document.getElementById('autocomplete-list');
         const stockQuantityInput = document.getElementById('stock-quantity');
@@ -776,45 +904,42 @@
         const historySearchInput = document.getElementById('history-search-input');
         const typeFilter = document.getElementById('type-filter');
         const dateFilter = document.getElementById('date-filter');
-        const itemFilter = document.getElementById('item-filter');
+        // const itemFilter = document.getElementById('item-filter'); // Removed
         const resetFiltersBtn = document.getElementById('reset-filters-btn');
         const alertContainer = document.getElementById('alert-container');
         const tabs = document.querySelectorAll('.tab');
         const tabContents = document.querySelectorAll('.tab-content');
 
-        // Elemen Paginasi
+        // Pagination Elements
         const itemsPerPageSelect = document.getElementById('items-per-page');
         const paginationButtonsContainer = document.getElementById('pagination-buttons-container');
         
-        // Statistik
+        // Statistics
         const totalItemsEl = document.getElementById('total-items');
         const availableItemsEl = document.getElementById('available-items');
         const lowStockItemsEl = document.getElementById('low-stock-items');
-        const totalValueEl = document.getElementById('total-value');
+        // const totalValueEl = document.getElementById('total-value'); // Removed
 
-        // Fungsi untuk memuat data dari pid.json
+        // Function to load data from pid.json
         async function loadPidData() {
             try {
-                // Pastikan pid.json berada di root direktori yang sama dengan file HTML ini
                 const response = await fetch('pid.json'); 
                 if (!response.ok) {
-                    // Jika respons tidak OK (misal 404 Not Found), lempar error
                     throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
                 }
                 const data = await response.json();
-                // Memastikan setiap item memiliki stok numerik, mengubah '-' menjadi 0
                 pidData = data.map(item => ({
                     ...item,
-                    stok: item.stok === '-' ? 0 : parseInt(item.stok) || 0 // Mengubah '-' menjadi 0, dan memastikan numerik
+                    stok: item.stok === '-' ? 0 : parseInt(item.stok) || 0 
                 }));
                 console.log('PID Data loaded and processed:', pidData);
             } catch (error) {
                 console.error('Error loading PID data:', error);
-                showAlert(`Gagal memuat data No. Barang (PID): ${error.message}`, 'error');
+                showAlert(`Failed to load Item No. (PID) data: ${error.message}`, 'error');
             }
         }
         
-        // Fungsi untuk menampilkan alert
+        // Function to display alerts
         function showAlert(message, type = 'success') {
             const alertEl = document.createElement('div');
             alertEl.className = `alert alert-${type}`;
@@ -822,30 +947,28 @@
             
             alertContainer.appendChild(alertEl);
             
-            // Hapus alert setelah 3 detik
             setTimeout(() => {
                 alertEl.remove();
             }, 3000);
         }
         
-        // Fungsi untuk memperbarui statistik
+        // Function to update statistics
         function updateStats() {
             const totalItems = items.length;
             const availableItems = items.filter(item => (item.stock || 0) > 0).length;
             const lowStockItems = items.filter(item => (item.stock || 0) > 0 && (item.stock || 0) <= 5).length;
-            const totalValue = items.reduce((sum, item) => sum + ((item.stock || 0) * (item.price || 0)), 0);
+            // const totalValue = items.reduce((sum, item) => sum + ((item.stock || 0) * (item.price || 0)), 0); // Removed
             
             totalItemsEl.textContent = totalItems;
             availableItemsEl.textContent = availableItems;
             lowStockItemsEl.textContent = lowStockItems;
-            totalValueEl.textContent = `Rp ${totalValue.toLocaleString('id-ID')}`;
+            // totalValueEl.textContent = `Rp ${totalValue.toLocaleString('id-ID')}`; // Removed
         }
         
-        // Fungsi untuk merender tombol paginasi
+        // Function to render pagination buttons
         function renderPaginationButtons(totalPages) {
-            paginationButtonsContainer.innerHTML = ''; // Bersihkan tombol sebelumnya
+            paginationButtonsContainer.innerHTML = ''; 
 
-            // Tombol "First Page" (<<)
             const firstPageBtn = document.createElement('button');
             firstPageBtn.className = 'btn';
             firstPageBtn.textContent = '««';
@@ -856,7 +979,6 @@
             });
             paginationButtonsContainer.appendChild(firstPageBtn);
 
-            // Tombol "Previous Page" (<)
             const prevPageBtn = document.createElement('button');
             prevPageBtn.className = 'btn';
             prevPageBtn.textContent = '«';
@@ -869,11 +991,9 @@
             });
             paginationButtonsContainer.appendChild(prevPageBtn);
 
-            // Tentukan rentang halaman yang akan ditampilkan (misal 5 halaman di sekitar halaman saat ini)
             let startPage = Math.max(1, currentPage - 2);
             let endPage = Math.min(totalPages, currentPage + 2);
 
-            // Sesuaikan rentang jika di awal atau akhir
             if (endPage - startPage + 1 < 5) {
                 if (startPage === 1) {
                     endPage = Math.min(totalPages, 5);
@@ -896,7 +1016,6 @@
                 paginationButtonsContainer.appendChild(pageBtn);
             }
 
-            // Tombol "Next Page" (>)
             const nextPageBtn = document.createElement('button');
             nextPageBtn.className = 'btn';
             nextPageBtn.textContent = '»';
@@ -909,7 +1028,6 @@
             });
             paginationButtonsContainer.appendChild(nextPageBtn);
 
-            // Tombol "Last Page" (>>)
             const lastPageBtn = document.createElement('button');
             lastPageBtn.className = 'btn';
             lastPageBtn.textContent = '»»';
@@ -921,13 +1039,12 @@
             paginationButtonsContainer.appendChild(lastPageBtn);
         }
 
-        // Fungsi untuk merender tabel barang (dengan paginasi)
+        // Function to render items table (with pagination)
         function renderItemsTable(itemsToRender = items) {
-            currentFilteredItems = itemsToRender; // Simpan item yang sudah difilter untuk paginasi
+            currentFilteredItems = itemsToRender; 
             const totalItemsCount = currentFilteredItems.length;
             const totalPages = Math.ceil(totalItemsCount / itemsPerPage);
 
-            // Pastikan currentPage tidak melebihi totalPages
             if (currentPage > totalPages && totalPages > 0) {
                 currentPage = totalPages;
             } else if (totalPages === 0) {
@@ -943,28 +1060,26 @@
             if (itemsForCurrentPage.length === 0) {
                 itemsTableBody.innerHTML = `
                     <tr>
-                        <td colspan="7" style="text-align: center; padding: 2rem;">
-                            Tidak ada data barang.
+                        <td colspan="5" style="text-align: center; padding: 2rem;">
+                            No item data.
                         </td>
                     </tr>
                 `;
             } else {
                 itemsForCurrentPage.forEach((item, index) => {
-                    const totalValue = (item.stock || 0) * (item.price || 0);
+                    // const totalValue = (item.stock || 0) * (item.price || 0); // Removed
                     const isLowStock = (item.stock || 0) > 0 && (item.stock || 0) <= 5;
                     
                     const row = document.createElement('tr');
                     row.innerHTML = `
-                        <td>${startIndex + index + 1}</td> <!-- Nomor urut global -->
+                        <td>${startIndex + index + 1}</td>
                         <td>${item.pid}</td>
                         <td>${item.name}</td>
                         <td class="${isLowStock ? 'low-stock' : ''}">${item.stock || 0}</td>
-                        <td>Rp ${item.price ? item.price.toLocaleString('id-ID') : '0'}</td>
-                        <td>Rp ${totalValue ? totalValue.toLocaleString('id-ID') : '0'}</td>
-                        <td class="action-cell">
-                            <button class="action-btn edit-btn" data-id="${item.id}">✏️</button>
-                            <button class="action-btn history-btn" data-id="${item.id}">📊</button>
-                            <button class="action-btn delete-btn" data-id="${item.id}">🗑️</button>
+                        <td>
+                            <button class="action-btn edit-btn" data-id="${item.id}" title="Edit">✏️</button>
+                            <button class="action-btn history-btn" data-id="${item.id}" title="View History">📊</button>
+                            <button class="action-btn delete-btn" data-id="${item.id}" title="Delete">🗑️</button>
                         </td>
                     `;
                     
@@ -972,10 +1087,8 @@
                 });
             }
             
-            // Render ulang tombol paginasi
             renderPaginationButtons(totalPages);
 
-            // Tambahkan event listener untuk tombol
             document.querySelectorAll('.edit-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     const id = e.target.dataset.id;
@@ -995,7 +1108,7 @@
                     const id = e.target.dataset.id;
                     const item = items.find(item => item.id === id);
                     if (item) {
-                        itemFilter.value = id;
+                        // itemFilter.value = id; // Removed item filter
                         document.querySelector('[data-tab="history"]').click();
                         renderHistoryTable();
                     }
@@ -1003,30 +1116,27 @@
             });
         }
         
-        // Fungsi untuk merender tabel history
+        // Function to render history table
         function renderHistoryTable(historyToRender = history) {
             historyTableBody.innerHTML = '';
             
             if (historyToRender.length === 0) {
                 historyTableBody.innerHTML = `
                     <tr>
-                        <td colspan="7" style="text-align: center; padding: 2rem;">
-                            Tidak ada data history.
+                        <td colspan="5" style="text-align: center; padding: 2rem;">
+                            No history data.
                         </td>
                     </tr>
                 `;
                 return;
             }
             
-            // Filter history berdasarkan kriteria
             let filteredHistory = [...historyToRender];
             
-            // Filter berdasarkan tipe
             if (typeFilter.value !== 'all') {
                 filteredHistory = filteredHistory.filter(record => record.type === typeFilter.value);
             }
             
-            // Filter berdasarkan tanggal
             if (dateFilter.value) {
                 filteredHistory = filteredHistory.filter(record => {
                     const recordDate = new Date(record.timestamp).toISOString().split('T')[0];
@@ -1034,12 +1144,11 @@
                 });
             }
             
-            // Filter berdasarkan barang
-            if (itemFilter.value !== 'all') {
-                filteredHistory = filteredHistory.filter(record => record.itemId === itemFilter.value);
-            }
+            // Removed item filter logic
+            // if (itemFilter.value !== 'all') {
+            //     filteredHistory = filteredHistory.filter(record => record.itemId === itemFilter.value);
+            // }
             
-            // Filter berdasarkan pencarian
             if (historySearchInput.value) {
                 const searchTerm = historySearchInput.value.toLowerCase();
                 filteredHistory = filteredHistory.filter(record => 
@@ -1049,14 +1158,13 @@
                 );
             }
             
-            // Urutkan dari yang terbaru
             filteredHistory.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
             
             if (filteredHistory.length === 0) {
                 historyTableBody.innerHTML = `
                     <tr>
-                        <td colspan="7" style="text-align: center; padding: 2rem;">
-                            Tidak ada data yang sesuai dengan filter.
+                        <td colspan="5" style="text-align: center; padding: 2rem;">
+                            No data matching the filters.
                         </td>
                     </tr>
                 `;
@@ -1065,7 +1173,7 @@
             
             filteredHistory.forEach(record => {
                 const date = new Date(record.timestamp);
-                const formattedDate = `${date.toLocaleDateString('id-ID')} ${date.toLocaleTimeString('id-ID')}`;
+                const formattedDate = `${date.toLocaleDateString('en-US')} ${date.toLocaleTimeString('en-US')}`;
                 
                 const row = document.createElement('tr');
                 row.innerHTML = `
@@ -1073,7 +1181,7 @@
                     <td>${record.itemName}</td>
                     <td>
                         <span class="history-badge ${record.type === 'in' ? 'badge-in' : 'badge-out'}">
-                            ${record.type === 'in' ? 'MASUK' : 'KELUAR'}
+                            ${record.type === 'in' ? 'IN' : 'OUT'}
                         </span>
                     </td>
                     <td class="${record.type === 'in' ? 'history-in' : 'history-out'}">
@@ -1081,59 +1189,57 @@
                     </td>
                     <td>${record.destination}</td>
                     <td>${record.notes || '-'}</td>
-                    <td>${record.user}</td>
+                    <!-- Removed User column -->
                 `;
                 
                 historyTableBody.appendChild(row);
             });
         }
         
-        // Fungsi untuk membuka modal stok masuk/keluar
+        // Function to open stock in/out modal
         function openStockModal(type) {
             stockTypeInput.value = type;
-            stockModalTitle.textContent = type === 'in' ? 'Stok Masuk' : 'Stok Keluar';
-            destinationLabel.textContent = type === 'in' ? 'Pemasok' : 'Tujuan Pengiriman';
+            stockModalTitle.textContent = type === 'in' ? 'Stock In' : 'Stock Out';
+            destinationLabel.textContent = type === 'in' ? 'Supplier' : 'Shipping Destination';
             stockForm.reset();
-            stockItemSearchInput.value = ''; // Clear search input
-            selectedStockItemIdInput.value = ''; // Clear selected item ID
-            autocompleteList.innerHTML = ''; // Clear autocomplete list
+            stockItemSearchInput.value = ''; 
+            selectedStockItemIdInput.value = ''; 
+            autocompleteList.innerHTML = ''; 
             stockModal.style.display = 'flex';
         }
         
-        // Fungsi untuk membuka modal edit barang
+        // Function to open edit item modal
         function editItem(id) {
             const item = items.find(item => item.id === id);
             
             if (item) {
-                modalTitle.textContent = 'Edit Barang';
+                modalTitle.textContent = 'Edit Item';
                 itemIdInput.value = item.id;
-                itemPidDisplay.value = item.pid; // Set selected PID
-                itemNameDisplayEdit.value = item.name; // Set displayed name
-                itemStockInput.value = item.stock || 0; // Set default if null
-                itemPriceInput.value = item.price || 0; // Set default if null
+                itemPidDisplay.value = item.pid; 
+                itemNameDisplayEdit.value = item.name; 
+                itemStockInput.value = item.stock || 0; 
+                // itemPriceInput.value = item.price || 0; // Removed
                 
                 itemModal.style.display = 'flex';
             }
         }
         
-        // Fungsi untuk menghapus barang
+        // Function to delete item
         async function deleteItem(id) {
-            if (confirm('Apakah Anda yakin ingin menghapus barang ini?')) {
+            if (confirm('Are you sure you want to delete this item?')) {
                 const item = items.find(item => item.id === id);
                 if (item) {
-                    // Add to history before deleting from inventory
-                    await addHistoryRecord('out', item.id, item.name, item.stock || 0, 'Dihapus dari sistem', 'Barang dihapus dari inventori');
+                    await addHistoryRecord('out', item.id, item.name, item.stock || 0, 'Deleted from system', 'Item deleted from inventory');
                     
-                    // Remove from Firebase
                     await itemsRef.child(id).remove();
-                    showAlert('Barang berhasil dihapus');
+                    showAlert('Item successfully deleted');
                 }
             }
         }
         
-        // Fungsi untuk menambahkan record history ke Firebase
+        // Function to add history record to Firebase
         async function addHistoryRecord(type, itemId, itemName, quantity, destination, notes) {
-            const newHistoryRef = historyRef.push(); // Generate unique key
+            const newHistoryRef = historyRef.push(); 
             const record = {
                 id: newHistoryRef.key,
                 type,
@@ -1142,80 +1248,77 @@
                 quantity,
                 destination,
                 notes,
-                user: 'Admin', // Dalam implementasi nyata, ini bisa diambil dari info login
+                // user: 'Admin', // Removed user field
                 timestamp: new Date().toISOString()
             };
             await newHistoryRef.set(record);
         }
         
-        // Event listener untuk form barang (sekarang hanya untuk edit)
+        // Event listener for item form (now only for edit)
         itemForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const id = itemIdInput.value;
-            const pid = itemPidDisplay.value; // PID dari display field
-            const name = itemNameDisplayEdit.value; // Nama dari display field
+            const pid = itemPidDisplay.value; 
+            const name = itemNameDisplayEdit.value; 
             const stock = parseInt(itemStockInput.value);
-            const price = parseInt(itemPriceInput.value);
+            // const price = parseInt(itemPriceInput.value); // Removed
 
-            // Validasi dasar (PID dan Nama Barang tidak bisa kosong karena readonly)
             if (!id || !pid || !name) {
-                showAlert('Terjadi kesalahan. Item tidak valid.', 'error');
+                showAlert('An error occurred. Invalid item.', 'error');
                 return;
             }
             
-            // Ini selalu edit karena tombol tambah barang sudah dihapus
             const existingItem = items.find(item => item.id === id);
             if (existingItem) {
                 const oldStock = existingItem.stock || 0;
-                const updatedItem = { id, pid, name, stock, price };
+                // const updatedItem = { id, pid, name, stock, price }; // Removed price
+                const updatedItem = { id, pid, name, stock }; 
                 await itemsRef.child(id).set(updatedItem);
                 
-                // Catat perubahan stok di history jika ada
                 if (stock !== oldStock) {
                     const changeType = stock > oldStock ? 'in' : 'out';
                     const changeQuantity = Math.abs(stock - oldStock);
-                    const destination = changeType === 'in' ? 'Penyesuaian stok (tambah)' : 'Penyesuaian stok (kurang)';
+                    const destination = changeType === 'in' ? 'Stock adjustment (add)' : 'Stock adjustment (subtract)';
                     
-                    await addHistoryRecord(changeType, id, name, changeQuantity, destination, 'Penyesuaian stok manual');
+                    await addHistoryRecord(changeType, id, name, changeQuantity, destination, 'Manual stock adjustment');
                 }
                 
-                showAlert('Barang berhasil diupdate');
+                showAlert('Item successfully updated');
             } else {
-                showAlert('Item tidak ditemukan untuk diupdate.', 'error');
+                showAlert('Item not found for update.', 'error');
             }
             
             itemModal.style.display = 'none';
         });
         
-        // Event listener untuk form stok
+        // Event listener for stock form
         stockForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const type = stockTypeInput.value;
-            const itemId = selectedStockItemIdInput.value; // Ambil dari hidden input
+            const itemId = selectedStockItemIdInput.value; 
             const quantity = parseInt(stockQuantityInput.value);
             const destination = stockDestinationInput.value;
             const notes = stockNotesInput.value;
             
             if (!itemId) {
-                showAlert('Pilih barang terlebih dahulu dari daftar pencarian.', 'error');
+                showAlert('Please select an item from the search list first.', 'error');
                 return;
             }
 
             const item = items.find(item => item.id === itemId);
             
             if (!item) {
-                showAlert('Barang tidak ditemukan.', 'error');
+                showAlert('Item not found.', 'error');
                 return;
             }
             
-            if (type === 'out' && quantity > (item.stock || 0)) { // Check against current stock or 0
-                showAlert('Stok tidak mencukupi', 'error');
+            if (type === 'out' && quantity > (item.stock || 0)) { 
+                showAlert('Insufficient stock.', 'error');
                 return;
             }
             
-            // Update stok barang di Firebase
             let newStock;
             if (type === 'in') {
                 newStock = (item.stock || 0) + quantity;
@@ -1224,14 +1327,13 @@
             }
             await itemsRef.child(itemId).update({ stock: newStock });
             
-            // Catat di history Firebase
             await addHistoryRecord(type, itemId, item.name, quantity, destination, notes);
             
-            showAlert(`Stok berhasil ${type === 'in' ? 'ditambahkan' : 'dikurangi'}`);
+            showAlert(`Stock successfully ${type === 'in' ? 'added' : 'deducted'}`);
             stockModal.style.display = 'none';
         });
         
-        // Event listener untuk pencarian barang
+        // Event listener for item search
         searchInput.addEventListener('input', (e) => {
             const searchTerm = e.target.value.toLowerCase();
             
@@ -1240,56 +1342,51 @@
                     item.name.toLowerCase().includes(searchTerm) || 
                     item.pid.toLowerCase().includes(searchTerm)
                 );
-                // Reset halaman ke 1 setelah pencarian
                 currentPage = 1;
                 renderItemsTable(filteredItems);
             } else {
-                // Jika pencarian kosong, tampilkan semua item dan reset halaman
                 currentPage = 1;
                 renderItemsTable(items);
             }
         });
         
-        // Event listener untuk pencarian history
+        // Event listener for history search
         historySearchInput.addEventListener('input', () => {
             renderHistoryTable();
         });
         
-        // Event listener untuk filter
+        // Event listener for history filters
         typeFilter.addEventListener('change', renderHistoryTable);
         dateFilter.addEventListener('change', renderHistoryTable);
-        itemFilter.addEventListener('change', renderHistoryTable);
+        // itemFilter.addEventListener('change', renderHistoryTable); // Removed
         
-        // Event listener untuk reset filter
+        // Event listener for reset filters
         resetFiltersBtn.addEventListener('click', () => {
             typeFilter.value = 'all';
             dateFilter.value = '';
-            itemFilter.value = 'all';
+            // itemFilter.value = 'all'; // Removed
             historySearchInput.value = '';
             renderHistoryTable();
         });
         
-        // Event listener untuk tabs
+        // Event listener for tabs
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
                 const tabId = tab.dataset.tab;
                 
-                // Update active tab
                 tabs.forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
                 
-                // Update active content
                 tabContents.forEach(content => content.classList.remove('active'));
                 document.getElementById(`${tabId}-tab`).classList.add('active');
                 
-                // Jika pindah ke tab history, render ulang
                 if (tabId === 'history') {
                     renderHistoryTable();
                 }
             });
         });
         
-        // Event listener untuk tombol dan modal
+        // Event listener for buttons and modals
         stockInBtn.addEventListener('click', () => openStockModal('in'));
         stockOutBtn.addEventListener('click', () => openStockModal('out'));
         
@@ -1309,7 +1406,7 @@
             stockModal.style.display = 'none';
         });
         
-        // Tutup modal jika klik di luar konten modal
+        // Close modal if clicked outside modal content
         window.addEventListener('click', (e) => {
             if (e.target === itemModal) {
                 itemModal.style.display = 'none';
@@ -1317,27 +1414,25 @@
             if (e.target === stockModal) {
                 stockModal.style.display = 'none';
             }
-            // Tutup autocomplete jika klik di luar
             if (e.target !== stockItemSearchInput && e.target.parentNode !== autocompleteList) {
                 autocompleteList.innerHTML = '';
             }
         });
 
-        // Sinkronisasi data inventori dari Firebase
+        // Synchronize inventory data from Firebase
         itemsRef.on('value', (snapshot) => {
             const data = snapshot.val();
             items = [];
             for (let key in data) {
                 items.push(data[key]);
             }
-            // Panggil renderItemsTable tanpa argumen untuk menggunakan 'items' global
-            // dan menerapkan paginasi pada semua item (atau yang sudah difilter oleh searchInput)
             const searchTerm = searchInput.value.toLowerCase();
             if (searchTerm) {
                 const filteredItems = items.filter(item => 
                     item.name.toLowerCase().includes(searchTerm) || 
                     item.pid.toLowerCase().includes(searchTerm)
                 );
+                currentPage = 1;
                 renderItemsTable(filteredItems);
             } else {
                 renderItemsTable(items);
@@ -1345,74 +1440,58 @@
             updateStats();
         });
 
-        // Sinkronisasi data history dari Firebase
+        // Synchronize history data from Firebase
         historyRef.on('value', (snapshot) => {
             const data = snapshot.val();
             history = [];
             for (let key in data) {
                 history.push(data[key]);
             }
-            // Only re-render history if the history tab is active
             if (document.getElementById('history-tab').classList.contains('active')) {
                 renderHistoryTable();
             }
         });
 
-        // Fungsi untuk mengisi Firebase dengan data dari pid.json jika belum ada
+        // Function to populate Firebase with data from pid.json if not already present
         async function populateFirebaseFromPidData() {
             if (pidData.length === 0) {
                 console.warn("pid.json data not loaded or is empty. Skipping Firebase population.");
-                return; // Jangan lanjutkan jika pidData kosong
+                return; 
             }
 
-            // Get current items from Firebase once
             const snapshot = await itemsRef.once('value');
             const currentFirebaseItems = snapshot.val() || {};
-            // Membuat Set dari PID yang sudah ada di Firebase untuk pencarian cepat
             const currentFirebasePids = new Set(Object.values(currentFirebaseItems).map(item => item.pid));
 
             for (const pidEntry of pidData) {
-                // Hanya tambahkan jika PID belum ada di Firebase
                 if (!currentFirebasePids.has(pidEntry.pid)) {
                     const newId = itemsRef.push().key;
                     const newItem = {
                         id: newId,
                         pid: pidEntry.pid,
-                        name: pidEntry.description, // Menggunakan 'description' dari pid.json sebagai 'name'
-                        stock: pidEntry.stok,       // Menggunakan nilai 'stok' yang sudah diproses
-                        price: 0                    // Default price to 0
+                        name: pidEntry.description, 
+                        stock: pidEntry.stok,       
+                        price: 0                    
                     };
                     await itemsRef.child(newId).set(newItem);
                     console.log(`Added new item from pid.json to Firebase: ${pidEntry.pid}`);
-                } else {
-                    // Opsional: Jika Anda ingin memperbarui stok atau nama barang dari pid.json
-                    // untuk item yang sudah ada di Firebase, Anda bisa menambahkan logika di sini.
-                    // Contoh:
-                    // const existingItemKey = Object.keys(currentFirebaseItems).find(key => currentFirebaseItems[key].pid === pidEntry.pid);
-                    // if (existingItemKey) {
-                    //     await itemsRef.child(existingItemKey).update({
-                    //         name: pidEntry.description,
-                    //         stock: pidEntry.stok // Ini akan menimpa stok yang ada di Firebase
-                    //     });
-                    //     console.log(`Updated existing item ${pidEntry.pid} from pid.json.`);
-                    // }
-                }
+                } 
             }
         }
         
-        // Event Listeners untuk Paginasi
+        // Event Listeners for Pagination
         itemsPerPageSelect.addEventListener('change', () => {
             itemsPerPage = parseInt(itemsPerPageSelect.value);
-            currentPage = 1; // Reset ke halaman pertama setiap kali items per page berubah
-            renderItemsTable(currentFilteredItems); // Render ulang dengan filter yang sedang aktif
+            currentPage = 1; 
+            renderItemsTable(currentFilteredItems); 
         });
 
-        // Autocomplete untuk input pencarian barang di modal stok
-        let currentFocus = -1; // Untuk navigasi keyboard
+        // Autocomplete for item search input in stock modal
+        let currentFocus = -1; 
 
         stockItemSearchInput.addEventListener("input", function(e) {
             const val = this.value;
-            closeAllLists(); // Tutup daftar autocomplete yang sudah ada
+            closeAllLists(); 
             if (!val) { return false; }
             currentFocus = -1;
 
@@ -1424,10 +1503,9 @@
             const searchLower = val.toLowerCase();
 
             items.forEach(item => {
-                const itemText = `${item.pid} - ${item.name} (Stok: ${item.stock || 0})`;
+                const itemText = `${item.pid} - ${item.name} (Stock: ${item.stock || 0})`;
                 if (itemText.toLowerCase().includes(searchLower)) {
                     const b = document.createElement("div");
-                    // Highlight bagian yang cocok
                     b.innerHTML = itemText.replace(new RegExp(val, "gi"), (match) => `<strong>${match}</strong>`);
                     b.innerHTML += `<input type='hidden' value='${item.id}' data-item-name='${item.name}' data-item-pid='${item.pid}'>`;
                     b.addEventListener("click", function(e) {
@@ -1443,13 +1521,13 @@
         stockItemSearchInput.addEventListener("keydown", function(e) {
             let x = document.getElementById(this.id + "autocomplete-list");
             if (x) x = x.getElementsByTagName("div");
-            if (e.keyCode == 40) { // Panah bawah
+            if (e.keyCode == 40) { 
                 currentFocus++;
                 addActive(x);
-            } else if (e.keyCode == 38) { // Panah atas
+            } else if (e.keyCode == 38) { 
                 currentFocus--;
                 addActive(x);
-            } else if (e.keyCode == 13) { // Enter
+            } else if (e.keyCode == 13) { 
                 e.preventDefault();
                 if (currentFocus > -1) {
                     if (x) x[currentFocus].click();
@@ -1480,14 +1558,13 @@
             }
         }
 
-        // Inisialisasi aplikasi
+        // Initialize application
         async function initApp() {
-            await loadPidData(); // Load PID data first
-            await populateFirebaseFromPidData(); // Then populate Firebase based on pid.json
-            // Firebase 'value' listeners will handle rendering and stats update
+            await loadPidData(); 
+            await populateFirebaseFromPidData(); 
         }
         
-        // Jalankan aplikasi
+        // Run application
         initApp();
     </script>
 </body>
