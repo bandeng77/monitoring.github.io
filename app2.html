@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Manajemen Stok dengan Riwayat</title>
+    <title>Stock Management System with History</title>
     <style>
         :root {
             --primary: #3b82f6;
@@ -455,10 +455,10 @@
         
         .filter-bar {
             display: flex;
+            flex-wrap: wrap; /* Allow items to wrap to the next line */
             gap: 1rem;
             margin-bottom: 1.5rem;
-            flex-wrap: wrap;
-            align-items: center;
+            align-items: flex-start; /* Align items to the start of the cross axis */
             background: white;
             padding: 1rem;
             border-radius: 8px;
@@ -572,7 +572,7 @@
             right: 0;
             max-height: 200px;
             overflow-y: auto;
-            background-color: white;
+            background-color: #fff; 
             box-shadow: var(--shadow-md);
             border-radius: 6px;
         }
@@ -593,7 +593,96 @@
             background-color: var(--primary-dark) !important;
             color: #ffffff;
         }
+
+        /* Specific styles for history item filter */
+        .history-item-filter-group {
+            flex-basis: 100%; /* Take full width */
+            display: flex;
+            flex-direction: column; /* Stack label and input vertically */
+            gap: 0.5rem;
+            margin-top: 1rem; /* Add some space above this group */
+        }
+
+        .history-item-filter-group .autocomplete-container {
+            width: 100%;
+        }
+
+        #selected-history-items-container {
+            display: flex;
+            flex-wrap: wrap; /* Allow selected items to wrap to the next line */
+            gap: 8px; /* Spacing between selected items */
+            margin-top: 8px; /* Space above the selected items */
+            width: 100%; /* Take full width */
+        }
+
+        #selected-history-items-container .history-badge {
+            background-color: var(--primary);
+            color: white;
+            padding: 6px 10px;
+            border-radius: 15px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9rem;
+            white-space: nowrap; /* Prevent text from wrapping inside the badge */
+        }
+
+        #selected-history-items-container .remove-item-tag {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 0.9em;
+            margin-left: 5px;
+            padding: 0;
+            line-height: 1;
+        }
         
+        /* Adjust action-bar for history tab to stack vertically */
+        #history-tab .action-bar {
+            flex-direction: column;
+            align-items: flex-start; /* Align items to the start */
+            gap: 1rem; /* Space between search box and filter bar */
+        }
+
+        #history-tab .action-bar .search-box {
+            max-width: 100%; /* Ensure search box takes full width */
+            margin-bottom: 0; /* Remove extra margin if any */
+        }
+
+        #history-tab .filter-bar {
+            width: 100%; /* Ensure filter bar takes full width */
+            margin-top: 0; /* Remove extra margin if any */
+            /* Ensure filter groups align horizontally */
+            justify-content: flex-start; /* Align items to the start */
+            align-items: flex-end; /* Align items to the bottom for better vertical alignment of inputs */
+        }
+
+        #history-tab .filter-bar .filter-group {
+            /* Allow filter groups to shrink/grow but prefer a certain size */
+            flex-basis: auto; 
+            min-width: 150px; /* Minimum width for each filter group */
+            flex-grow: 1; /* Allow them to grow */
+            align-items: flex-start; /* Align label and input to the start */
+            flex-direction: column; /* Stack label and input vertically */
+        }
+
+        #history-tab .filter-bar .filter-group label {
+            margin-bottom: 0.25rem; /* Smaller margin for labels */
+        }
+
+        #history-tab .filter-bar .filter-group input,
+        #history-tab .filter-bar .filter-group select {
+            width: auto; /* Allow inputs to size based on content/flex */
+            flex-grow: 1; /* Allow inputs to grow within their group */
+        }
+
+        /* Ensure buttons are also aligned */
+        #history-tab .filter-bar .btn {
+            align-self: flex-end; /* Align buttons to the bottom of the filter bar */
+            margin-top: 1rem; /* Add margin to separate from other filters */
+        }
+
         @media (max-width: 768px) {
             .dashboard {
                 grid-template-columns: 1fr;
@@ -632,12 +721,23 @@
             .header-content .back-button {
                 margin-top: 1rem;
             }
+            .history-item-filter-group {
+                flex-basis: auto; /* Adjust for smaller screens */
+            }
+            #history-tab .filter-bar .filter-group {
+                flex-direction: column; /* Stack vertically on small screens */
+                align-items: stretch;
+                min-width: unset; /* Remove min-width constraint */
+            }
+            #history-tab .filter-bar .btn {
+                align-self: stretch; /* Stretch buttons on small screens */
+            }
         }
     </style>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <!-- Library untuk Export Excel -->
+    <!-- Library for Exporting Excel -->
     <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
 </head>
 <body>
@@ -646,10 +746,10 @@
             <div class="header-content">
                 <div class="logo">
                     <span class="logo-icon">📦</span>
-                    <h1>Sistem Manajemen Stok dengan Riwayat</h1>
+                    <h1>Stock Management System with History</h1>
                 </div>
                 <a href="index.html" class="back-button">
-                    <span>🏠</span> Kembali ke Beranda
+                    <span>🏠</span> Back to Home
                 </a>
             </div>
         </div>
@@ -657,22 +757,22 @@
 
     <main>
         <div class="tabs">
-            <button class="tab active" data-tab="inventory">Item Inventaris</button>
-            <button class="tab" data-tab="history">Riwayat Pergerakan</button>
+            <button class="tab active" data-tab="inventory">Inventory Items</button>
+            <button class="tab" data-tab="history">Movement History</button>
         </div>
         
         <div class="tab-content active" id="inventory-tab">
             <div class="dashboard">
                 <div class="stat-card">
-                    <div class="stat-title">Total Item</div>
+                    <div class="stat-title">Total Items</div>
                     <div class="stat-value" id="total-items">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-title">Item Tersedia</div>
+                    <div class="stat-title">Available Items</div>
                     <div class="stat-value" id="available-items">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-title">Stok Rendah</div>
+                    <div class="stat-title">Low Stock Items</div>
                     <div class="stat-value" id="low-stock-items">0</div>
                 </div>
             </div>
@@ -680,14 +780,14 @@
             <div class="action-bar">
                 <div class="search-box">
                     <span>🔍</span>
-                    <input type="text" id="search-input" placeholder="Cari item...">
+                    <input type="text" id="search-input" placeholder="Search item...">
                 </div>
                 <div style="display: flex; gap: 1rem;">
                     <button class="btn btn-info" id="stock-in-btn">
-                        <span>⬇️</span> Stok Masuk
+                        <span>⬇️</span> Stock In
                     </button>
                     <button class="btn btn-warning" id="stock-out-btn">
-                        <span>⬆️</span> Stok Keluar
+                        <span>⬆️</span> Stock Out
                     </button>
                 </div>
             </div>
@@ -696,17 +796,17 @@
 
             <div class="pagination-controls">
                 <div class="items-per-page-group">
-                    <label for="items-per-page">Tampilkan:</label>
+                    <label for="items-per-page">Show:</label>
                     <select id="items-per-page" class="filter-select">
                         <option value="10">10</option>
                         <option value="50">50</option>
                         <option value="100">100</option>
                         <option value="1000">1000</option>
                     </select>
-                    <span>item per halaman</span>
+                    <span>items per page</span>
                 </div>
                 <div class="pagination-buttons" id="pagination-buttons-container">
-                    <!-- Tombol paginasi akan dirender di sini oleh JavaScript -->
+                    <!-- Pagination buttons will be rendered here by JavaScript -->
                 </div>
             </div>
 
@@ -715,14 +815,14 @@
                     <thead>
                         <tr>
                             <th>No.</th>
-                            <th>No. Item</th>
-                            <th>Nama Item</th>
-                            <th>Stok</th>
-                            <th>Aksi</th>
+                            <th>Item No.</th>
+                            <th>Item Name</th>
+                            <th>Stock</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="items-table-body">
-                        <!-- Data akan diisi oleh JavaScript -->
+                        <!-- Data will be populated by JavaScript -->
                     </tbody>
                 </table>
             </div>
@@ -732,43 +832,43 @@
             <div class="action-bar">
                 <div class="search-box">
                     <span>🔍</span>
-                    <input type="text" id="history-search-input" placeholder="Cari riwayat...">
+                    <input type="text" id="history-search-input" placeholder="Search history...">
                 </div>
                 <div class="filter-bar">
                     <div class="filter-group">
-                        <label for="type-filter">Tipe:</label>
+                        <label for="type-filter">Type:</label>
                         <select id="type-filter" class="filter-select">
-                            <option value="all">Semua</option>
-                            <option value="in">Stok Masuk</option>
-                            <option value="out">Stok Keluar</option>
+                            <option value="all">All</option>
+                            <option value="in">Stock In</option>
+                            <option value="out">Stock Out</option>
                         </select>
                     </div>
                     
                     <div class="filter-group">
-                        <label for="start-date-filter">Dari Tanggal:</label>
+                        <label for="start-date-filter">From Date:</label>
                         <input type="date" id="start-date-filter" class="filter-select">
                     </div>
                     <div class="filter-group">
-                        <label for="end-date-filter">Sampai Tanggal:</label>
+                        <label for="end-date-filter">To Date:</label>
                         <input type="date" id="end-date-filter" class="filter-select">
                     </div>
 
-                    <!-- Filter Item Multi-pilihan dengan Search (Autocomplete) -->
-                    <div class="filter-group" style="flex-grow: 1; max-width: 400px;">
-                        <label for="history-item-search-input">Pilih Item:</label>
+                    <!-- Multi-select Item Filter with Search (Autocomplete) -->
+                    <div class="history-item-filter-group">
+                        <label for="history-item-search-input">Select Item:</label>
                         <div class="autocomplete-container">
-                            <input type="text" id="history-item-search-input" placeholder="Cari & pilih item...">
+                            <input type="text" id="history-item-search-input" placeholder="Search & select item...">
                             <div id="history-item-autocomplete-list" class="autocomplete-items"></div>
                         </div>
-                        <div id="selected-history-items-container" style="display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px;">
-                            <!-- Item yang dipilih akan muncul di sini -->
+                        <div id="selected-history-items-container">
+                            <!-- Selected items will appear here -->
                         </div>
                     </div>
                     
-                    <button class="btn" id="reset-filters-btn">Reset Filter</button>
-                    <!-- Tombol Export to Excel -->
+                    <button class="btn" id="reset-filters-btn">Reset Filters</button>
+                    <!-- Export to Excel Button -->
                     <button class="btn btn-success" id="export-excel-btn">
-                        <span>📊</span> Export ke Excel
+                        <span>📊</span> Export to Excel
                     </button>
                 </div>
             </div>
@@ -777,24 +877,24 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>Tanggal</th>
-                            <th>No. Item</th>
-                            <th>Nama Item</th>
-                            <th>Tipe</th>
-                            <th>Kuantitas</th>
-                            <th>Tujuan/Pemasok</th>
-                            <th>Catatan</th>
+                            <th>Date</th>
+                            <th>Item No.</th>
+                            <th>Item Name</th>
+                            <th>Type</th>
+                            <th>Quantity</th>
+                            <th>Destination/Supplier</th>
+                            <th>Notes</th>
                         </tr>
                     </thead>
                     <tbody id="history-table-body">
-                        <!-- Data riwayat akan diisi oleh JavaScript -->
+                        <!-- History data will be populated by JavaScript -->
                     </tbody>
                 </table>
             </div>
         </div>
     </main>
 
-    <!-- Modal untuk mengedit item -->
+    <!-- Modal for editing items -->
     <div class="modal" id="item-modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -804,66 +904,66 @@
             <form id="item-form">
                 <input type="hidden" id="item-id">
                 <div class="form-group">
-                    <label for="item-pid-display">No. Item</label>
+                    <label for="item-pid-display">Item No.</label>
                     <input type="text" id="item-pid-display" readonly>
                 </div>
                 <div class="form-group">
-                    <label for="item-name-display-edit">Nama Item</label>
+                    <label for="item-name-display-edit">Item Name</label>
                     <input type="text" id="item-name-display-edit" readonly>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="item-stock">Kuantitas Stok</label>
+                        <label for="item-stock">Stock Quantity</label>
                         <input type="number" id="item-stock" min="0" required>
                     </div>
                 </div>
                 <div class="form-actions">
-                    <button type="button" class="btn btn-danger" id="cancel-btn">Batal</button>
-                    <button type="submit" class="btn btn-success">Simpan</button>
+                    <button type="button" class="btn btn-danger" id="cancel-btn">Cancel</button>
+                    <button type="submit" class="btn btn-success">Save</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Modal untuk stok masuk/keluar -->
+    <!-- Modal for stock in/out -->
     <div class="modal" id="stock-modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 id="stock-modal-title">Stok Masuk</h2>
+                <h2 id="stock-modal-title">Stock In</h2>
                 <button class="close-modal" id="close-stock-modal">&times;</button>
             </div>
             <form id="stock-form">
                 <input type="hidden" id="stock-type">
                 <input type="hidden" id="selected-stock-item-id">
                 <div class="form-group">
-                    <label for="stock-item-search">Cari Item</label>
+                    <label for="stock-item-search">Search Item</label>
                     <div class="autocomplete-container">
-                        <input type="text" id="stock-item-search" placeholder="Ketik No. Item atau Nama Item..." required>
+                        <input type="text" id="stock-item-search" placeholder="Type Item No. or Item Name..." required>
                         <div id="autocomplete-list" class="autocomplete-items"></div>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="stock-quantity">Kuantitas</label>
+                    <label for="stock-quantity">Quantity</label>
                     <input type="number" id="stock-quantity" min="1" required>
                 </div>
                 <div class="form-group" id="destination-group">
-                    <label for="stock-destination" id="destination-label">Pemasok</label>
+                    <label for="stock-destination" id="destination-label">Supplier</label>
                     <input type="text" id="stock-destination" required>
                 </div>
                 <div class="form-group">
-                    <label for="stock-notes">Catatan</label>
+                    <label for="stock-notes">Notes</label>
                     <textarea id="stock-notes" rows="3"></textarea>
                 </div>
                 <div class="form-actions">
-                    <button type="button" class="btn btn-danger" id="cancel-stock-btn">Batal</button>
-                    <button type="submit" class="btn btn-success">Simpan</button>
+                    <button type="button" class="btn btn-danger" id="cancel-stock-btn">Cancel</button>
+                    <button type="submit" class="btn btn-success">Save</button>
                 </div>
             </form>
         </div>
     </div>
 
     <script>
-        // Konfigurasi Firebase
+        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyDWgxJfYKksEoeUF2rK67rAH-arejKawJM",
             authDomain: "monitoring-acc.firebaseapp.com",
@@ -874,23 +974,23 @@
             databaseURL: "https://monitoring-acc-default-rtdb.asia-southeast1.firebasedatabase.app/"
         };
 
-        // Inisialisasi Firebase
+        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
         const itemsRef = database.ref('inventoryItems');
         const historyRef = database.ref('inventoryHistory');
 
-        // Data barang (akan disinkronkan dengan Firebase)
+        // Item data (will be synchronized with Firebase)
         let items = [];
         let history = [];
-        let pidData = []; // Data dari pid.json
+        let pidData = []; // Data from pid.json
         
-        // Variabel Paginasi
+        // Pagination variables
         let currentPage = 1;
         let itemsPerPage = 10; // Default
-        let currentFilteredItems = []; // Untuk menyimpan hasil pencarian yang difilter sebelum paginasi
+        let currentFilteredItems = []; // To store filtered search results before pagination
 
-        // Elemen DOM
+        // DOM elements
         const itemsTableBody = document.getElementById('items-table-body');
         const historyTableBody = document.getElementById('history-table-body');
         const itemForm = document.getElementById('item-form');
@@ -927,29 +1027,29 @@
         const tabs = document.querySelectorAll('.tab');
         const tabContents = document.querySelectorAll('.tab-content');
 
-        // Elemen Paginasi
+        // Pagination elements
         const itemsPerPageSelect = document.getElementById('items-per-page');
         const paginationButtonsContainer = document.getElementById('pagination-buttons-container');
         
-        // Statistik
+        // Statistics
         const totalItemsEl = document.getElementById('total-items');
         const availableItemsEl = document.getElementById('available-items');
         const lowStockItemsEl = document.getElementById('low-stock-items');
 
-        // Filter Riwayat Baru
+        // New History Filters
         const startDateFilter = document.getElementById('start-date-filter');
         const endDateFilter = document.getElementById('end-date-filter');
         
-        // Elemen untuk filter item multi-pilihan
+        // Elements for multi-select item filter
         const historyItemSearchInput = document.getElementById('history-item-search-input');
         const historyItemAutocompleteList = document.getElementById('history-item-autocomplete-list');
         const selectedHistoryItemsContainer = document.getElementById('selected-history-items-container');
-        let selectedHistoryItemIds = new Set(); // Untuk menyimpan ID item yang dipilih
+        let selectedHistoryItemIds = new Set(); // To store selected item IDs
 
-        // Tombol Export Excel
+        // Export Excel Button
         const exportExcelBtn = document.getElementById('export-excel-btn');
 
-        // Fungsi untuk memuat data dari pid.json
+        // Function to load data from pid.json
         async function loadPidData() {
             try {
                 const response = await fetch('pid.json'); 
@@ -961,14 +1061,14 @@
                     ...item,
                     stok: item.stok === '-' ? 0 : parseInt(item.stok) || 0 
                 }));
-                console.log('Data PID dimuat dan diproses:', pidData);
+                console.log('PID data loaded and processed:', pidData);
             } catch (error) {
-                console.error('Error memuat data PID:', error);
-                showAlert(`Gagal memuat data No. Item (PID): ${error.message}`, 'error');
+                console.error('Error loading PID data:', error);
+                showAlert(`Failed to load Item No. (PID) data: ${error.message}`, 'error');
             }
         }
         
-        // Fungsi untuk menampilkan notifikasi
+        // Function to display notifications
         function showAlert(message, type = 'success') {
             const alertEl = document.createElement('div');
             alertEl.className = `alert alert-${type}`;
@@ -981,7 +1081,7 @@
             }, 3000);
         }
         
-        // Fungsi untuk memperbarui statistik
+        // Function to update statistics
         function updateStats() {
             const totalItems = items.length;
             const availableItems = items.filter(item => (item.stock || 0) > 0).length;
@@ -992,7 +1092,7 @@
             lowStockItemsEl.textContent = lowStockItems;
         }
         
-        // Fungsi untuk merender tombol paginasi
+        // Function to render pagination buttons
         function renderPaginationButtons(totalPages) {
             paginationButtonsContainer.innerHTML = ''; 
 
@@ -1066,7 +1166,7 @@
             paginationButtonsContainer.appendChild(lastPageBtn);
         }
 
-        // Fungsi untuk merender tabel item (dengan paginasi)
+        // Function to render the item table (with pagination)
         function renderItemsTable(itemsToRender = items) {
             currentFilteredItems = itemsToRender; 
             const totalItemsCount = currentFilteredItems.length;
@@ -1088,7 +1188,7 @@
                 itemsTableBody.innerHTML = `
                     <tr>
                         <td colspan="5" style="text-align: center; padding: 2rem;">
-                            Tidak ada data item.
+                            No item data.
                         </td>
                     </tr>
                 `;
@@ -1104,8 +1204,8 @@
                         <td class="${isLowStock ? 'low-stock' : ''}">${item.stock || 0}</td>
                         <td>
                             <button class="action-btn edit-btn" data-id="${item.id}" title="Edit">✏️</button>
-                            <button class="action-btn history-btn" data-id="${item.id}" title="Lihat Riwayat">📊</button>
-                            <button class="action-btn delete-btn" data-id="${item.id}" title="Hapus">🗑️</button>
+                            <button class="action-btn history-btn" data-id="${item.id}" title="View History">📊</button>
+                            <button class="action-btn delete-btn" data-id="${item.id}" title="Delete">🗑️</button>
                         </td>
                     `;
                     
@@ -1134,21 +1234,21 @@
                     const id = e.target.dataset.id;
                     const item = items.find(item => item.id === id);
                     if (item) {
-                        // Tambahkan item ke daftar item yang dipilih untuk filter riwayat
-                        selectedHistoryItemIds.clear(); // Hapus pilihan sebelumnya jika hanya ingin 1 item
+                        // Add item to the selected items list for history filter
+                        selectedHistoryItemIds.clear(); // Clear previous selections if only one item is desired
                         selectedHistoryItemIds.add(id);
-                        renderSelectedHistoryItems(); // Render ulang tag item yang dipilih
+                        renderSelectedHistoryItems(); // Re-render selected item tags
 
-                        // Pindah ke tab history
+                        // Switch to history tab
                         document.querySelector('[data-tab="history"]').click();
-                        // Render ulang tabel history dengan filter yang diterapkan
+                        // Re-render history table with applied filter
                         renderHistoryTable();
                     }
                 });
             });
         }
         
-        // Fungsi untuk merender tabel riwayat
+        // Function to render the history table
         function renderHistoryTable(historyToRender = history) {
             historyTableBody.innerHTML = '';
             
@@ -1156,7 +1256,7 @@
                 historyTableBody.innerHTML = `
                     <tr>
                         <td colspan="7" style="text-align: center; padding: 2rem;">
-                            Tidak ada data riwayat.
+                            No history data.
                         </td>
                     </tr>
                 `;
@@ -1165,33 +1265,33 @@
             
             let filteredHistory = [...historyToRender];
             
-            // Terapkan Filter Tipe
+            // Apply Type Filter
             if (typeFilter.value !== 'all') {
                 filteredHistory = filteredHistory.filter(record => record.type === typeFilter.value);
             }
             
-            // Terapkan Filter Rentang Tanggal
+            // Apply Date Range Filter
             const selectedStartDate = startDateFilter.value;
             const selectedEndDate = endDateFilter.value;
 
             if (selectedStartDate && selectedEndDate) {
                 const start = new Date(selectedStartDate);
-                start.setHours(0, 0, 0, 0); // Atur ke awal hari
+                start.setHours(0, 0, 0, 0); // Set to start of the day
                 const end = new Date(selectedEndDate);
-                end.setHours(23, 59, 59, 999); // Atur ke akhir hari
+                end.setHours(23, 59, 59, 999); // Set to end of the day
 
                 filteredHistory = filteredHistory.filter(record => {
                     const recordDate = new Date(record.timestamp);
                     return recordDate >= start && recordDate <= end;
                 });
-            } else if (selectedStartDate) { // Jika hanya tanggal mulai yang dipilih
+            } else if (selectedStartDate) { // If only start date is selected
                 const start = new Date(selectedStartDate);
                 start.setHours(0, 0, 0, 0);
                 filteredHistory = filteredHistory.filter(record => {
                     const recordDate = new Date(record.timestamp);
                     return recordDate >= start;
                 });
-            } else if (selectedEndDate) { // Jika hanya tanggal akhir yang dipilih
+            } else if (selectedEndDate) { // If only end date is selected
                 const end = new Date(selectedEndDate);
                 end.setHours(23, 59, 59, 999);
                 filteredHistory = filteredHistory.filter(record => {
@@ -1200,12 +1300,12 @@
                 });
             }
             
-            // Terapkan Filter Item Multi-pilihan
+            // Apply Multi-select Item Filter
             if (selectedHistoryItemIds.size > 0) {
                 filteredHistory = filteredHistory.filter(record => selectedHistoryItemIds.has(record.itemId));
             }
             
-            // Terapkan Filter Pencarian Teks
+            // Apply Text Search Filter
             if (historySearchInput.value) {
                 const searchTerm = historySearchInput.value.toLowerCase();
                 filteredHistory = filteredHistory.filter(record => 
@@ -1222,7 +1322,7 @@
                 historyTableBody.innerHTML = `
                     <tr>
                         <td colspan="7" style="text-align: center; padding: 2rem;">
-                            Tidak ada data yang cocok dengan filter.
+                            No data matching the filters.
                         </td>
                     </tr>
                 `;
@@ -1231,7 +1331,7 @@
             
             filteredHistory.forEach(record => {
                 const date = new Date(record.timestamp);
-                const formattedDate = `${date.toLocaleDateString('id-ID')} ${date.toLocaleTimeString('id-ID')}`;
+                const formattedDate = `${date.toLocaleDateString('en-US')} ${date.toLocaleTimeString('en-US')}`;
                 
                 const relatedItem = items.find(item => item.id === record.itemId);
                 const itemNo = relatedItem ? relatedItem.pid : 'N/A';
@@ -1243,7 +1343,7 @@
                     <td>${record.itemName}</td>
                     <td>
                         <span class="history-badge ${record.type === 'in' ? 'badge-in' : 'badge-out'}">
-                            ${record.type === 'in' ? 'MASUK' : 'KELUAR'}
+                            ${record.type === 'in' ? 'STOCK IN' : 'STOCK OUT'}
                         </span>
                     </td>
                     <td class="${record.type === 'in' ? 'history-in' : 'history-out'}">
@@ -1257,11 +1357,11 @@
             });
         }
         
-        // Fungsi untuk membuka modal stok masuk/keluar
+        // Function to open stock in/out modal
         function openStockModal(type) {
             stockTypeInput.value = type;
-            stockModalTitle.textContent = type === 'in' ? 'Stok Masuk' : 'Stok Keluar';
-            destinationLabel.textContent = type === 'in' ? 'Pemasok' : 'Tujuan Pengiriman';
+            stockModalTitle.textContent = type === 'in' ? 'Stock In' : 'Stock Out';
+            destinationLabel.textContent = type === 'in' ? 'Supplier' : 'Delivery Destination';
             stockForm.reset();
             stockItemSearchInput.value = ''; 
             selectedStockItemIdInput.value = ''; 
@@ -1269,7 +1369,7 @@
             stockModal.style.display = 'flex';
         }
         
-        // Fungsi untuk membuka modal edit item
+        // Function to open item edit modal
         function editItem(id) {
             const item = items.find(item => item.id === id);
             
@@ -1284,20 +1384,20 @@
             }
         }
         
-        // Fungsi untuk menghapus item
+        // Function to delete an item
         async function deleteItem(id) {
-            if (confirm('Apakah Anda yakin ingin menghapus item ini?')) {
+            if (confirm('Are you sure you want to delete this item?')) {
                 const item = items.find(item => item.id === id);
                 if (item) {
-                    await addHistoryRecord('out', item.id, item.name, item.stock || 0, 'Dihapus dari sistem', 'Item dihapus dari inventaris');
+                    await addHistoryRecord('out', item.id, item.name, item.stock || 0, 'Deleted from system', 'Item deleted from inventory');
                     
                     await itemsRef.child(id).remove();
-                    showAlert('Item berhasil dihapus');
+                    showAlert('Item deleted successfully');
                 }
             }
         }
         
-        // Fungsi untuk menambahkan catatan riwayat ke Firebase
+        // Function to add a history record to Firebase
         async function addHistoryRecord(type, itemId, itemName, quantity, destination, notes) {
             const newHistoryRef = historyRef.push(); 
             const record = {
@@ -1313,7 +1413,7 @@
             await newHistoryRef.set(record);
         }
         
-        // Event listener untuk form item (sekarang hanya untuk edit)
+        // Event listener for item form (currently only for edit)
         itemForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -1323,7 +1423,7 @@
             const stock = parseInt(itemStockInput.value);
 
             if (!id || !pid || !name) {
-                showAlert('Terjadi kesalahan. Item tidak valid.', 'error');
+                showAlert('An error occurred. Invalid item.', 'error');
                 return;
             }
             
@@ -1336,20 +1436,20 @@
                 if (stock !== oldStock) {
                     const changeType = stock > oldStock ? 'in' : 'out';
                     const changeQuantity = Math.abs(stock - oldStock);
-                    const destination = changeType === 'in' ? 'Penyesuaian stok (tambah)' : 'Penyesuaian stok (kurang)';
+                    const destination = changeType === 'in' ? 'Stock adjustment (increase)' : 'Stock adjustment (decrease)';
                     
-                    await addHistoryRecord(changeType, id, name, changeQuantity, destination, 'Penyesuaian stok manual');
+                    await addHistoryRecord(changeType, id, name, changeQuantity, destination, 'Manual stock adjustment');
                 }
                 
-                showAlert('Item berhasil diperbarui');
+                showAlert('Item updated successfully');
             } else {
-                showAlert('Item tidak ditemukan untuk diperbarui.', 'error');
+                showAlert('Item not found for update.', 'error');
             }
             
             itemModal.style.display = 'none';
         });
         
-        // Event listener untuk form stok
+        // Event listener for stock form
         stockForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -1360,19 +1460,19 @@
             const notes = stockNotesInput.value;
             
             if (!itemId) {
-                showAlert('Mohon pilih item dari daftar pencarian terlebih dahulu.', 'error');
+                showAlert('Please select an item from the search list first.', 'error');
                 return;
             }
 
             const item = items.find(item => item.id === itemId);
             
             if (!item) {
-                showAlert('Item tidak ditemukan.', 'error');
+                showAlert('Item not found.', 'error');
                 return;
             }
             
             if (type === 'out' && quantity > (item.stock || 0)) { 
-                showAlert('Stok tidak mencukupi.', 'error');
+                showAlert('Insufficient stock.', 'error');
                 return;
             }
             
@@ -1386,11 +1486,11 @@
             
             await addHistoryRecord(type, itemId, item.name, quantity, destination, notes);
             
-            showAlert(`Stok berhasil ${type === 'in' ? 'ditambahkan' : 'dikurangi'}`);
+            showAlert(`Stock successfully ${type === 'in' ? 'added' : 'reduced'}`);
             stockModal.style.display = 'none';
         });
         
-        // Event listener untuk pencarian item
+        // Event listener for item search
         searchInput.addEventListener('input', (e) => {
             const searchTerm = e.target.value.toLowerCase();
             
@@ -1407,28 +1507,28 @@
             }
         });
         
-        // Event listener untuk pencarian riwayat
+        // Event listener for history search
         historySearchInput.addEventListener('input', () => {
             renderHistoryTable();
         });
         
-        // Event listener untuk filter riwayat
+        // Event listener for history filters
         typeFilter.addEventListener('change', renderHistoryTable);
         startDateFilter.addEventListener('change', renderHistoryTable);
         endDateFilter.addEventListener('change', renderHistoryTable);
         
-        // Event listener untuk reset filter
+        // Event listener for reset filters
         resetFiltersBtn.addEventListener('click', () => {
             typeFilter.value = 'all';
             startDateFilter.value = '';
             endDateFilter.value = '';
             historySearchInput.value = '';
-            selectedHistoryItemIds.clear(); // Reset item yang dipilih
-            renderSelectedHistoryItems(); // Render ulang tampilan item yang dipilih
+            selectedHistoryItemIds.clear(); // Reset selected items
+            renderSelectedHistoryItems(); // Re-render selected item display
             renderHistoryTable();
         });
         
-        // Event listener untuk tab
+        // Event listener for tabs
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
                 const tabId = tab.dataset.tab;
@@ -1445,7 +1545,7 @@
             });
         });
         
-        // Event listener untuk tombol dan modal
+        // Event listener for buttons and modals
         stockInBtn.addEventListener('click', () => openStockModal('in'));
         stockOutBtn.addEventListener('click', () => openStockModal('out'));
         
@@ -1465,7 +1565,7 @@
             stockModal.style.display = 'none';
         });
         
-        // Tutup modal jika diklik di luar konten modal
+        // Close modal if clicked outside modal content
         window.addEventListener('click', (e) => {
             if (e.target === itemModal) {
                 itemModal.style.display = 'none';
@@ -1473,17 +1573,17 @@
             if (e.target === stockModal) {
                 stockModal.style.display = 'none';
             }
-            // Tutup daftar autocomplete untuk pencarian item stok
+            // Close autocomplete list for stock item search
             if (e.target !== stockItemSearchInput && e.target.parentNode !== autocompleteList) {
                 autocompleteList.innerHTML = '';
             }
-            // Tutup daftar autocomplete untuk filter item riwayat
+            // Close autocomplete list for history item filter
             if (e.target !== historyItemSearchInput && e.target.parentNode !== historyItemAutocompleteList) {
                 closeAllHistoryItemLists();
             }
         });
 
-        // Sinkronisasi data inventaris dari Firebase
+        // Synchronize inventory data from Firebase
         itemsRef.on('value', (snapshot) => {
             const data = snapshot.val();
             items = [];
@@ -1499,13 +1599,14 @@
                 currentPage = 1;
                 renderItemsTable(filteredItems);
             } else {
+                currentPage = 1;
                 renderItemsTable(items);
             }
             updateStats();
-            // Tidak perlu memanggil populateHistoryItemFilter() lagi karena menggunakan autocomplete
+            // No need to call populateHistoryItemFilter() again as it uses autocomplete
         });
 
-        // Sinkronisasi data riwayat dari Firebase
+        // Synchronize history data from Firebase
         historyRef.on('value', (snapshot) => {
             const data = snapshot.val();
             history = [];
@@ -1517,10 +1618,10 @@
             }
         });
 
-        // Fungsi untuk mengisi Firebase dengan data dari pid.json jika belum ada
+        // Function to populate Firebase with data from pid.json if not already present
         async function populateFirebaseFromPidData() {
             if (pidData.length === 0) {
-                console.warn("Data pid.json tidak dimuat atau kosong. Melewati pengisian Firebase.");
+                console.warn("pid.json data not loaded or empty. Skipping Firebase population.");
                 return; 
             }
 
@@ -1539,19 +1640,19 @@
                         price: 0                    
                     };
                     await itemsRef.child(newId).set(newItem);
-                    console.log(`Menambahkan item baru dari pid.json ke Firebase: ${pidEntry.pid}`);
+                    console.log(`Adding new item from pid.json to Firebase: ${pidEntry.pid}`);
                 } 
             }
         }
         
-        // Event Listener untuk Paginasi
+        // Event Listener for Pagination
         itemsPerPageSelect.addEventListener('change', () => {
             itemsPerPage = parseInt(itemsPerPageSelect.value);
             currentPage = 1; 
             renderItemsTable(currentFilteredItems); 
         });
 
-        // Autocomplete untuk pencarian item di modal stok (sudah ada)
+        // Autocomplete for item search in stock modal
         let currentFocus = -1; 
 
         stockItemSearchInput.addEventListener("input", function(e) {
@@ -1568,7 +1669,7 @@
             const searchLower = val.toLowerCase();
 
             items.forEach(item => {
-                const itemText = `${item.pid} - ${item.name} (Stok: ${item.stock || 0})`;
+                const itemText = `${item.pid} - ${item.name} (Stock: ${item.stock || 0})`;
                 if (itemText.toLowerCase().includes(searchLower)) {
                     const b = document.createElement("div");
                     b.innerHTML = itemText.replace(new RegExp(val, "gi"), (match) => `<strong>${match}</strong>`);
@@ -1623,7 +1724,7 @@
             }
         }
 
-        // Autocomplete untuk filter item di tab history
+        // Autocomplete for item filter in history tab
         let currentHistoryItemFocus = -1;
 
         historyItemSearchInput.addEventListener("input", function(e) {
@@ -1640,7 +1741,7 @@
             const searchLower = val.toLowerCase();
 
             items.forEach(item => {
-                // Hanya tampilkan item yang belum dipilih
+                // Only show items not yet selected
                 if (!selectedHistoryItemIds.has(item.id)) {
                     const itemText = `${item.pid} - ${item.name}`;
                     if (itemText.toLowerCase().includes(searchLower)) {
@@ -1651,8 +1752,8 @@
                             const itemId = this.getElementsByTagName("input")[0].value;
                             selectedHistoryItemIds.add(itemId);
                             renderSelectedHistoryItems();
-                            renderHistoryTable(); // Render ulang tabel riwayat setelah item dipilih
-                            historyItemSearchInput.value = ''; // Kosongkan input setelah memilih
+                            renderHistoryTable(); // Re-render history table after item is selected
+                            historyItemSearchInput.value = ''; // Clear input after selection
                             closeAllHistoryItemLists();
                         });
                         a.appendChild(b);
@@ -1698,27 +1799,22 @@
                 if (elmnt != x[i] && elmnt != historyItemSearchInput) {
                     x[i].parentNode.removeChild(x[i]);
                 }
+                // Also close the autocomplete list for the stock item search if it's open
+                if (elmnt != stockItemSearchInput && elmnt != autocompleteList) {
+                    autocompleteList.innerHTML = '';
+                }
             }
         }
 
-        // Fungsi untuk merender item yang dipilih sebagai "tag"
+        // Function to render selected items as "tags"
         function renderSelectedHistoryItems() {
             selectedHistoryItemsContainer.innerHTML = '';
             selectedHistoryItemIds.forEach(itemId => {
                 const item = items.find(i => i.id === itemId);
                 if (item) {
                     const tag = document.createElement('span');
-                    tag.className = 'history-badge badge-in'; // Bisa pakai badge-in atau buat style baru
-                    tag.style.marginRight = '5px';
-                    tag.style.marginBottom = '5px';
-                    tag.style.padding = '5px 10px';
-                    tag.style.borderRadius = '15px';
-                    tag.style.backgroundColor = 'var(--primary)';
-                    tag.style.color = 'white';
-                    tag.style.display = 'inline-flex';
-                    tag.style.alignItems = 'center';
-                    tag.style.gap = '5px';
-                    tag.innerHTML = `${item.pid} <button data-id="${item.id}" class="remove-item-tag" style="background: none; border: none; color: white; cursor: pointer; font-size: 0.8em;">&times;</button>`;
+                    tag.className = 'history-badge'; 
+                    tag.innerHTML = `${item.pid} <button data-id="${item.id}" class="remove-item-tag">&times;</button>`;
                     selectedHistoryItemsContainer.appendChild(tag);
                 }
             });
@@ -1728,44 +1824,44 @@
                     const itemIdToRemove = e.target.dataset.id;
                     selectedHistoryItemIds.delete(itemIdToRemove);
                     renderSelectedHistoryItems();
-                    renderHistoryTable(); // Render ulang tabel riwayat setelah item dihapus
+                    renderHistoryTable(); // Re-render history table after item is removed
                 });
             });
         }
 
-        // Event listener untuk tombol Export to Excel
+        // Event listener for Export to Excel button
         exportExcelBtn.addEventListener('click', () => {
             exportHistoryToExcel();
         });
 
-        // Fungsi untuk Export ke Excel
+        // Function to Export to Excel
         function exportHistoryToExcel() {
             const table = document.querySelector('#history-tab table');
             const ws = XLSX.utils.table_to_sheet(table);
 
-            // Mengatur lebar kolom secara otomatis (opsional, bisa disesuaikan)
+            // Set column widths automatically (optional, can be adjusted)
             const colWidths = [];
             const headerCells = table.querySelectorAll('thead th');
             headerCells.forEach((th, i) => {
-                // Perkiraan lebar berdasarkan panjang teks header
+                // Estimated width based on header text length
                 colWidths.push({ wch: th.innerText.length + 2 }); 
             });
             ws['!cols'] = colWidths;
 
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Riwayat Pergerakan Stok");
-            XLSX.writeFile(wb, "Riwayat_Pergerakan_Stok.xlsx");
+            XLSX.utils.book_append_sheet(wb, ws, "Stock Movement History");
+            XLSX.writeFile(wb, "Stock_Movement_History.xlsx");
         }
 
 
-        // Inisialisasi aplikasi
+        // Initialize the application
         async function initApp() {
             await loadPidData(); 
             await populateFirebaseFromPidData(); 
-            renderSelectedHistoryItems(); // Render item yang dipilih saat inisialisasi (jika ada)
+            renderSelectedHistoryItems(); // Render selected items on initialization (if any)
         }
         
-        // Jalankan aplikasi
+        // Run the application
         initApp();
     </script>
 </body>
