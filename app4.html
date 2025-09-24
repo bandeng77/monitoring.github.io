@@ -483,18 +483,9 @@
         }
 
         /* Media Queries for responsiveness */
-        @media (max-width: 1280px) { /* For large laptop screens, 3 columns */
-            .deal-card {
-                width: calc(33.333% - 0.666rem);
-                min-width: 280px;
-            }
-        }
+        /* Media queries for .deal-card have been removed to force 4 columns */
 
         @media (max-width: 1024px) { /* For tablets, 2 columns */
-            .deal-card {
-                width: calc(50% - 0.5rem);
-                min-width: 280px;
-            }
             /* Adjust main PO form grid columns for tablets */
             #monitoringModalContent .grid.grid-cols-1.sm\:grid-cols-2.md\:grid-cols-3.lg\:grid-cols-4 > div {
                 grid-column: span 1; /* Default 1 column */
@@ -512,10 +503,6 @@
         }
 
         @media (max-width: 768px) { /* For mobile, 1 column */
-            .deal-card {
-                width: 100%;
-                min-width: unset;
-            }
             .max-w-7xl {
                 padding-left: 1rem;
                 padding-right: 1rem;
@@ -1880,7 +1867,7 @@
                 const docInfo_doc1Name = document.getElementById('docInfo_doc1Name');
                 // const docInfo_doc1Link = document.getElementById('docInfo_doc1Link'); // REMOVED
                 const docInfo_doc2Name = document.getElementById('docInfo_doc2Name');
-                // const docInfo_doc2Link = document.getElementById('docInfo_doc2Link'); // REMOVED
+                // const docInfo_doc2Link = document.getElementById('doc2Link'); // REMOVED
 
                 docInfo_documentNumber.textContent = documentNumber;
 
