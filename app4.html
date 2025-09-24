@@ -176,7 +176,6 @@
             box-shadow: 0 6px 15px var(--shadow-light); /* Clearer shadow */
             font-size: 0.875rem;
             width: calc(25% - 0.75rem); /* Adjusted for 4 columns */
-            /* min-width: 220px; <-- Hapus baris ini */
             box-sizing: border-box;
             opacity: 0; /* Animation: Start invisible */
             transform: translateY(20px); /* Animation: Start slightly below */
@@ -950,7 +949,6 @@
                         <label class="block text-gray-700 text-sm font-semibold mb-2" for="uploadDoc_document1">Document Before Change</label>
                         <input type="file" id="uploadDoc_document1" accept=".pdf" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
                         <p id="document1FileName" class="text-sm text-gray-600 mt-1 hidden"></p>
-                        <!-- <a id="document1DownloadLink" href="#" target="_blank" class="text-blue-600 hover:underline text-sm mt-1 hidden">View Document 1</a> -->
                     </div>
 
                     <!-- Document Upload 2 -->
@@ -958,7 +956,6 @@
                         <label class="block text-gray-700 text-sm font-semibold mb-2" for="uploadDoc_document2">Document After Change</label>
                         <input type="file" id="uploadDoc_document2" accept=".pdf" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
                         <p id="document2FileName" class="text-sm text-gray-600 mt-1 hidden"></p>
-                        <!-- <a id="document2DownloadLink" href="#" target="_blank" class="text-blue-600 hover:underline text-sm mt-1 hidden">View Document 2</a> -->
                     </div>
 
                     <div class="flex justify-end space-x-3 mt-6">
@@ -1038,36 +1035,26 @@
     // Appwrite Configuration
     const client = new Appwrite.Client();
     client
-        .setEndpoint('https://fra.cloud.appwrite.io/v1') // *** CORRECTED: Using the correct endpoint ***
-        .setProject('68d0d6eb001dc06a95b3'); // Your Project ID
+        .setEndpoint('https://fra.cloud.appwrite.io/v1')
+        .setProject('68d0d6eb001dc06a95b3'); // KOREKSI: Menggunakan ID Proyek yang benar
 
     const storage = new Appwrite.Storage(client);
     const database = new Appwrite.Databases(client); // If you plan to use Appwrite Database for document metadata
-    const APPWRITE_DATABASE_ID = '68d0d71600124cfdc86e'; // This is not used in this code, but it's fine
+    const APPWRITE_DATABASE_ID = '68d0d71600124cfdc86e'; // Ini adalah ID database, tidak digunakan untuk setProject
 
     // Appwrite Hardcoded Config
-    const APPWRITE_ENDPOINT = "https://fra.cloud.appwrite.io/v1"; // Original Appwrite endpoint
-    const PROJECT_ID = '68d0d6eb001dc06a95b3'; // Use your project ID
+    const APPWRITE_ENDPOINT = "https://fra.cloud.appwrite.io/v1";
+    const PROJECT_ID = '68d0d6eb001dc06a95b3'; // KOREKSI: Menggunakan ID Proyek yang benar
     const APPWRITE_BUCKET_ID = '68d0d72500025b188805';
 
 
     document.addEventListener('DOMContentLoaded', function() {
         // --- User Authentication (Simulated) ---
-        // In a real application, you would use Firebase Authentication or Appwrite Auth
-        // For this example, we'll simulate a logged-in user with a fixed email.
-        // IMPORTANT: Replace 'user@example.com' with the actual logged-in user's email
-        // obtained from your authentication system (e.g., Firebase Auth, Appwrite Auth).
         let currentUserEmail = 'user@example.com'; // Default simulated user
 
-        // Function to get current user email (simulated)
         function getCurrentUserEmail() {
-            // In a real app, this would return the actual logged-in user's email
-            // For now, we'll use the simulated one.
             return currentUserEmail;
         }
-
-        // --- Activity Logging Function (NEW) ---
-        // REMOVED: logActivity function and all its calls
 
         // --- Generic function to toggle modal visibility ---
         function toggleModal(modalId, show) {
@@ -1075,13 +1062,10 @@
             if (modal) {
                 if (show) {
                     modal.classList.remove('hidden');
-                    // Optional: Add a class to body to prevent scrolling when modal is open
                     document.body.classList.add('overflow-hidden');
                 } else {
                     modal.classList.add('hidden');
-                    // Optional: Remove the class from body
                     document.body.classList.remove('overflow-hidden');
-                    // Hide autocomplete suggestions if any modal is closed
                     const suggestions = document.getElementById('uploadDoc_documentNumberSuggestions');
                     if (suggestions) suggestions.innerHTML = '';
                 }
@@ -1090,7 +1074,7 @@
 
         // --- Currency Formatting Functions ---
         function formatRupiah(angka, prefix) {
-            if (angka === null || angka === undefined || isNaN(angka)) return ''; // Handle null, undefined, NaN
+            if (angka === null || angka === undefined || isNaN(angka)) return '';
             let number_string = angka.toString().replace(/[^,\d]/g, ''),
                 split = number_string.split(','),
                 sisa = split[0].length % 3,
@@ -1108,9 +1092,8 @@
 
         function unformatRupiah(rupiah) {
             if (!rupiah) return 0;
-            // Remove "Rp ", dots, and replace comma with dot for proper parsing
             const cleaned = rupiah.replace('Rp ', '').replace(/\./g, '').replace(/,/g, '.');
-            return parseFloat(cleaned) || 0; // Use parseFloat for decimal values if needed, otherwise parseInt
+            return parseFloat(cleaned) || 0;
         }
 
         // Apply currency formatting to inputs
@@ -1125,7 +1108,6 @@
                     this.value = formatRupiah(unformatRupiah(this.value), 'Rp ');
                 }
             });
-            // Initial format if there's a value on load
             if (input.value) {
                 input.value = formatRupiah(unformatRupiah(input.value), 'Rp ');
             }
@@ -1136,13 +1118,12 @@
         // Add Monitoring Button
         document.getElementById('addMonitoringBtn').addEventListener('click', () => {
             document.getElementById('modalTitle').textContent = 'Add New Monitoring';
-            document.getElementById('monitoringId').value = ''; // Clear ID for new entry
-            document.getElementById('monitoringForm').reset(); // Clear form fields
+            document.getElementById('monitoringId').value = '';
+            document.getElementById('monitoringForm').reset();
             toggleModal('monitoringModal', true);
-            // logActivity('Opened "Add New Monitoring" form'); // REMOVED
         });
 
-        // Close Add/Edit Monitoring Modal (using new ID for cancel button)
+        // Close Add/Edit Monitoring Modal
         document.getElementById('cancelMonitoringBtn').addEventListener('click', () => toggleModal('monitoringModal', false));
 
         // Submit Monitoring Form
@@ -1151,7 +1132,7 @@
             showGlobalLoading();
 
             const monitoringId = document.getElementById('monitoringId').value;
-            const documentNumber = document.getElementById('documentNumber').value; // Get document number for logging
+            const documentNumber = document.getElementById('documentNumber').value;
             const data = {
                 documentType: document.getElementById('documentType').value,
                 documentNumber: documentNumber,
@@ -1161,27 +1142,23 @@
                 changeDate: document.getElementById('changeDate').value,
                 changeDescription: document.getElementById('changeDescription').value,
                 changedValue: unformatRupiah(document.getElementById('changedValue').value),
-                changedBy: document.getElementById('changedBy').value, // NEW: Get Changed By value
+                changedBy: document.getElementById('changedBy').value,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
 
             try {
                 if (monitoringId) {
-                    // Update existing monitoring
                     await monitoringsCollection.doc(monitoringId).update(data);
                     document.getElementById('successAlertMessage').textContent = 'Monitoring updated successfully!';
-                    // logActivity(`Updated monitoring for document number: ${documentNumber}`, monitoringId, documentNumber); // REMOVED
                 } else {
-                    // Add new monitoring
                     const newDocRef = await monitoringsCollection.add(data);
                     document.getElementById('successAlertMessage').textContent = 'New monitoring added successfully!';
-                    // logActivity(`Added new monitoring for document number: ${documentNumber}`, newDocRef.id, documentNumber); // REMOVED
                 }
                 toggleModal('monitoringModal', false);
                 toggleModal('successAlertModal', true);
-                loadMonitorings(); // Reload list after save
-                fetchAllDocumentNumbers(); // Re-fetch document numbers for autocomplete
+                loadMonitorings();
+                fetchAllDocumentNumbers();
             } catch (error) {
                 console.error("Error saving monitoring: ", error);
                 alert("Failed to save monitoring. Please try again.");
@@ -1190,25 +1167,18 @@
             }
         });
 
-        // Upload Document Button (formerly Document Checklist)
+        // Upload Document Button
         document.getElementById('uploadDocumentBtn').addEventListener('click', () => {
             document.getElementById('uploadDocumentForm').reset();
-            document.getElementById('uploadDoc_monitoringId').value = ''; // Clear monitoringId
+            document.getElementById('uploadDoc_monitoringId').value = '';
             document.getElementById('selectedMonitoringInfo').classList.add('hidden');
             document.getElementById('uploadDoc_documentNumberSuggestions').innerHTML = '';
-            // Clear file inputs and their display
             document.getElementById('uploadDoc_document1').value = '';
             document.getElementById('document1FileName').classList.add('hidden');
-            // document.getElementById('document1DownloadLink').classList.add('hidden'); // REMOVED
-            // document.getElementById('document1DownloadLink').removeAttribute('href'); // REMOVED
-
             document.getElementById('uploadDoc_document2').value = '';
             document.getElementById('document2FileName').classList.add('hidden');
-            // document.getElementById('document2DownloadLink').classList.add('hidden'); // REMOVED
-            // document.getElementById('document2DownloadLink').removeAttribute('href'); // REMOVED
 
             toggleModal('uploadDocumentModal', true);
-            // logActivity('Opened "Upload Document" form'); // REMOVED
         });
 
         // Close Upload Document Modal
@@ -1252,9 +1222,9 @@
                 if (document1File) {
                     const file1Response = await storage.createFile(
                         APPWRITE_BUCKET_ID,
-                        Appwrite.ID.unique(), // Generate a unique ID for the file
+                        Appwrite.ID.unique(),
                         document1File,
-                        [Appwrite.Permission.read(Appwrite.Role.any())] // public permission
+                        [Appwrite.Permission.read(Appwrite.Role.any())]
                     );
                     document1FileId = file1Response.$id;
                     document1Url = APPWRITE_ENDPOINT + '/storage/buckets/' + APPWRITE_BUCKET_ID + '/files/' + document1FileId + '/view?project=' + PROJECT_ID;
@@ -1267,9 +1237,9 @@
                 if (document2File) {
                     const file2Response = await storage.createFile(
                         APPWRITE_BUCKET_ID,
-                        Appwrite.ID.unique(), // Generate a unique ID for the file
+                        Appwrite.ID.unique(),
                         document2File,
-                        [Appwrite.Permission.read(Appwrite.Role.any())] // public permission
+                        [Appwrite.Permission.read(Appwrite.Role.any())]
                     );
                     document2FileId = file2Response.$id;
                     document2Url = APPWRITE_ENDPOINT + '/storage/buckets/' + APPWRITE_BUCKET_ID + '/files/' + document2FileId + '/view?project=' + PROJECT_ID;
@@ -1285,8 +1255,7 @@
                 document.getElementById('successAlertMessage').textContent = `Document files for Document Number ${documentNumber} saved successfully!`;
                 toggleModal('uploadDocumentModal', false);
                 toggleModal('successAlertModal', true);
-                loadMonitorings(); // Reload list to update checkmarks on cards
-                // logActivity(`Uploaded documents for document number: ${documentNumber}`, monitoringId, documentNumber); // REMOVED
+                loadMonitorings();
             } catch (error) {
                 console.error("Error saving document upload status or uploading files: ", error);
                 alert(`Failed to save document upload status or upload files. Error: ${error.message}. Please try again.`);
@@ -1295,19 +1264,17 @@
             }
         });
 
-        // Autocomplete for Document Number Search in Upload Document (Modified for substring search)
-        let allDocumentNumbers = []; // Cache all document numbers for client-side filtering
+        // Autocomplete for Document Number Search in Upload Document
+        let allDocumentNumbers = [];
         async function fetchAllDocumentNumbers() {
             try {
-                const snapshot = await monitoringsCollection.get(); // Fetch all documents
+                const snapshot = await monitoringsCollection.get();
                 allDocumentNumbers = snapshot.docs.map(doc => ({ id: doc.id, documentNumber: doc.data().documentNumber }));
-                // console.log("Fetched all document numbers:", allDocumentNumbers); // Debugging line
             } catch (error) {
                 console.error("Error fetching all document numbers for search: ", error);
             }
         }
 
-        // Call this once on page load
         fetchAllDocumentNumbers();
 
         document.getElementById('uploadDoc_documentNumberSearch').addEventListener('input', function() {
@@ -1317,13 +1284,13 @@
             document.getElementById('selectedMonitoringInfo').classList.add('hidden');
             document.getElementById('uploadDoc_monitoringId').value = '';
 
-            if (searchTerm.length < 1) { // Allow search with 1 character
+            if (searchTerm.length < 1) {
                 return;
             }
 
             const filteredSuggestions = allDocumentNumbers.filter(doc =>
                 doc.documentNumber && doc.documentNumber.toLowerCase().includes(searchTerm)
-            ).slice(0, 10); // Limit to 10 suggestions
+            ).slice(0, 10);
 
             filteredSuggestions.forEach(doc => {
                 const div = document.createElement('div');
@@ -1333,14 +1300,13 @@
                     document.getElementById('uploadDoc_monitoringId').value = doc.id;
                     document.getElementById('selectedDocumentNumberDisplay').textContent = doc.documentNumber;
                     document.getElementById('selectedMonitoringInfo').classList.remove('hidden');
-                    suggestionsContainer.innerHTML = ''; // Clear suggestions after selection
-                    loadUploadDocumentStatus(doc.id); // Load existing status for this Monitoring
+                    suggestionsContainer.innerHTML = '';
+                    loadUploadDocumentStatus(doc.id);
                 });
                 suggestionsContainer.appendChild(div);
             });
         });
 
-        // Hide autocomplete suggestions when clicking outside
         document.addEventListener('click', function(e) {
             const suggestionsContainer = document.getElementById('uploadDoc_documentNumberSuggestions');
             const searchInput = document.getElementById('uploadDoc_documentNumberSearch');
@@ -1355,47 +1321,24 @@
             try {
                 const uploadDoc = await documentUploadsCollection.doc(monitoringId).get();
                 const document1FileNameDisplay = document.getElementById('document1FileName');
-                // const document1DownloadLink = document.getElementById('document1DownloadLink'); // REMOVED
                 const document2FileNameDisplay = document.getElementById('document2FileName');
-                // const document2DownloadLink = document.getElementById('document2DownloadLink'); // REMOVED
 
-                // Reset display elements
                 document1FileNameDisplay.classList.add('hidden');
-                // document1DownloadLink.classList.add('hidden'); // REMOVED
-                // document1DownloadLink.removeAttribute('href'); // REMOVED
-
                 document2FileNameDisplay.classList.add('hidden');
-                // document2DownloadLink.classList.add('hidden'); // REMOVED
-                // document2DownloadLink.removeAttribute('href'); // REMOVED
-
 
                 if (uploadDoc.exists) {
                     const data = uploadDoc.data();
-                    console.log("Document Upload Data for monitoringId", monitoringId, ":", data); // Debugging
+                    console.log("Document Upload Data for monitoringId", monitoringId, ":", data);
 
-                    // Document 1
                     if (data.document1FileName && data.document1FileId && data.document1Url) {
                         document1FileNameDisplay.textContent = `File: ${data.document1FileName}`;
                         document1FileNameDisplay.classList.remove('hidden');
-                        // document1DownloadLink.href = data.document1Url; // REMOVED
-                        // document1DownloadLink.classList.remove('hidden'); // REMOVED
-                        console.log("Document 1 URL:", data.document1Url); // Debugging
-                    } else {
-                        console.log("Document 1 not found or incomplete data for monitoringId", monitoringId); // Debugging
                     }
 
-                    // Document 2
                     if (data.document2FileName && data.document2FileId && data.document2Url) {
                         document2FileNameDisplay.textContent = `File: ${data.document2FileName}`;
                         document2FileNameDisplay.classList.remove('hidden');
-                        // document2DownloadLink.href = data.document2Url; // REMOVED
-                        // document2DownloadLink.classList.remove('hidden'); // REMOVED
-                        console.log("Document 2 URL:", data.document2Url); // Debugging
-                    } else {
-                        console.log("Document 2 not found or incomplete data for monitoringId", monitoringId); // Debugging
                     }
-                } else {
-                    console.log("No document upload entry found for monitoringId", monitoringId); // Debugging
                 }
             } catch (error) {
                 console.error("Error loading document upload status: ", error);
@@ -1406,46 +1349,40 @@
         // Filter Panel Button
         document.getElementById('openFilterPanelBtn').addEventListener('click', () => {
             toggleModal('filterPanel', true);
-            // logActivity('Opened "Filter" panel'); // REMOVED
         });
-        document.getElementById('closeFilterPanelBtn').addEventListener('click', () => toggleModal('filterPanel', false)); // Added ID for close button
-        document.getElementById('applyFiltersBtn').addEventListener('click', () => { // Added ID for apply button
-            // Save current filter values before applying
+        document.getElementById('closeFilterPanelBtn').addEventListener('click', () => toggleModal('filterPanel', false));
+        document.getElementById('applyFiltersBtn').addEventListener('click', () => {
             document.getElementById('filterDocumentType').dataset.currentValue = document.getElementById('filterDocumentType').value;
             document.getElementById('filterDocumentNumber').dataset.currentValue = document.getElementById('filterDocumentNumber').value;
-            document.getElementById('filterChangedBy').dataset.currentValue = document.getElementById('filterChangedBy').value; // NEW: Store Changed By filter
-            loadMonitorings(); // Reload with filters
+            document.getElementById('filterChangedBy').dataset.currentValue = document.getElementById('filterChangedBy').value;
+            loadMonitorings();
             toggleModal('filterPanel', false);
-            // logActivity('Applied filters'); // REMOVED
         });
-        document.getElementById('resetFiltersBtn').addEventListener('click', () => { // Added ID for reset button
-            // Reset filter dropdowns
+        document.getElementById('resetFiltersBtn').addEventListener('click', () => {
             document.getElementById('filterDocumentType').value = 'all';
             document.getElementById('filterDocumentNumber').value = 'all';
             document.getElementById('filterStartDate').value = '';
             document.getElementById('filterEndDate').value = '';
-            document.getElementById('filterChangedBy').value = 'all'; // NEW: Reset Changed By filter
-            // Clear stored current values
+            document.getElementById('filterChangedBy').value = 'all';
             delete document.getElementById('filterDocumentType').dataset.currentValue;
             delete document.getElementById('filterDocumentNumber').dataset.currentValue;
-            delete document.getElementById('filterChangedBy').dataset.currentValue; // NEW: Clear Changed By stored value
-            loadMonitorings(); // Reload without filters
+            delete document.getElementById('filterChangedBy').dataset.currentValue;
+            loadMonitorings();
             toggleModal('filterPanel', false);
-            // logActivity('Reset filters'); // REMOVED
         });
 
         // Close Success Alert Modal
-        document.getElementById('closeSuccessAlertBtn').addEventListener('click', () => toggleModal('successAlertModal', false)); // Added ID for close button
+        document.getElementById('closeSuccessAlertBtn').addEventListener('click', () => toggleModal('successAlertModal', false));
 
         // --- Global Loading Overlay ---
         function showGlobalLoading() {
             document.getElementById('global-loading-overlay').classList.remove('hidden');
-            document.body.classList.add('overflow-hidden'); // Prevent scrolling
+            document.body.classList.add('overflow-hidden');
         }
 
         function hideGlobalLoading() {
             document.getElementById('global-loading-overlay').classList.add('hidden');
-            document.body.classList.remove('overflow-hidden'); // Allow scrolling
+            document.body.classList.remove('overflow-hidden');
         }
 
         // --- Ripple Effect for Buttons ---
@@ -1473,14 +1410,10 @@
         // --- Placeholder for other buttons ---
         document.getElementById('authButton').addEventListener('click', () => {
             alert('Logout button clicked!');
-            // In a real app, this would handle actual logout and redirect
-            currentUserEmail = null; // Clear current user
-            // logActivity('Logged out'); // REMOVED
-            // window.location.href = 'login.html'; // Example redirect to a login page
+            currentUserEmail = null;
         });
-        // Updated Back button functionality
         document.getElementById('backButton').addEventListener('click', () => {
-            window.location.href = 'index.html'; // Redirect to index.html
+            window.location.href = 'index.html';
         });
 
         // --- Export Excel Functionality ---
@@ -1501,7 +1434,7 @@
                         'Change Date': monitoring.changeDate || '',
                         'Change Description': monitoring.changeDescription || '',
                         'Changed Value (Rp)': formatRupiah(monitoring.changedValue, ''),
-                        'Changed By': monitoring.changedBy || '', // NEW: Export Changed By
+                        'Changed By': monitoring.changedBy || '',
                         'Created At': monitoring.createdAt ? new Date(monitoring.createdAt.toDate()).toLocaleString() : '',
                         'Updated At': monitoring.updatedAt ? new Date(monitoring.updatedAt.toDate()).toLocaleString() : ''
                     });
@@ -1515,11 +1448,10 @@
                 const ws = XLSX.utils.json_to_sheet(dataToExport);
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "Monitoring Data");
-                XLSX.writeFile(wb, "Document_Monitoring.xlsx"); // Changed filename
+                XLSX.writeFile(wb, "Document_Monitoring.xlsx");
 
                 document.getElementById('successAlertMessage').textContent = 'Data exported to Excel successfully!';
                 toggleModal('successAlertModal', true);
-                // logActivity('Exported monitoring data to Excel'); // REMOVED
 
             } catch (error) {
                 console.error("Error exporting data to Excel: ", error);
@@ -1535,16 +1467,17 @@
         async function loadMonitorings() {
             showGlobalLoading();
             const monitoringsStage = document.getElementById('monitorings-stage');
-            monitoringsStage.innerHTML = ''; // Clear current list
+            monitoringsStage.innerHTML = '';
 
             try {
-                let query = monitoringsCollection.orderBy('createdAt', 'desc');
+                // Mengubah 'desc' menjadi 'asc' agar data terbaru muncul di akhir
+                let query = monitoringsCollection.orderBy('createdAt', 'asc');
 
                 const filterDocType = document.getElementById('filterDocumentType').value;
                 const filterDocNumber = document.getElementById('filterDocumentNumber').value;
                 const filterStartDate = document.getElementById('filterStartDate').value;
                 const filterEndDate = document.getElementById('filterEndDate').value;
-                const filterChangedBy = document.getElementById('filterChangedBy').value; // NEW: Get Changed By filter
+                const filterChangedBy = document.getElementById('filterChangedBy').value;
                 const searchTerm = document.getElementById('searchMonitorings').value.toLowerCase();
 
                 if (filterDocType !== 'all') {
@@ -1553,7 +1486,7 @@
                 if (filterDocNumber !== 'all') {
                     query = query.where('documentNumber', '==', filterDocNumber);
                 }
-                if (filterChangedBy !== 'all') { // NEW: Apply Changed By filter
+                if (filterChangedBy !== 'all') {
                     query = query.where('changedBy', '==', filterChangedBy);
                 }
 
@@ -1586,15 +1519,14 @@
                         </div>
                     `;
                 } else {
-                    // Assign sequential numbers based on the filtered and sorted list
                     for (const [index, monitoring] of filteredMonitorings.entries()) {
-                        const card = createMonitoringCard(monitoring, index + 1); // Pass index + 1 as the sequential number
+                        const card = createMonitoringCard(monitoring, index + 1);
                         monitoringsStage.appendChild(card);
-                        setTimeout(() => card.classList.add('show'), 50); // Animate cards
+                        setTimeout(() => card.classList.add('show'), 50);
                     }
                 }
 
-                populateFilterOptions(monitorings); // Update filter dropdowns
+                populateFilterOptions(monitorings);
             } catch (error) {
                 console.error("Error loading monitorings: ", error);
                 monitoringsStage.innerHTML = `
@@ -1609,27 +1541,25 @@
             }
         }
 
-        // Modified createMonitoringCard to accept a sequential number and change checkmark to button
         function createMonitoringCard(monitoring, sequentialNumber) {
             const card = document.createElement('div');
-            card.className = 'deal-card relative w-full sm:w-1/2 lg:w-1/4'; // Adjust width for responsiveness
+            card.className = 'deal-card relative w-full sm:w-1/2 lg:w-1/4';
             card.setAttribute('data-id', monitoring.id);
 
             const formattedInitialValue = formatRupiah(monitoring.initialValue, 'Rp ');
             const formattedChangedValue = formatRupiah(monitoring.changedValue, 'Rp ');
 
             card.innerHTML = `
-                <span class="monitoring-card-number">${sequentialNumber}</span> <!-- Display sequential number -->
+                <span class="monitoring-card-number">${sequentialNumber}</span>
                 <h3 class="text-lg font-bold text-gray-900 mb-2">${monitoring.documentNumber || 'N/A'}</h3>
                 <div class="deal-details">
                     <p><i class="fas fa-calendar-alt"></i> Document Date: ${monitoring.documentDate || 'N/A'}</p>
                     <p><i class="fas fa-file-alt"></i> Document Description: ${monitoring.documentDescription || 'N/A'}</p>
                     <p><i class="fas fa-money-bill-wave"></i> Changed Price Value: ${formattedChangedValue || 'Rp 0'}</p>
-                    <p><i class="fas fa-user"></i> Changed By: ${monitoring.changedBy || 'N/A'}</p> <!-- NEW: Display Changed By -->
+                    <p><i class="fas fa-user"></i> Changed By: ${monitoring.changedBy || 'N/A'}</p>
                 </div>
                 <div class="deal-footer">
                     <div class="deal-footer-left">
-                        <!-- Checkmark button -->
                         <button class="document-info-btn text-green-600 hover:text-green-800 p-1 rounded-full hidden" title="View Uploaded Documents" id="doc-info-btn-${monitoring.id}">
                             <i class="fas fa-check-circle"></i>
                         </button>
@@ -1648,31 +1578,23 @@
                 </div>
             `;
 
-            // Event Listeners for card buttons
             card.querySelector('.view-btn').addEventListener('click', () => {
                 viewMonitoringDetails(monitoring.id);
-                // logActivity(`Viewed details for document number: ${monitoring.documentNumber}`, monitoring.id, monitoring.documentNumber); // REMOVED
             });
             card.querySelector('.edit-btn').addEventListener('click', () => {
                 editMonitoring(monitoring.id);
-                // logActivity(`Opened edit form for document number: ${monitoring.documentNumber}`, monitoring.id, monitoring.documentNumber); // REMOVED
             });
             card.querySelector('.delete-btn').addEventListener('click', () => {
                 confirmDeleteMonitoring(monitoring.id, monitoring.documentNumber);
-                // logActivity(`Opened delete confirmation for document number: ${monitoring.documentNumber}`, monitoring.id, monitoring.documentNumber); // REMOVED
             });
 
-            // Event listener for the new document info button
             const docInfoButton = card.querySelector(`#doc-info-btn-${monitoring.id}`);
-            if (docInfoButton) { // Ensure button exists before adding listener
+            if (docInfoButton) {
                 docInfoButton.addEventListener('click', () => {
                     showDocumentInfo(monitoring.id, monitoring.documentNumber);
-                    // logActivity(`Viewed uploaded document info for document number: ${monitoring.documentNumber}`, monitoring.id, monitoring.documentNumber); // REMOVED
                 });
             }
 
-
-            // Call function to check document upload status and display checkmark
             checkAndDisplayDocumentUploadStatus(monitoring.id);
 
             return card;
@@ -1692,7 +1614,7 @@
                     document.getElementById('detailChangeDate').textContent = data.changeDate || '-';
                     document.getElementById('detailChangeDescription').textContent = data.changeDescription || '-';
                     document.getElementById('detailChangedValue').textContent = formatRupiah(data.changedValue, 'Rp ') || 'Rp 0';
-                    document.getElementById('detailChangedBy').textContent = data.changedBy || '-'; // NEW: Display Changed By
+                    document.getElementById('detailChangedBy').textContent = data.changedBy || '-';
 
                     toggleModal('monitoringDetailModal', true);
                 } else {
@@ -1706,7 +1628,6 @@
             }
         }
 
-        // FIX: Add event listener for closeMonitoringDetailBtn
         document.getElementById('closeMonitoringDetailBtn').addEventListener('click', () => toggleModal('monitoringDetailModal', false));
 
 
@@ -1726,7 +1647,7 @@
                     document.getElementById('changeDate').value = data.changeDate || '';
                     document.getElementById('changeDescription').value = data.changeDescription || '';
                     document.getElementById('changedValue').value = formatRupiah(data.changedValue, 'Rp ') || '';
-                    document.getElementById('changedBy').value = data.changedBy || ''; // NEW: Set Changed By value
+                    document.getElementById('changedBy').value = data.changedBy || '';
 
                     toggleModal('monitoringModal', true);
                 } else {
@@ -1755,8 +1676,6 @@
                     const documentNumber = docToDelete.exists ? docToDelete.data().documentNumber : 'N/A';
 
                     await monitoringsCollection.doc(monitoringToDeleteId).delete();
-                    // Also delete associated document uploads if any
-                    // It's good practice to also delete the files from Appwrite Storage
                     const uploadDoc = await documentUploadsCollection.doc(monitoringToDeleteId).get();
                     if (uploadDoc.exists) {
                         const uploadData = uploadDoc.data();
@@ -1773,9 +1692,8 @@
                     toggleModal('deleteModal', false);
                     toggleModal('successAlertModal', true);
                     document.getElementById('successAlertMessage').textContent = 'Monitoring deleted successfully!';
-                    loadMonitorings(); // Reload list after deletion
-                    fetchAllDocumentNumbers(); // Re-fetch document numbers for autocomplete
-                    // logActivity(`Deleted monitoring for document number: ${documentNumber}`, monitoringToDeleteId, documentNumber); // REMOVED
+                    loadMonitorings();
+                    fetchAllDocumentNumbers();
                 } catch (error) {
                     console.error("Error deleting monitoring: ", error);
                     alert("Failed to delete monitoring. Please try again.");
@@ -1785,33 +1703,29 @@
                 }
             }
         });
-        document.getElementById('cancelDeleteBtn').addEventListener('click', () => toggleModal('deleteModal', false)); // Added ID for cancel button
+        document.getElementById('cancelDeleteBtn').addEventListener('click', () => toggleModal('deleteModal', false));
 
 
-        // Function to populate filter dropdowns
         async function populateFilterOptions(monitorings) {
             const filterDocumentTypeSelect = document.getElementById('filterDocumentType');
             const filterDocumentNumberSelect = document.getElementById('filterDocumentNumber');
-            const filterChangedBySelect = document.getElementById('filterChangedBy'); // NEW: Get Changed By filter select
+            const filterChangedBySelect = document.getElementById('filterChangedBy');
 
-            // Store current selected values
             const currentFilterDocType = filterDocumentTypeSelect.dataset.currentValue || 'all';
             const currentFilterDocNumber = filterDocumentNumberSelect.dataset.currentValue || 'all';
-            const currentFilterChangedBy = filterChangedBySelect.dataset.currentValue || 'all'; // NEW: Store current Changed By filter
+            const currentFilterChangedBy = filterChangedBySelect.dataset.currentValue || 'all';
 
-            // Clear existing options (except "All")
             filterDocumentTypeSelect.innerHTML = '<option value="all">All Document Types</option>';
             filterDocumentNumberSelect.innerHTML = '<option value="all">All Document Numbers</option>';
-            // Do not clear filterChangedBySelect as its options are static
 
             const documentTypes = new Set();
             const documentNumbers = new Set();
-            const changedByPersons = new Set(); // NEW: Collect Changed By persons
+            const changedByPersons = new Set();
 
             monitorings.forEach(m => {
                 if (m.documentType) documentTypes.add(m.documentType);
                 if (m.documentNumber) documentNumbers.add(m.documentNumber);
-                if (m.changedBy) changedByPersons.add(m.changedBy); // NEW: Add to set
+                if (m.changedBy) changedByPersons.add(m.changedBy);
             });
 
             Array.from(documentTypes).sort().forEach(type => {
@@ -1828,13 +1742,11 @@
                 filterDocumentNumberSelect.appendChild(option);
             });
 
-            // Restore selected filter values
             filterDocumentTypeSelect.value = currentFilterDocType;
             filterDocumentNumberSelect.value = currentFilterDocNumber;
-            filterChangedBySelect.value = currentFilterChangedBy; // NEW: Restore Changed By filter
+            filterChangedBySelect.value = currentFilterChangedBy;
         }
 
-        // Function to check document upload status and display checkmark button (MODIFIED)
         async function checkAndDisplayDocumentUploadStatus(monitoringId) {
             try {
                 const uploadDoc = await documentUploadsCollection.doc(monitoringId).get();
@@ -1843,14 +1755,13 @@
                 if (docInfoButton) {
                     if (uploadDoc.exists) {
                         const data = uploadDoc.data();
-                        // Check if at least one document (document1 or document2) has been uploaded AND has a URL
                         if ((data.document1FileId && data.document1Url) || (data.document2FileId && data.document2Url)) {
                             docInfoButton.classList.remove('hidden');
                         } else {
                             docInfoButton.classList.add('hidden');
                         }
                     } else {
-                        docInfoButton.classList.add('hidden'); // Hide if no upload document entry exists
+                        docInfoButton.classList.add('hidden');
                     }
                 }
             } catch (error) {
@@ -1858,53 +1769,32 @@
             }
         }
 
-        // --- Show Document Info Modal (NEW) ---
         async function showDocumentInfo(monitoringId, documentNumber) {
             showGlobalLoading();
             try {
                 const uploadDoc = await documentUploadsCollection.doc(monitoringId).get();
                 const docInfo_documentNumber = document.getElementById('docInfo_documentNumber');
                 const docInfo_doc1Name = document.getElementById('docInfo_doc1Name');
-                // const docInfo_doc1Link = document.getElementById('docInfo_doc1Link'); // REMOVED
                 const docInfo_doc2Name = document.getElementById('docInfo_doc2Name');
-                // const docInfo_doc2Link = document.getElementById('doc2Link'); // REMOVED
 
                 docInfo_documentNumber.textContent = documentNumber;
 
-                // Reset previous info
                 docInfo_doc1Name.textContent = 'None';
-                // docInfo_doc1Link.classList.add('hidden'); // REMOVED
-                // docInfo_doc1Link.removeAttribute('href'); // REMOVED
-
                 docInfo_doc2Name.textContent = 'None';
-                // docInfo_doc2Link.classList.add('hidden'); // REMOVED
-                // docInfo_doc2Link.removeAttribute('href'); // REMOVED
 
                 if (uploadDoc.exists) {
                     const data = uploadDoc.data();
-                    console.log("Document Info Modal Data for monitoringId", monitoringId, ":", data); // Debugging
+                    console.log("Document Info Modal Data for monitoringId", monitoringId, ":", data);
 
-                    // Document 1
                     if (data.document1FileName && data.document1FileId && data.document1Url) {
                         docInfo_doc1Name.textContent = data.document1FileName;
-                        // docInfo_doc1Link.href = data.document1Url; // REMOVED
-                        // docInfo_doc1Link.classList.remove('hidden'); // REMOVED
-                        console.log("Doc Info - Document 1 URL:", data.document1Url); // Debugging
-                    } else {
-                        console.log("Doc Info - Document 1 not found or incomplete data for monitoringId", monitoringId); // Debugging
                     }
 
-                    // Document 2
                     if (data.document2FileName && data.document2FileId && data.document2Url) {
                         docInfo_doc2Name.textContent = data.document2FileName;
-                        // docInfo_doc2Link.href = data.document2Url; // REMOVED
-                        // docInfo_doc2Link.classList.remove('hidden'); // REMOVED
-                        console.log("Doc Info - Document 2 URL:", data.document2Url); // Debugging
-                    } else {
-                        console.log("Doc Info - Document 2 not found or incomplete data for monitoringId", monitoringId); // Debugging
                     }
                 } else {
-                    console.log("No document upload entry found for monitoringId", monitoringId, "in Document Info Modal."); // Debugging
+                    console.log("No document upload entry found for monitoringId", monitoringId, "in Document Info Modal.");
                 }
 
                 toggleModal('documentInfoModal', true);
@@ -1916,13 +1806,12 @@
             }
         }
 
-        // Close Document Info Modal
         document.getElementById('closeDocumentInfoModalBtn').addEventListener('click', () => toggleModal('documentInfoModal', false));
         document.getElementById('closeDocumentInfoBtn').addEventListener('click', () => toggleModal('documentInfoModal', false));
 
 
         // --- Initial Load ---
-        loadMonitorings(); // Load monitorings when the page loads
+        loadMonitorings();
     });
 </script>
 </body>
