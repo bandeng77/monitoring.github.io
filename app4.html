@@ -292,7 +292,6 @@
             max-width: 98vw; /* Ensure it doesn't exceed viewport */
             max-height: 98vh; /* Ensure it doesn't exceed viewport */
             border-radius: 1rem;
-            box-shadow: 0 20px 50px var(--shadow-strong);
             display: flex;
             flex-direction: column;
             padding: 1rem; /* Adjust padding to not be too large */
@@ -1543,7 +1542,7 @@
 
         function createMonitoringCard(monitoring, sequentialNumber) {
             const card = document.createElement('div');
-            card.className = 'deal-card relative w-full sm:w-1/2 lg:w-1/4';
+            card.className = 'deal-card relative'; /* Removed width classes here */
             card.setAttribute('data-id', monitoring.id);
 
             const formattedInitialValue = formatRupiah(monitoring.initialValue, 'Rp ');
