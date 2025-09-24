@@ -693,24 +693,11 @@
         }
 
         /* Custom styles for inventory action bar and filter bar */
-        #inventory-tab .action-bar {
-            flex-direction: column; /* Stack search and buttons vertically */
-            align-items: flex-start;
-            gap: 1rem;
-        }
-
-        #inventory-tab .action-bar .search-box {
-            max-width: 100%;
-        }
+        /* Removed #inventory-tab .action-bar as it's replaced by #inventory-action-bar-combined */
+        /* Removed #inventory-tab .action-bar .search-box as it's handled by #inventory-action-bar-combined */
 
         /* New container for stock in/out buttons */
-        .stock-movement-buttons {
-            display: flex;
-            gap: 1rem;
-            margin-top: 1rem; /* Space below filter bar */
-            width: 100%;
-            justify-content: flex-end; /* Align to the right */
-        }
+        /* Removed .stock-movement-buttons as it's now inside #inventory-action-bar-combined */
 
         #inventory-tab .filter-bar {
             width: 100%;
@@ -755,6 +742,43 @@
             width: 100%; /* Take full width */
             justify-content: flex-start; /* Align to the left */
             margin-top: 1rem; /* Space below select item */
+        }
+
+        /* Custom styles for combined search and stock movement buttons */
+        #inventory-action-bar-combined {
+            display: flex;
+            justify-content: space-between; /* Distribute space between search and buttons */
+            align-items: center; /* Align items vertically in the middle */
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+            gap: 1rem; /* Space between search box and buttons */
+            margin-bottom: 1.5rem; /* Space below this bar */
+            background: white; /* Add background to make it look like one canvas */
+            padding: 1rem; /* Add padding */
+            border-radius: 8px; /* Rounded corners */
+            box-shadow: var(--shadow-sm); /* Add shadow */
+        }
+
+        #inventory-action-bar-combined .search-box {
+            flex-grow: 1; /* Allow search box to grow and take available space */
+            max-width: 400px; /* Optional: limit max width of search box */
+            margin-bottom: 0; /* Remove any default margin */
+            box-shadow: none; /* Remove individual shadow if parent has one */
+            padding: 0.5rem 1rem; /* Adjust padding to match parent */
+            border: 1px solid var(--gray-300); /* Add border to search box */
+            border-radius: 6px; /* Rounded corners for search box */
+        }
+        
+        #inventory-action-bar-combined .search-box input {
+            padding: 0; /* Remove internal padding as parent search-box has it */
+        }
+
+        #inventory-action-bar-combined .stock-movement-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end; /* Align buttons to the right within their group */
+            flex-shrink: 0; /* Prevent buttons from shrinking too much */
+            margin-top: 0; /* Remove any default margin */
+            width: auto; /* Allow buttons to size naturally */
         }
 
 
@@ -807,8 +831,23 @@
             #history-tab .filter-bar .btn, #inventory-tab .filter-bar .btn {
                 align-self: stretch; /* Stretch buttons on small screens */
             }
-            .stock-movement-buttons, #inventory-filter-bar .filter-buttons-group {
+            /* Removed .stock-movement-buttons media query as it's now inside #inventory-action-bar-combined */
+            #inventory-filter-bar .filter-buttons-group {
                 justify-content: stretch; /* Stretch buttons on small screens */
+            }
+            /* Adjust media query for the new combined bar */
+            #inventory-action-bar-combined {
+                flex-direction: column; /* Stack vertically on small screens */
+                align-items: stretch; /* Stretch items to full width */
+            }
+            #inventory-action-bar-combined .search-box {
+                max-width: 100%; /* Full width on small screens */
+            }
+            #inventory-action-bar-combined .stock-movement-buttons {
+                justify-content: stretch; /* Stretch buttons on small screens */
+            }
+            #inventory-action-bar-combined .stock-movement-buttons .btn {
+                flex-grow: 1; /* Make buttons fill available width */
             }
         }
     </style>
@@ -855,13 +894,6 @@
                 </div>
             </div>
 
-            <div class="action-bar container"> <!-- Added container class here -->
-                <div class="search-box">
-                    <span>🔍</span>
-                    <input type="text" id="search-input" placeholder="Search item...">
-                </div>
-            </div>
-
             <!-- New Filter Bar for Inventory Items -->
             <div class="filter-bar container" id="inventory-filter-bar"> <!-- Added container class here -->
                 <div class="filter-group">
@@ -894,14 +926,20 @@
                 </div>
             </div>
 
-            <!-- Stock In/Out buttons moved below filter bar -->
-            <div class="stock-movement-buttons container"> <!-- Added container class here -->
-                <button class="btn btn-info" id="stock-in-btn">
-                    <span>⬇️</span> Stock In
-                </button>
-                <button class="btn btn-warning" id="stock-out-btn">
-                    <span>⬆️</span> Stock Out
-                </button>
+            <!-- Combined Search and Stock Movement Buttons -->
+            <div class="action-bar container" id="inventory-action-bar-combined"> <!-- New container for combined elements -->
+                <div class="search-box">
+                    <span>🔍</span>
+                    <input type="text" id="search-input" placeholder="Search item...">
+                </div>
+                <div class="stock-movement-buttons"> <!-- Existing stock movement buttons -->
+                    <button class="btn btn-info" id="stock-in-btn">
+                        <span>⬇️</span> Stock In
+                    </button>
+                    <button class="btn btn-warning" id="stock-out-btn">
+                        <span>⬆️</span> Stock Out
+                    </button>
+                </div>
             </div>
 
             <div id="alert-container" class="container"></div> <!-- Added container class here -->
