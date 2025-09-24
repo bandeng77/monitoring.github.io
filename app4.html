@@ -752,6 +752,11 @@
                                 <label class="block text-gray-700 text-sm font-semibold mb-1" for="changedValue">Changed Price Value (Rp)</label>
                                 <input type="text" id="changedValue" class="currency-input w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="Rp 0">
                             </div>
+                            <!-- NEW: Requested By Input -->
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="requestedBy">Requested By</label>
+                                <input type="text" id="requestedBy" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="Name of requester">
+                            </div>
                             <!-- NEW: Changed By Dropdown -->
                             <div class="mb-4">
                                 <label class="block text-gray-700 text-sm font-semibold mb-1" for="changedBy">Changed By</label>
@@ -826,6 +831,11 @@
                             <div class="detail-item">
                                 <p class="font-semibold">Changed Price Value:</p>
                                 <p id="detailChangedValue">-</p>
+                            </div>
+                            <!-- NEW: Requested By Detail -->
+                            <div class="detail-item">
+                                <p class="font-semibold">Requested By:</p>
+                                <p id="detailRequestedBy">-</p>
                             </div>
                             <!-- NEW: Changed By Detail -->
                             <div class="detail-item">
@@ -1137,6 +1147,7 @@
                 changeDate: document.getElementById('changeDate').value,
                 changeDescription: document.getElementById('changeDescription').value,
                 changedValue: unformatRupiah(document.getElementById('changedValue').value),
+                requestedBy: document.getElementById('requestedBy').value, // NEW
                 changedBy: document.getElementById('changedBy').value,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -1429,6 +1440,7 @@
                         'Change Date': monitoring.changeDate || '',
                         'Change Description': monitoring.changeDescription || '',
                         'Changed Value (Rp)': formatRupiah(monitoring.changedValue, ''),
+                        'Requested By': monitoring.requestedBy || '', // NEW
                         'Changed By': monitoring.changedBy || '',
                         'Created At': monitoring.createdAt ? new Date(monitoring.createdAt.toDate()).toLocaleString() : '',
                         'Updated At': monitoring.updatedAt ? new Date(monitoring.updatedAt.toDate()).toLocaleString() : ''
@@ -1551,7 +1563,7 @@
                     <p><i class="fas fa-calendar-alt"></i> Document Date: ${monitoring.documentDate || 'N/A'}</p>
                     <p><i class="fas fa-file-alt"></i> Document Description: ${monitoring.documentDescription || 'N/A'}</p>
                     <p><i class="fas fa-money-bill-wave"></i> Changed Price Value: ${formattedChangedValue || 'Rp 0'}</p>
-                    <p><i class="fas fa-user"></i> Changed By: ${monitoring.changedBy || 'N/A'}</p>
+                    <!-- Removed 'Changed By' from deal card -->
                 </div>
                 <div class="deal-footer">
                     <div class="deal-footer-left">
@@ -1609,6 +1621,7 @@
                     document.getElementById('detailChangeDate').textContent = data.changeDate || '-';
                     document.getElementById('detailChangeDescription').textContent = data.changeDescription || '-';
                     document.getElementById('detailChangedValue').textContent = formatRupiah(data.changedValue, 'Rp ') || 'Rp 0';
+                    document.getElementById('detailRequestedBy').textContent = data.requestedBy || '-'; // NEW
                     document.getElementById('detailChangedBy').textContent = data.changedBy || '-';
 
                     toggleModal('monitoringDetailModal', true);
@@ -1642,6 +1655,7 @@
                     document.getElementById('changeDate').value = data.changeDate || '';
                     document.getElementById('changeDescription').value = data.changeDescription || '';
                     document.getElementById('changedValue').value = formatRupiah(data.changedValue, 'Rp ') || '';
+                    document.getElementById('requestedBy').value = data.requestedBy || ''; // NEW
                     document.getElementById('changedBy').value = data.changedBy || '';
 
                     toggleModal('monitoringModal', true);
