@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document Monitoring - Genetek</title>
+    <title>Changes Monitoring - Genetek</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <!-- Library for Export Excel -->
@@ -655,7 +655,7 @@
         <header class="mb-8 bg-white p-6 rounded-lg shadow-md header">
             <div class="flex justify-between items-start">
                 <div>
-                    <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900">Document Monitoring <i class="fas fa-box-open text-blue-600 ml-2"></i></h1>
+                    <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900">Changes Monitoring <i class="fas fa-box-open text-blue-600 ml-2"></i></h1>
                 </div>
                 <!-- Logout button container removed -->
             </div>
@@ -663,7 +663,7 @@
             <!-- Buttons below title -->
             <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 mt-4">
                 <button id="addMonitoringBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
-                    <i class="fas fa-plus-circle mr-2"></i> Add Monitoring
+                    <i class="fas fa-plus-circle mr-2"></i> Add New Changes
                 </button>
 
                 <button id="uploadDocumentBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
@@ -709,13 +709,29 @@
         <!-- Add/Edit Monitoring Modal -->
         <div id="monitoringModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
             <div class="bg-white rounded-none p-8 w-full h-full shadow-2xl modal-content-enter" id="monitoringModalContent">
-                <h2 class="text-xl sm:text-2xl font-bold mb-4 text-gray-900" id="modalTitle">Add New Monitoring</h2>
+                <h2 class="text-xl sm:text-2xl font-bold mb-4 text-gray-900" id="modalTitle">Add New Changes</h2>
                 <form id="monitoringForm" class="monitoring-form-container">
                     <input type="hidden" id="monitoringId">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                        <!-- Column 1: Document Details -->
+                        <!-- Column 1: User Information & Document Details -->
                         <div>
-                            <h3 class="text-lg font-bold text-gray-900 mb-3">Document Details</h3>
+                            <h3 class="text-lg font-bold text-gray-900 mb-3">User Information</h3>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="requestedBy">Requested By</label>
+                                <input type="text" id="requestedBy" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="Name of requester">
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="changedBy">Changed By</label>
+                                <select id="changedBy" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                                    <option value="">Select Person</option>
+                                    <option value="Rossiana">Rossiana</option>
+                                    <option value="Maya">Maya</option>
+                                    <option value="Evi">Evi</option>
+                                    <option value="Maida">Maida</option>
+                                </select>
+                            </div>
+
+                            <h3 class="text-lg font-bold text-gray-900 mb-3 mt-6">Document Details</h3>
                             <div class="mb-4">
                                 <label class="block text-gray-700 text-sm font-semibold mb-1" for="documentType">Document Type <span class="text-red-500">*</span></label>
                                 <input type="text" id="documentType" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" required>
@@ -728,45 +744,33 @@
                                 <label class="block text-gray-700 text-sm font-semibold mb-1" for="documentDate">Document Date</label>
                                 <input type="date" id="documentDate" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
                             </div>
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="documentDescription">Description</label>
-                                <textarea id="documentDescription" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" rows="4" placeholder="Document description..."></textarea>
-                            </div>
                         </div>
                         <!-- Column 2: Value and Changes -->
                         <div>
                             <h3 class="text-lg font-bold text-gray-900 mb-3">Value & Changes</h3>
                             <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="initialValue">Initial Price Value (Rp)</label>
-                                <input type="text" id="initialValue" class="currency-input w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="Rp 0">
-                            </div>
-                            <div class="mb-4">
                                 <label class="block text-gray-700 text-sm font-semibold mb-1" for="changeDate">Change Date</label>
                                 <input type="date" id="changeDate" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
                             </div>
                             <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="changeDescription">Change Description</label>
-                                <textarea id="changeDescription" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" rows="4" placeholder="Description of change..."></textarea>
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="columnToChange">Column to Change</label>
+                                <input type="text" id="columnToChange" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="e.g., Document Type, Initial Value">
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="changeTo">Change To</label>
+                                <input type="text" id="changeTo" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="New value">
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="reasonForChange">Reason for Change</label>
+                                <textarea id="reasonForChange" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" rows="4" placeholder="Description of change..."></textarea>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="initialValue">Initial Price Value (Rp)</label>
+                                <input type="text" id="initialValue" class="currency-input w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="Rp 0">
                             </div>
                             <div class="mb-4">
                                 <label class="block text-gray-700 text-sm font-semibold mb-1" for="changedValue">Changed Price Value (Rp)</label>
                                 <input type="text" id="changedValue" class="currency-input w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="Rp 0">
-                            </div>
-                            <!-- NEW: Requested By Input -->
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="requestedBy">Requested By</label>
-                                <input type="text" id="requestedBy" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="Name of requester">
-                            </div>
-                            <!-- NEW: Changed By Dropdown -->
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="changedBy">Changed By</label>
-                                <select id="changedBy" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
-                                    <option value="">Select Person</option>
-                                    <option value="Rossiana">Rossiana</option>
-                                    <option value="Maya">Maya</option>
-                                    <option value="Evi">Evi</option>
-                                    <option value="Maida">Maida</option>
-                                </select>
                             </div>
                         </div>
                     </div>
@@ -776,7 +780,7 @@
                             Cancel
                         </button>
                         <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105 text-sm">
-                            Save Monitoring
+                            Save Changes
                         </button>
                     </div>
                 </form>
@@ -786,12 +790,24 @@
         <!-- Monitoring Detail Modal -->
         <div id="monitoringDetailModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
             <div class="bg-white rounded-xl p-8 w-full max-w-5xl shadow-2xl modal-content-enter overflow-y-auto" id="monitoringDetailModalContent">
-                <h2 class="text-xl sm:text-2xl font-bold mb-6 text-gray-900" id="monitoringDetailTitle">Monitoring Details</h2>
+                <h2 class="text-xl sm:text-2xl font-bold mb-6 text-gray-900" id="monitoringDetailTitle">Changes Details</h2>
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <!-- Left Column: Main Monitoring Details -->
+                    <!-- Left Column: User Information & Document Details -->
                     <div>
-                        <h3 class="text-lg font-bold text-gray-900 mb-4">Document Information</h3>
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">User Information</h3>
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <p class="font-semibold">Requested By:</p>
+                                <p id="detailRequestedBy">-</p>
+                            </div>
+                            <div class="detail-item">
+                                <p class="font-semibold">Changed By:</p>
+                                <p id="detailChangedBy">-</p>
+                            </div>
+                        </div>
+
+                        <h3 class="text-lg font-bold text-gray-900 mb-4 mt-6">Document Details</h3>
                         <div class="detail-grid">
                             <div class="detail-item">
                                 <p class="font-semibold">Document Type:</p>
@@ -805,10 +821,6 @@
                                 <p class="font-semibold">Document Date:</p>
                                 <p id="detailDocumentDate">-</p>
                             </div>
-                            <div class="detail-item col-span-full">
-                                <p class="font-semibold">Description:</p>
-                                <p id="detailDocumentDescription">-</p>
-                            </div>
                         </div>
                     </div>
 
@@ -817,30 +829,28 @@
                         <h3 class="text-lg font-bold text-gray-900 mb-4">Value & Changes</h3>
                         <div class="detail-grid">
                             <div class="detail-item">
+                                <p class="font-semibold">Change Date:</p>
+                                <p id="detailChangeDate">-</p>
+                            </div>
+                            <div class="detail-item">
+                                <p class="font-semibold">Column to Change:</p>
+                                <p id="detailColumnToChange">-</p>
+                            </div>
+                            <div class="detail-item">
+                                <p class="font-semibold">Change To:</p>
+                                <p id="detailChangeTo">-</p>
+                            </div>
+                            <div class="detail-item col-span-full">
+                                <p class="font-semibold">Reason for Change:</p>
+                                <p id="detailReasonForChange">-</p>
+                            </div>
+                            <div class="detail-item">
                                 <p class="font-semibold">Initial Price Value:</p>
                                 <p id="detailInitialValue">-</p>
                             </div>
                             <div class="detail-item">
-                                <p class="font-semibold">Change Date:</p>
-                                <p id="detailChangeDate">-</p>
-                            </div>
-                            <div class="detail-item col-span-full">
-                                <p class="font-semibold">Change Description:</p>
-                                <p id="detailChangeDescription">-</p>
-                            </div>
-                            <div class="detail-item">
                                 <p class="font-semibold">Changed Price Value:</p>
                                 <p id="detailChangedValue">-</p>
-                            </div>
-                            <!-- NEW: Requested By Detail -->
-                            <div class="detail-item">
-                                <p class="font-semibold">Requested By:</p>
-                                <p id="detailRequestedBy">-</p>
-                            </div>
-                            <!-- NEW: Changed By Detail -->
-                            <div class="detail-item">
-                                <p class="font-semibold">Changed By:</p>
-                                <p id="detailChangedBy">-</p>
                             </div>
                         </div>
                     </div>
@@ -1122,7 +1132,7 @@
 
         // Add Monitoring Button
         document.getElementById('addMonitoringBtn').addEventListener('click', () => {
-            document.getElementById('modalTitle').textContent = 'Add New Monitoring';
+            document.getElementById('modalTitle').textContent = 'Add New Changes';
             document.getElementById('monitoringId').value = '';
             document.getElementById('monitoringForm').reset();
             toggleModal('monitoringModal', true);
@@ -1139,16 +1149,17 @@
             const monitoringId = document.getElementById('monitoringId').value;
             const documentNumber = document.getElementById('documentNumber').value;
             const data = {
+                requestedBy: document.getElementById('requestedBy').value,
+                changedBy: document.getElementById('changedBy').value,
                 documentType: document.getElementById('documentType').value,
                 documentNumber: documentNumber,
                 documentDate: document.getElementById('documentDate').value,
-                documentDescription: document.getElementById('documentDescription').value,
-                initialValue: unformatRupiah(document.getElementById('initialValue').value),
                 changeDate: document.getElementById('changeDate').value,
-                changeDescription: document.getElementById('changeDescription').value,
+                columnToChange: document.getElementById('columnToChange').value, // NEW
+                changeTo: document.getElementById('changeTo').value, // NEW
+                reasonForChange: document.getElementById('reasonForChange').value, // Renamed from documentDescription
+                initialValue: unformatRupiah(document.getElementById('initialValue').value),
                 changedValue: unformatRupiah(document.getElementById('changedValue').value),
-                requestedBy: document.getElementById('requestedBy').value, // NEW
-                changedBy: document.getElementById('changedBy').value,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
@@ -1156,18 +1167,18 @@
             try {
                 if (monitoringId) {
                     await monitoringsCollection.doc(monitoringId).update(data);
-                    document.getElementById('successAlertMessage').textContent = 'Monitoring updated successfully!';
+                    document.getElementById('successAlertMessage').textContent = 'Changes updated successfully!';
                 } else {
                     const newDocRef = await monitoringsCollection.add(data);
-                    document.getElementById('successAlertMessage').textContent = 'New monitoring added successfully!';
+                    document.getElementById('successAlertMessage').textContent = 'New changes added successfully!';
                 }
                 toggleModal('monitoringModal', false);
                 toggleModal('successAlertModal', true);
                 loadMonitorings();
                 fetchAllDocumentNumbers();
             } catch (error) {
-                console.error("Error saving monitoring: ", error);
-                alert("Failed to save monitoring. Please try again.");
+                console.error("Error saving changes: ", error);
+                alert("Failed to save changes. Please try again.");
             } finally {
                 hideGlobalLoading();
             }
@@ -1435,13 +1446,14 @@
                         'Document Type': monitoring.documentType || '',
                         'Document Number': monitoring.documentNumber || '',
                         'Document Date': monitoring.documentDate || '',
-                        'Document Description': monitoring.documentDescription || '',
-                        'Initial Value (Rp)': formatRupiah(monitoring.initialValue, ''),
-                        'Change Date': monitoring.changeDate || '',
-                        'Change Description': monitoring.changeDescription || '',
-                        'Changed Value (Rp)': formatRupiah(monitoring.changedValue, ''),
-                        'Requested By': monitoring.requestedBy || '', // NEW
+                        'Requested By': monitoring.requestedBy || '',
                         'Changed By': monitoring.changedBy || '',
+                        'Change Date': monitoring.changeDate || '',
+                        'Column to Change': monitoring.columnToChange || '',
+                        'Change To': monitoring.changeTo || '',
+                        'Reason for Change': monitoring.reasonForChange || '',
+                        'Initial Value (Rp)': formatRupiah(monitoring.initialValue, ''),
+                        'Changed Value (Rp)': formatRupiah(monitoring.changedValue, ''),
                         'Created At': monitoring.createdAt ? new Date(monitoring.createdAt.toDate()).toLocaleString() : '',
                         'Updated At': monitoring.updatedAt ? new Date(monitoring.updatedAt.toDate()).toLocaleString() : ''
                     });
@@ -1507,7 +1519,12 @@
                     const matchesSearch = searchTerm === '' ||
                                           (monitoring.documentType && monitoring.documentType.toLowerCase().includes(searchTerm)) ||
                                           (monitoring.documentNumber && monitoring.documentNumber.toLowerCase().includes(searchTerm)) ||
-                                          (monitoring.documentDescription && monitoring.documentDescription.toLowerCase().includes(searchTerm));
+                                          (monitoring.reasonForChange && monitoring.reasonForChange.toLowerCase().includes(searchTerm)) ||
+                                          (monitoring.requestedBy && monitoring.requestedBy.toLowerCase().includes(searchTerm)) ||
+                                          (monitoring.changedBy && monitoring.changedBy.toLowerCase().includes(searchTerm)) ||
+                                          (monitoring.columnToChange && monitoring.columnToChange.toLowerCase().includes(searchTerm)) ||
+                                          (monitoring.changeTo && monitoring.changeTo.toLowerCase().includes(searchTerm));
+
 
                     const docDate = monitoring.documentDate;
                     const matchesDate = (!filterStartDate || (docDate && docDate >= filterStartDate)) &&
@@ -1553,7 +1570,6 @@
             card.className = 'deal-card relative'; /* Removed width classes here */
             card.setAttribute('data-id', monitoring.id);
 
-            const formattedInitialValue = formatRupiah(monitoring.initialValue, 'Rp ');
             const formattedChangedValue = formatRupiah(monitoring.changedValue, 'Rp ');
 
             card.innerHTML = `
@@ -1561,9 +1577,9 @@
                 <h3 class="text-lg font-bold text-gray-900 mb-2">${monitoring.documentNumber || 'N/A'}</h3>
                 <div class="deal-details">
                     <p><i class="fas fa-calendar-alt"></i> Document Date: ${monitoring.documentDate || 'N/A'}</p>
-                    <p><i class="fas fa-file-alt"></i> Document Description: ${monitoring.documentDescription || 'N/A'}</p>
+                    <p><i class="fas fa-user"></i> Requested By: ${monitoring.requestedBy || 'N/A'}</p>
+                    <p><i class="fas fa-user-edit"></i> Changed By: ${monitoring.changedBy || 'N/A'}</p>
                     <p><i class="fas fa-money-bill-wave"></i> Changed Price Value: ${formattedChangedValue || 'Rp 0'}</p>
-                    <!-- Removed 'Changed By' from deal card -->
                 </div>
                 <div class="deal-footer">
                     <div class="deal-footer-left">
@@ -1613,16 +1629,17 @@
                 const doc = await monitoringsCollection.doc(id).get();
                 if (doc.exists) {
                     const data = doc.data();
+                    document.getElementById('detailRequestedBy').textContent = data.requestedBy || '-';
+                    document.getElementById('detailChangedBy').textContent = data.changedBy || '-';
                     document.getElementById('detailDocumentType').textContent = data.documentType || '-';
                     document.getElementById('detailDocumentNumber').textContent = data.documentNumber || '-';
                     document.getElementById('detailDocumentDate').textContent = data.documentDate || '-';
-                    document.getElementById('detailDocumentDescription').textContent = data.documentDescription || '-';
-                    document.getElementById('detailInitialValue').textContent = formatRupiah(data.initialValue, 'Rp ') || 'Rp 0';
                     document.getElementById('detailChangeDate').textContent = data.changeDate || '-';
-                    document.getElementById('detailChangeDescription').textContent = data.changeDescription || '-';
+                    document.getElementById('detailColumnToChange').textContent = data.columnToChange || '-';
+                    document.getElementById('detailChangeTo').textContent = data.changeTo || '-';
+                    document.getElementById('detailReasonForChange').textContent = data.reasonForChange || '-';
+                    document.getElementById('detailInitialValue').textContent = formatRupiah(data.initialValue, 'Rp ') || 'Rp 0';
                     document.getElementById('detailChangedValue').textContent = formatRupiah(data.changedValue, 'Rp ') || 'Rp 0';
-                    document.getElementById('detailRequestedBy').textContent = data.requestedBy || '-'; // NEW
-                    document.getElementById('detailChangedBy').textContent = data.changedBy || '-';
 
                     toggleModal('monitoringDetailModal', true);
                 } else {
@@ -1645,18 +1662,19 @@
                 const doc = await monitoringsCollection.doc(id).get();
                 if (doc.exists) {
                     const data = doc.data();
-                    document.getElementById('modalTitle').textContent = 'Edit Monitoring';
+                    document.getElementById('modalTitle').textContent = 'Edit Changes';
                     document.getElementById('monitoringId').value = id;
+                    document.getElementById('requestedBy').value = data.requestedBy || '';
+                    document.getElementById('changedBy').value = data.changedBy || '';
                     document.getElementById('documentType').value = data.documentType || '';
                     document.getElementById('documentNumber').value = data.documentNumber || '';
                     document.getElementById('documentDate').value = data.documentDate || '';
-                    document.getElementById('documentDescription').value = data.documentDescription || '';
-                    document.getElementById('initialValue').value = formatRupiah(data.initialValue, 'Rp ') || '';
                     document.getElementById('changeDate').value = data.changeDate || '';
-                    document.getElementById('changeDescription').value = data.changeDescription || '';
+                    document.getElementById('columnToChange').value = data.columnToChange || '';
+                    document.getElementById('changeTo').value = data.changeTo || '';
+                    document.getElementById('reasonForChange').value = data.reasonForChange || '';
+                    document.getElementById('initialValue').value = formatRupiah(data.initialValue, 'Rp ') || '';
                     document.getElementById('changedValue').value = formatRupiah(data.changedValue, 'Rp ') || '';
-                    document.getElementById('requestedBy').value = data.requestedBy || ''; // NEW
-                    document.getElementById('changedBy').value = data.changedBy || '';
 
                     toggleModal('monitoringModal', true);
                 } else {
