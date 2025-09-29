@@ -674,7 +674,7 @@
                     <i class="fas fa-file-excel mr-2"></i> Export Excel
                 </button>
 
-                <button id="backButton" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
+                <button id="backButton" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg shadow-md font-medium transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
                     <i class="fas fa-arrow-left mr-2"></i> Back
                 </button>
             </div>
@@ -734,7 +734,13 @@
                             <h3 class="text-lg font-bold text-gray-900 mb-3 mt-6">Document Details</h3>
                             <div class="mb-4">
                                 <label class="block text-gray-700 text-sm font-semibold mb-1" for="documentType">Document Type <span class="text-red-500">*</span></label>
-                                <input type="text" id="documentType" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" required>
+                                <select id="documentType" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" required>
+                                    <option value="">Select Document Type</option>
+                                    <option value="PO EFK">PO EFK</option>
+                                    <option value="SO EFK">SO EFK</option>
+                                    <option value="PO GEN">PO GEN</option>
+                                    <option value="SO GEN">SO GEN</option>
+                                </select>
                             </div>
                             <div class="mb-4">
                                 <label class="block text-gray-700 text-sm font-semibold mb-1" for="documentNumber">Document Number <span class="text-red-500">*</span></label>
@@ -1742,24 +1748,29 @@
             const currentFilterDocNumber = filterDocumentNumberSelect.dataset.currentValue || 'all';
             const currentFilterChangedBy = filterChangedBySelect.dataset.currentValue || 'all';
 
+            // Hardcoded document types for the filter dropdown
+            const hardcodedDocumentTypes = ["PO EFK", "SO EFK", "PO GEN", "SO GEN"];
+
             filterDocumentTypeSelect.innerHTML = '<option value="all">All Document Types</option>';
-            filterDocumentNumberSelect.innerHTML = '<option value="all">All Document Numbers</option>';
-
-            const documentTypes = new Set();
-            const documentNumbers = new Set();
-            const changedByPersons = new Set();
-
-            monitorings.forEach(m => {
-                if (m.documentType) documentTypes.add(m.documentType);
-                if (m.documentNumber) documentNumbers.add(m.documentNumber);
-                if (m.changedBy) changedByPersons.add(m.changedBy);
-            });
-
-            Array.from(documentTypes).sort().forEach(type => {
+            // Populate filterDocumentTypeSelect with hardcoded options
+            hardcodedDocumentTypes.forEach(type => {
                 const option = document.createElement('option');
                 option.value = type;
                 option.textContent = type;
                 filterDocumentTypeSelect.appendChild(option);
+            });
+
+
+            filterDocumentNumberSelect.innerHTML = '<option value="all">All Document Numbers</option>';
+
+            // The rest of the logic for document numbers and changedBy remains the same
+            const documentNumbers = new Set();
+            const changedByPersons = new Set();
+
+            monitorings.forEach(m => {
+                // Only add document numbers if they are not null/undefined
+                if (m.documentNumber) documentNumbers.add(m.documentNumber);
+                if (m.changedBy) changedByPersons.add(m.changedBy);
             });
 
             Array.from(documentNumbers).sort().forEach(number => {
