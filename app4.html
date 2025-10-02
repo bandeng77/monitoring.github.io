@@ -60,11 +60,6 @@
             font-size: 2.25rem; /* Larger */
             font-weight: 800;
         }
-        /* .header .logout-btn-container { */
-        /*     position: absolute; */
-        /*     top: 1.75rem; */
-        /*     right: 2rem; */
-        /* } */
         .header button {
             font-weight: 600;
             border-radius: 0.65rem;
@@ -513,11 +508,6 @@
             .header h1 {
                 font-size: 1.75rem;
             }
-            /* .header .logout-btn-container { */
-            /*     position: static; /\* Revert to normal position on mobile *\/ */
-            /*     margin-top: 1rem; */
-            /*     width: 100%; */
-            /* } */
             .header > div:last-child { /* This is the div containing buttons below the title */
                 margin-top: 1rem;
                 width: 100%;
@@ -657,7 +647,6 @@
                 <div>
                     <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900">Changes Monitoring <i class="fas fa-box-open text-blue-600 ml-2"></i></h1>
                 </div>
-                <!-- Logout button container removed -->
             </div>
 
             <!-- Buttons below title -->
@@ -680,7 +669,7 @@
             </div>
 
             <!-- Combined Filter Section -->
-            <div class="mt-6 flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 items-center">
+            <div class="mt-6 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 items-center">
                 <input type="text" id="searchMonitorings" placeholder="Search by document type, number, description..." class="w-full sm:w-1/2 p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
 
                 <button id="openFilterPanelBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
@@ -724,10 +713,7 @@
                                 <label class="block text-gray-700 text-sm font-semibold mb-1" for="changedBy">Changed By</label>
                                 <select id="changedBy" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
                                     <option value="">Select Person</option>
-                                    <option value="Rossiana">Rossiana</option>
-                                    <option value="Maya">Maya</option>
-                                    <option value="Evi">Evi</option>
-                                    <option value="Maida">Maida</option>
+                                    <!-- Options will be dynamically loaded -->
                                 </select>
                             </div>
 
@@ -904,15 +890,7 @@
                             <!-- Options will be dynamically loaded from Firebase -->
                         </select>
                     </div>
-                    <!-- Filter: Document Number -->
-                    <div>
-                        <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterDocumentNumber">Document Number</label>
-                        <select id="filterDocumentNumber" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
-                            <option value="all">All Document Numbers</option>
-                            <!-- Options will be dynamically loaded from Firebase -->
-                        </select>
-                    </div>
-                    <!-- Filter: Date Range (Example) -->
+                    <!-- Filter: Date Range -->
                     <div>
                         <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterStartDate">From Date</label>
                         <input type="date" id="filterStartDate" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
@@ -921,15 +899,12 @@
                         <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterEndDate">To Date</label>
                         <input type="date" id="filterEndDate" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
                     </div>
-                    <!-- NEW: Filter Changed By -->
+                    <!-- Filter Changed By -->
                     <div>
                         <label class="block text-gray-700 text-sm font-semibold mb-2" for="filterChangedBy">Changed By</label>
                         <select id="filterChangedBy" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
                             <option value="all">All Persons</option>
-                            <option value="Rossiana">Rossiana</option>
-                            <option value="Maya">Maya</option>
-                            <option value="Evi">Evi</option>
-                            <option value="Maida">Maida</option>
+                            <!-- Options will be dynamically loaded -->
                         </select>
                     </div>
                 </div>
@@ -1051,32 +1026,21 @@
     const monitoringsCollection = db.collection('monitorings');
     const purchaseOrdersCollection = db.collection('purchaseOrders'); // Assuming you have a 'purchaseOrders' collection
     const documentUploadsCollection = db.collection('documentUploads'); // New collection for document upload status
-    // const activitiesCollection = db.collection('activities'); // NEW: Collection for user activities - REMOVED
 
     // Appwrite Configuration
     const client = new Appwrite.Client();
     client
         .setEndpoint('https://fra.cloud.appwrite.io/v1')
-        .setProject('68d0d6eb001dc06a95b3'); // KOREKSI: Menggunakan ID Proyek yang benar
+        .setProject('68d0d6eb001dc06a95b3');
 
     const storage = new Appwrite.Storage(client);
-    const database = new Appwrite.Databases(client); // If you plan to use Appwrite Database for document metadata
-    const APPWRITE_DATABASE_ID = '68d0d71600124cfdc86e'; // Ini adalah ID database, tidak digunakan untuk setProject
-
-    // Appwrite Hardcoded Config
+    const database = new Appwrite.Databases(client);
     const APPWRITE_ENDPOINT = "https://fra.cloud.appwrite.io/v1";
-    const PROJECT_ID = '68d0d6eb001dc06a95b3'; // KOREKSI: Menggunakan ID Proyek yang benar
+    const PROJECT_ID = '68d0d6eb001dc06a95b3';
     const APPWRITE_BUCKET_ID = '68d0d72500025b188805';
 
 
     document.addEventListener('DOMContentLoaded', function() {
-        // --- User Authentication (Simulated) ---
-        // let currentUserEmail = 'user@example.com'; // Default simulated user
-
-        // function getCurrentUserEmail() {
-        //     return currentUserEmail;
-        // }
-
         // --- Generic function to toggle modal visibility ---
         function toggleModal(modalId, show) {
             const modal = document.getElementById(modalId);
@@ -1161,9 +1125,9 @@
                 documentNumber: documentNumber,
                 documentDate: document.getElementById('documentDate').value,
                 changeDate: document.getElementById('changeDate').value,
-                columnToChange: document.getElementById('columnToChange').value, // NEW
-                changeTo: document.getElementById('changeTo').value, // NEW
-                reasonForChange: document.getElementById('reasonForChange').value, // Renamed from documentDescription
+                columnToChange: document.getElementById('columnToChange').value,
+                changeTo: document.getElementById('changeTo').value,
+                reasonForChange: document.getElementById('reasonForChange').value,
                 initialValue: unformatRupiah(document.getElementById('initialValue').value),
                 changedValue: unformatRupiah(document.getElementById('changedValue').value),
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -1180,8 +1144,8 @@
                 }
                 toggleModal('monitoringModal', false);
                 toggleModal('successAlertModal', true);
-                loadMonitorings();
-                fetchAllDocumentNumbers();
+                loadMonitorings(); // Reload data after save
+                fetchAllDocumentNumbers(); // Update autocomplete list
             } catch (error) {
                 console.error("Error saving changes: ", error);
                 alert("Failed to save changes. Please try again.");
@@ -1278,7 +1242,7 @@
                 document.getElementById('successAlertMessage').textContent = `Document files for Document Number ${documentNumber} saved successfully!`;
                 toggleModal('uploadDocumentModal', false);
                 toggleModal('successAlertModal', true);
-                loadMonitorings();
+                loadMonitorings(); // Reload data to update checkmark status
             } catch (error) {
                 console.error("Error saving document upload status or uploading files: ", error);
                 alert(`Failed to save document upload status or upload files. Error: ${error.message}. Please try again.`);
@@ -1374,23 +1338,30 @@
             toggleModal('filterPanel', true);
         });
         document.getElementById('closeFilterPanelBtn').addEventListener('click', () => toggleModal('filterPanel', false));
+
+        // Apply Filters Button
         document.getElementById('applyFiltersBtn').addEventListener('click', () => {
+            // Store current filter values in dataset for persistence
             document.getElementById('filterDocumentType').dataset.currentValue = document.getElementById('filterDocumentType').value;
-            document.getElementById('filterDocumentNumber').dataset.currentValue = document.getElementById('filterDocumentNumber').value;
             document.getElementById('filterChangedBy').dataset.currentValue = document.getElementById('filterChangedBy').value;
-            loadMonitorings();
+            document.getElementById('filterStartDate').dataset.currentValue = document.getElementById('filterStartDate').value;
+            document.getElementById('filterEndDate').dataset.currentValue = document.getElementById('filterEndDate').value;
+            loadMonitorings(); // Reload data with new filters
             toggleModal('filterPanel', false);
         });
+
+        // Reset Filters Button
         document.getElementById('resetFiltersBtn').addEventListener('click', () => {
             document.getElementById('filterDocumentType').value = 'all';
-            document.getElementById('filterDocumentNumber').value = 'all';
             document.getElementById('filterStartDate').value = '';
             document.getElementById('filterEndDate').value = '';
             document.getElementById('filterChangedBy').value = 'all';
+            // Clear stored filter values
             delete document.getElementById('filterDocumentType').dataset.currentValue;
-            delete document.getElementById('filterDocumentNumber').dataset.currentValue;
             delete document.getElementById('filterChangedBy').dataset.currentValue;
-            loadMonitorings();
+            delete document.getElementById('filterStartDate').dataset.currentValue;
+            delete document.getElementById('filterEndDate').dataset.currentValue;
+            loadMonitorings(); // Reload data without filters
             toggleModal('filterPanel', false);
         });
 
@@ -1431,10 +1402,6 @@
         });
 
         // --- Placeholder for other buttons ---
-        // document.getElementById('authButton').addEventListener('click', () => {
-        //     alert('Logout button clicked!');
-        //     currentUserEmail = null;
-        // });
         document.getElementById('backButton').addEventListener('click', () => {
             window.location.href = 'index.html';
         });
@@ -1495,33 +1462,39 @@
             monitoringsStage.innerHTML = '';
 
             try {
-                // Mengubah 'desc' menjadi 'asc' agar data terbaru muncul di akhir
                 let query = monitoringsCollection.orderBy('createdAt', 'asc');
 
+                // Ambil semua data terlebih dahulu untuk populasi filter
+                const snapshot = await query.get();
+                let allMonitorings = []; // Gunakan nama berbeda agar tidak bingung dengan filteredMonitorings
+                snapshot.forEach(doc => {
+                    allMonitorings.push({ id: doc.id, ...doc.data() });
+                });
+
+                // Panggil populateFilterOptions DENGAN SEMUA DATA YANG DIAMBIL
+                populateFilterOptions(allMonitorings);
+
+                // Ambil nilai filter dari UI
                 const filterDocType = document.getElementById('filterDocumentType').value;
-                const filterDocNumber = document.getElementById('filterDocumentNumber').value;
                 const filterStartDate = document.getElementById('filterStartDate').value;
                 const filterEndDate = document.getElementById('filterEndDate').value;
                 const filterChangedBy = document.getElementById('filterChangedBy').value;
                 const searchTerm = document.getElementById('searchMonitorings').value.toLowerCase();
 
-                if (filterDocType !== 'all') {
-                    query = query.where('documentType', '==', filterDocType);
-                }
-                if (filterDocNumber !== 'all') {
-                    query = query.where('documentNumber', '==', filterDocNumber);
-                }
-                if (filterChangedBy !== 'all') {
-                    query = query.where('changedBy', '==', filterChangedBy);
-                }
+                // Terapkan filter pada data yang sudah diambil
+                let filteredMonitorings = allMonitorings.filter(monitoring => {
+                    // Filter Document Type
+                    const matchesDocType = filterDocType === 'all' || (monitoring.documentType && monitoring.documentType === filterDocType);
 
-                const snapshot = await query.get();
-                const monitorings = [];
-                snapshot.forEach(doc => {
-                    monitorings.push({ id: doc.id, ...doc.data() });
-                });
+                    // Filter Changed By
+                    const matchesChangedBy = filterChangedBy === 'all' || (monitoring.changedBy && monitoring.changedBy === filterChangedBy);
 
-                const filteredMonitorings = monitorings.filter(monitoring => {
+                    // Filter Date Range (menggunakan changeDate)
+                    const changeDate = monitoring.changeDate;
+                    const matchesDate = (!filterStartDate || (changeDate && changeDate >= filterStartDate)) &&
+                                        (!filterEndDate || (changeDate && changeDate <= filterEndDate));
+
+                    // Filter Search Term
                     const matchesSearch = searchTerm === '' ||
                                           (monitoring.documentType && monitoring.documentType.toLowerCase().includes(searchTerm)) ||
                                           (monitoring.documentNumber && monitoring.documentNumber.toLowerCase().includes(searchTerm)) ||
@@ -1531,12 +1504,7 @@
                                           (monitoring.columnToChange && monitoring.columnToChange.toLowerCase().includes(searchTerm)) ||
                                           (monitoring.changeTo && monitoring.changeTo.toLowerCase().includes(searchTerm));
 
-
-                    const docDate = monitoring.documentDate;
-                    const matchesDate = (!filterStartDate || (docDate && docDate >= filterStartDate)) &&
-                                        (!filterEndDate || (docDate && docDate <= filterEndDate));
-
-                    return matchesSearch && matchesDate;
+                    return matchesDocType && matchesChangedBy && matchesDate && matchesSearch;
                 });
 
 
@@ -1556,7 +1524,6 @@
                     }
                 }
 
-                populateFilterOptions(monitorings);
             } catch (error) {
                 console.error("Error loading monitorings: ", error);
                 monitoringsStage.innerHTML = `
@@ -1573,25 +1540,25 @@
 
         function createMonitoringCard(monitoring, sequentialNumber) {
             const card = document.createElement('div');
-            card.className = 'deal-card relative'; /* Removed width classes here */
+            card.className = 'deal-card relative';
             card.setAttribute('data-id', monitoring.id);
 
-            const formattedChangedValue = formatRupiah(monitoring.changedValue, 'Rp ');
+            const documentTypeFull = monitoring.documentType || 'N/A';
 
             card.innerHTML = `
                 <span class="monitoring-card-number">${sequentialNumber}</span>
                 <h3 class="text-lg font-bold text-gray-900 mb-2">${monitoring.documentNumber || 'N/A'}</h3>
                 <div class="deal-details">
-                    <p><i class="fas fa-calendar-alt"></i> Document Date: ${monitoring.documentDate || 'N/A'}</p>
+                    <p><i class="fas fa-calendar-alt"></i> Change Date: ${monitoring.changeDate || 'N/A'}</p>
                     <p><i class="fas fa-user"></i> Requested By: ${monitoring.requestedBy || 'N/A'}</p>
                     <p><i class="fas fa-user-edit"></i> Changed By: ${monitoring.changedBy || 'N/A'}</p>
-                    <p><i class="fas fa-money-bill-wave"></i> Changed Price Value: ${formattedChangedValue || 'Rp 0'}</p>
                 </div>
                 <div class="deal-footer">
                     <div class="deal-footer-left">
                         <button class="document-info-btn text-green-600 hover:text-green-800 p-1 rounded-full hidden" title="View Uploaded Documents" id="doc-info-btn-${monitoring.id}">
                             <i class="fas fa-check-circle"></i>
                         </button>
+                        <span class="text-sm font-semibold text-gray-700">${documentTypeFull}</span>
                     </div>
                     <div class="deal-actions">
                         <button class="view-btn text-blue-600 hover:text-blue-800 p-1" title="View Details">
@@ -1741,48 +1708,59 @@
 
         async function populateFilterOptions(monitorings) {
             const filterDocumentTypeSelect = document.getElementById('filterDocumentType');
-            const filterDocumentNumberSelect = document.getElementById('filterDocumentNumber');
             const filterChangedBySelect = document.getElementById('filterChangedBy');
+            const changedByFormSelect = document.getElementById('changedBy'); // Dropdown di form Add/Edit
 
+            // Preserve current selections if they exist
             const currentFilterDocType = filterDocumentTypeSelect.dataset.currentValue || 'all';
-            const currentFilterDocNumber = filterDocumentNumberSelect.dataset.currentValue || 'all';
             const currentFilterChangedBy = filterChangedBySelect.dataset.currentValue || 'all';
+            const currentFormChangedBy = changedByFormSelect.value || ''; // Ambil nilai dari form Add/Edit
 
-            // Hardcoded document types for the filter dropdown
-            const hardcodedDocumentTypes = ["PO EFK", "SO EFK", "PO GEN", "SO GEN"];
-
+            // Clear existing options for Document Type
             filterDocumentTypeSelect.innerHTML = '<option value="all">All Document Types</option>';
-            // Populate filterDocumentTypeSelect with hardcoded options
-            hardcodedDocumentTypes.forEach(type => {
+            // Clear existing options for Changed By (filter)
+            filterChangedBySelect.innerHTML = '<option value="all">All Persons</option>';
+            // Clear existing options for Changed By (form)
+            changedByFormSelect.innerHTML = '<option value="">Select Person</option>';
+
+
+            const uniqueDocumentTypes = new Set();
+            const uniqueChangedBy = new Set();
+
+            monitorings.forEach(m => {
+                if (m.documentType && m.documentType.trim() !== '') {
+                    uniqueDocumentTypes.add(m.documentType);
+                }
+                if (m.changedBy && m.changedBy.trim() !== '') {
+                    uniqueChangedBy.add(m.changedBy);
+                }
+            });
+
+            // Add unique document types to the filter dropdown
+            Array.from(uniqueDocumentTypes).sort().forEach(type => {
                 const option = document.createElement('option');
                 option.value = type;
                 option.textContent = type;
                 filterDocumentTypeSelect.appendChild(option);
             });
 
+            // Add unique Changed By persons to both filter and form dropdowns
+            Array.from(uniqueChangedBy).sort().forEach(person => {
+                const filterOption = document.createElement('option');
+                filterOption.value = person;
+                filterOption.textContent = person;
+                filterChangedBySelect.appendChild(filterOption);
 
-            filterDocumentNumberSelect.innerHTML = '<option value="all">All Document Numbers</option>';
-
-            // The rest of the logic for document numbers and changedBy remains the same
-            const documentNumbers = new Set();
-            const changedByPersons = new Set();
-
-            monitorings.forEach(m => {
-                // Only add document numbers if they are not null/undefined
-                if (m.documentNumber) documentNumbers.add(m.documentNumber);
-                if (m.changedBy) changedByPersons.add(m.changedBy);
+                const formOption = document.createElement('option');
+                formOption.value = person;
+                formOption.textContent = person;
+                changedByFormSelect.appendChild(formOption);
             });
 
-            Array.from(documentNumbers).sort().forEach(number => {
-                const option = document.createElement('option');
-                option.value = number;
-                option.textContent = number;
-                filterDocumentNumberSelect.appendChild(option);
-            });
-
+            // Re-apply previous selections
             filterDocumentTypeSelect.value = currentFilterDocType;
-            filterDocumentNumberSelect.value = currentFilterDocNumber;
             filterChangedBySelect.value = currentFilterChangedBy;
+            changedByFormSelect.value = currentFormChangedBy; // Terapkan kembali nilai ke form Add/Edit
         }
 
         async function checkAndDisplayDocumentUploadStatus(monitoringId) {
