@@ -611,7 +611,6 @@
             }
         }
 
-
         .item-row > div {
             display: flex;
             flex-direction: column;
@@ -636,6 +635,22 @@
             display: flex;
             align-items: center;
             gap: 0.5rem; /* Space between elements in the left footer */
+        }
+
+        /* Currency Input Group */
+        .currency-input-group {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .currency-dropdown {
+            width: 100%;
+        }
+
+        .currency-amount-input {
+            width: 100%;
         }
     </style>
 </head>
@@ -671,6 +686,11 @@
             <!-- Combined Filter Section -->
             <div class="mt-6 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 items-center">
                 <input type="text" id="searchMonitorings" placeholder="Search by document type, number, description..." class="w-full sm:w-1/2 p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                
+                <!-- Sort Button -->
+                <button id="sortToggleBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
+                    <i class="fas fa-sort-amount-down mr-2"></i> Sort: Newest
+                </button>
 
                 <button id="openFilterPanelBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 flex items-center text-sm">
                     <i class="fas fa-filter mr-2"></i> Filter
@@ -756,13 +776,37 @@
                                 <label class="block text-gray-700 text-sm font-semibold mb-1" for="reasonForChange">Reason for Change</label>
                                 <textarea id="reasonForChange" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" rows="4" placeholder="Description of change..."></textarea>
                             </div>
+                            
+                            <!-- Initial Price Value with Currency Dropdown -->
                             <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="initialValue">Initial Price Value (Rp)</label>
-                                <input type="text" id="initialValue" class="currency-input w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="Rp 0">
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="initialValue">Initial Price Value</label>
+                                <div class="currency-input-group">
+                                    <select id="initialCurrency" class="currency-dropdown p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                                        <option value="EUR">Euro</option>
+                                        <option value="GBP">GBP</option>
+                                        <option value="MYR">Ringgit Malaysia</option>
+                                        <option value="IDR" selected>Rupiah</option>
+                                        <option value="SGD">SGD</option>
+                                        <option value="USD">USD</option>
+                                    </select>
+                                    <input type="text" id="initialValue" class="currency-amount-input p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="0">
+                                </div>
                             </div>
+                            
+                            <!-- Changed Price Value with Currency Dropdown -->
                             <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="changedValue">Changed Price Value (Rp)</label>
-                                <input type="text" id="changedValue" class="currency-input w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="Rp 0">
+                                <label class="block text-gray-700 text-sm font-semibold mb-1" for="changedValue">Changed Price Value</label>
+                                <div class="currency-input-group">
+                                    <select id="changedCurrency" class="currency-dropdown p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm">
+                                        <option value="EUR">Euro</option>
+                                        <option value="GBP">GBP</option>
+                                        <option value="MYR">Ringgit Malaysia</option>
+                                        <option value="IDR" selected>Rupiah</option>
+                                        <option value="SGD">SGD</option>
+                                        <option value="USD">USD</option>
+                                    </select>
+                                    <input type="text" id="changedValue" class="currency-amount-input p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 text-sm" placeholder="0">
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1039,6 +1083,8 @@
     const PROJECT_ID = '68d0d6eb001dc06a95b3';
     const APPWRITE_BUCKET_ID = '68d0d72500025b188805';
 
+    // Global variable for sort order
+    let sortOrder = 'desc'; // 'asc' or 'desc'
 
     document.addEventListener('DOMContentLoaded', function() {
         // --- Generic function to toggle modal visibility ---
@@ -1057,44 +1103,32 @@
             }
         }
 
-        // --- Currency Formatting Functions ---
-        function formatRupiah(angka, prefix) {
-            if (angka === null || angka === undefined || isNaN(angka)) return '';
-            let number_string = angka.toString().replace(/[^,\d]/g, ''),
-                split = number_string.split(','),
-                sisa = split[0].length % 3,
-                rupiah = split[0].substr(0, sisa),
-                ribuan = split[0].substr(sisa).match(/\d{3}/gi);
-
-            if (ribuan) {
-                let separator = sisa ? '.' : '';
-                rupiah += separator + ribuan.join('.');
-            }
-
-            rupiah = split[1] !== undefined ? rupiah + ',' + split[1] : rupiah;
-            return prefix === undefined ? rupiah : (rupiah ? 'Rp ' + rupiah : '');
+        // --- Number Formatting Functions ---
+        function formatNumber(num) {
+            if (num === null || num === undefined || isNaN(num)) return '';
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
         }
 
-        function unformatRupiah(rupiah) {
-            if (!rupiah) return 0;
-            const cleaned = rupiah.replace('Rp ', '').replace(/\./g, '').replace(/,/g, '.');
+        function unformatNumber(formattedNum) {
+            if (!formattedNum) return 0;
+            const cleaned = formattedNum.toString().replace(/\./g, '');
             return parseFloat(cleaned) || 0;
         }
 
-        // Apply currency formatting to inputs
-        document.querySelectorAll('.currency-input').forEach(input => {
+        // Apply number formatting to amount inputs
+        document.querySelectorAll('.currency-amount-input').forEach(input => {
             input.addEventListener('keyup', function(e) {
-                this.value = formatRupiah(unformatRupiah(this.value), 'Rp ');
+                this.value = formatNumber(unformatNumber(this.value));
             });
             input.addEventListener('blur', function() {
-                if (this.value === 'Rp ' || this.value === '') {
+                if (this.value === '' || this.value === '0') {
                     this.value = '';
                 } else {
-                    this.value = formatRupiah(unformatRupiah(this.value), 'Rp ');
+                    this.value = formatNumber(unformatNumber(this.value));
                 }
             });
-            if (input.value) {
-                input.value = formatRupiah(unformatRupiah(input.value), 'Rp ');
+            if (input.value && input.value !== '0') {
+                input.value = formatNumber(unformatNumber(input.value));
             }
         });
 
@@ -1105,7 +1139,22 @@
             document.getElementById('modalTitle').textContent = 'Add New Changes';
             document.getElementById('monitoringId').value = '';
             document.getElementById('monitoringForm').reset();
+            // Set default currency to Rupiah
+            document.getElementById('initialCurrency').value = 'IDR';
+            document.getElementById('changedCurrency').value = 'IDR';
             toggleModal('monitoringModal', true);
+        });
+
+        // Sort Toggle Button
+        document.getElementById('sortToggleBtn').addEventListener('click', () => {
+            sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+            const buttonText = sortOrder === 'asc' ? 'Sort: Oldest' : 'Sort: Newest';
+            const buttonIcon = sortOrder === 'asc' ? 'fa-sort-amount-up' : 'fa-sort-amount-down';
+            
+            document.getElementById('sortToggleBtn').innerHTML = 
+                `<i class="fas ${buttonIcon} mr-2"></i> ${buttonText}`;
+            
+            loadMonitorings();
         });
 
         // Close Add/Edit Monitoring Modal
@@ -1128,8 +1177,10 @@
                 columnToChange: document.getElementById('columnToChange').value,
                 changeTo: document.getElementById('changeTo').value,
                 reasonForChange: document.getElementById('reasonForChange').value,
-                initialValue: unformatRupiah(document.getElementById('initialValue').value),
-                changedValue: unformatRupiah(document.getElementById('changedValue').value),
+                initialCurrency: document.getElementById('initialCurrency').value,
+                initialValue: unformatNumber(document.getElementById('initialValue').value),
+                changedCurrency: document.getElementById('changedCurrency').value,
+                changedValue: unformatNumber(document.getElementById('changedValue').value),
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
@@ -1302,7 +1353,6 @@
             }
         });
 
-
         // Function to load existing upload document status for a selected Monitoring
         async function loadUploadDocumentStatus(monitoringId) {
             try {
@@ -1331,7 +1381,6 @@
                 console.error("Error loading document upload status: ", error);
             }
         }
-
 
         // Filter Panel Button
         document.getElementById('openFilterPanelBtn').addEventListener('click', () => {
@@ -1410,11 +1459,14 @@
         document.getElementById('exportExcelBtn').addEventListener('click', async () => {
             showGlobalLoading();
             try {
-                const snapshot = await monitoringsCollection.orderBy('createdAt', 'desc').get();
+                const snapshot = await monitoringsCollection.orderBy('createdAt', sortOrder).get();
                 const dataToExport = [];
 
                 snapshot.forEach(doc => {
                     const monitoring = doc.data();
+                    const initialValue = monitoring.initialValue || 0;
+                    const changedValue = monitoring.changedValue || 0;
+                    
                     dataToExport.push({
                         'Document Type': monitoring.documentType || '',
                         'Document Number': monitoring.documentNumber || '',
@@ -1425,8 +1477,10 @@
                         'Column to Change': monitoring.columnToChange || '',
                         'Change To': monitoring.changeTo || '',
                         'Reason for Change': monitoring.reasonForChange || '',
-                        'Initial Value (Rp)': formatRupiah(monitoring.initialValue, ''),
-                        'Changed Value (Rp)': formatRupiah(monitoring.changedValue, ''),
+                        'Initial Currency': monitoring.initialCurrency || 'IDR',
+                        'Initial Value': formatNumber(initialValue),
+                        'Changed Currency': monitoring.changedCurrency || 'IDR',
+                        'Changed Value': formatNumber(changedValue),
                         'Created At': monitoring.createdAt ? new Date(monitoring.createdAt.toDate()).toLocaleString() : '',
                         'Updated At': monitoring.updatedAt ? new Date(monitoring.updatedAt.toDate()).toLocaleString() : ''
                     });
@@ -1453,7 +1507,6 @@
             }
         });
 
-
         // --- Functions for Monitoring List and Details ---
 
         async function loadMonitorings() {
@@ -1462,11 +1515,11 @@
             monitoringsStage.innerHTML = '';
 
             try {
-                let query = monitoringsCollection.orderBy('createdAt', 'asc');
+                let query = monitoringsCollection.orderBy('createdAt', sortOrder);
 
                 // Ambil semua data terlebih dahulu untuk populasi filter
                 const snapshot = await query.get();
-                let allMonitorings = []; // Gunakan nama berbeda agar tidak bingung dengan filteredMonitorings
+                let allMonitorings = [];
                 snapshot.forEach(doc => {
                     allMonitorings.push({ id: doc.id, ...doc.data() });
                 });
@@ -1507,7 +1560,6 @@
                     return matchesDocType && matchesChangedBy && matchesDate && matchesSearch;
                 });
 
-
                 if (filteredMonitorings.length === 0) {
                     monitoringsStage.innerHTML = `
                         <div class="empty-state">
@@ -1544,6 +1596,10 @@
             card.setAttribute('data-id', monitoring.id);
 
             const documentTypeFull = monitoring.documentType || 'N/A';
+            const initialValue = monitoring.initialValue || 0;
+            const changedValue = monitoring.changedValue || 0;
+            const initialCurrency = monitoring.initialCurrency || 'IDR';
+            const changedCurrency = monitoring.changedCurrency || 'IDR';
 
             card.innerHTML = `
                 <span class="monitoring-card-number">${sequentialNumber}</span>
@@ -1552,6 +1608,8 @@
                     <p><i class="fas fa-calendar-alt"></i> Change Date: ${monitoring.changeDate || 'N/A'}</p>
                     <p><i class="fas fa-user"></i> Requested By: ${monitoring.requestedBy || 'N/A'}</p>
                     <p><i class="fas fa-user-edit"></i> Changed By: ${monitoring.changedBy || 'N/A'}</p>
+                    <p><i class="fas fa-money-bill-wave"></i> Initial: ${formatNumber(initialValue)} ${initialCurrency}</p>
+                    <p><i class="fas fa-exchange-alt"></i> Changed: ${formatNumber(changedValue)} ${changedCurrency}</p>
                 </div>
                 <div class="deal-footer">
                     <div class="deal-footer-left">
@@ -1602,6 +1660,11 @@
                 const doc = await monitoringsCollection.doc(id).get();
                 if (doc.exists) {
                     const data = doc.data();
+                    const initialValue = data.initialValue || 0;
+                    const changedValue = data.changedValue || 0;
+                    const initialCurrency = data.initialCurrency || 'IDR';
+                    const changedCurrency = data.changedCurrency || 'IDR';
+                    
                     document.getElementById('detailRequestedBy').textContent = data.requestedBy || '-';
                     document.getElementById('detailChangedBy').textContent = data.changedBy || '-';
                     document.getElementById('detailDocumentType').textContent = data.documentType || '-';
@@ -1611,8 +1674,8 @@
                     document.getElementById('detailColumnToChange').textContent = data.columnToChange || '-';
                     document.getElementById('detailChangeTo').textContent = data.changeTo || '-';
                     document.getElementById('detailReasonForChange').textContent = data.reasonForChange || '-';
-                    document.getElementById('detailInitialValue').textContent = formatRupiah(data.initialValue, 'Rp ') || 'Rp 0';
-                    document.getElementById('detailChangedValue').textContent = formatRupiah(data.changedValue, 'Rp ') || 'Rp 0';
+                    document.getElementById('detailInitialValue').textContent = `${formatNumber(initialValue)} ${initialCurrency}`;
+                    document.getElementById('detailChangedValue').textContent = `${formatNumber(changedValue)} ${changedCurrency}`;
 
                     toggleModal('monitoringDetailModal', true);
                 } else {
@@ -1627,7 +1690,6 @@
         }
 
         document.getElementById('closeMonitoringDetailBtn').addEventListener('click', () => toggleModal('monitoringDetailModal', false));
-
 
         async function editMonitoring(id) {
             showGlobalLoading();
@@ -1646,8 +1708,14 @@
                     document.getElementById('columnToChange').value = data.columnToChange || '';
                     document.getElementById('changeTo').value = data.changeTo || '';
                     document.getElementById('reasonForChange').value = data.reasonForChange || '';
-                    document.getElementById('initialValue').value = formatRupiah(data.initialValue, 'Rp ') || '';
-                    document.getElementById('changedValue').value = formatRupiah(data.changedValue, 'Rp ') || '';
+                    
+                    // Set currency dropdowns
+                    document.getElementById('initialCurrency').value = data.initialCurrency || 'IDR';
+                    document.getElementById('changedCurrency').value = data.changedCurrency || 'IDR';
+                    
+                    // Set amount values with formatting
+                    document.getElementById('initialValue').value = formatNumber(data.initialValue || 0);
+                    document.getElementById('changedValue').value = formatNumber(data.changedValue || 0);
 
                     toggleModal('monitoringModal', true);
                 } else {
@@ -1688,7 +1756,6 @@
                         await documentUploadsCollection.doc(monitoringToDeleteId).delete();
                     }
 
-
                     toggleModal('deleteModal', false);
                     toggleModal('successAlertModal', true);
                     document.getElementById('successAlertMessage').textContent = 'Monitoring deleted successfully!';
@@ -1705,16 +1772,15 @@
         });
         document.getElementById('cancelDeleteBtn').addEventListener('click', () => toggleModal('deleteModal', false));
 
-
         async function populateFilterOptions(monitorings) {
             const filterDocumentTypeSelect = document.getElementById('filterDocumentType');
             const filterChangedBySelect = document.getElementById('filterChangedBy');
-            const changedByFormSelect = document.getElementById('changedBy'); // Dropdown di form Add/Edit
+            const changedByFormSelect = document.getElementById('changedBy');
 
             // Preserve current selections if they exist
             const currentFilterDocType = filterDocumentTypeSelect.dataset.currentValue || 'all';
             const currentFilterChangedBy = filterChangedBySelect.dataset.currentValue || 'all';
-            const currentFormChangedBy = changedByFormSelect.value || ''; // Ambil nilai dari form Add/Edit
+            const currentFormChangedBy = changedByFormSelect.value || '';
 
             // Clear existing options for Document Type
             filterDocumentTypeSelect.innerHTML = '<option value="all">All Document Types</option>';
@@ -1722,7 +1788,6 @@
             filterChangedBySelect.innerHTML = '<option value="all">All Persons</option>';
             // Clear existing options for Changed By (form)
             changedByFormSelect.innerHTML = '<option value="">Select Person</option>';
-
 
             const uniqueDocumentTypes = new Set();
             const uniqueChangedBy = new Set();
@@ -1760,7 +1825,7 @@
             // Re-apply previous selections
             filterDocumentTypeSelect.value = currentFilterDocType;
             filterChangedBySelect.value = currentFilterChangedBy;
-            changedByFormSelect.value = currentFormChangedBy; // Terapkan kembali nilai ke form Add/Edit
+            changedByFormSelect.value = currentFormChangedBy;
         }
 
         async function checkAndDisplayDocumentUploadStatus(monitoringId) {
@@ -1825,6 +1890,10 @@
         document.getElementById('closeDocumentInfoModalBtn').addEventListener('click', () => toggleModal('documentInfoModal', false));
         document.getElementById('closeDocumentInfoBtn').addEventListener('click', () => toggleModal('documentInfoModal', false));
 
+        // Search input event listener
+        document.getElementById('searchMonitorings').addEventListener('input', () => {
+            loadMonitorings();
+        });
 
         // --- Initial Load ---
         loadMonitorings();
