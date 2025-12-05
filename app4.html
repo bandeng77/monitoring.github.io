@@ -1106,29 +1106,98 @@
         // --- Number Formatting Functions ---
         function formatNumber(num) {
             if (num === null || num === undefined || isNaN(num)) return '';
-            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            
+            // Convert to number if it's a string
+            const number = typeof num === 'string' ? parseFloat(num.replace(/\./g, '').replace(',', '.')) : num;
+            
+            // Format with thousand separators and 2 decimal places
+            return number.toLocaleString('id-ID', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
         }
-
+        
         function unformatNumber(formattedNum) {
-            if (!formattedNum) return 0;
-            const cleaned = formattedNum.toString().replace(/\./g, '');
+            if (!formattedNum || formattedNum === '') return 0;
+            
+            // Remove thousand separators (dots) and replace comma with dot for decimal
+            const cleaned = formattedNum.toString()
+                .replace(/\./g, '')           // Remove thousand separators
+                .replace(',', '.');           // Replace comma with dot for decimal
+            
             return parseFloat(cleaned) || 0;
         }
 
-        // Apply number formatting to amount inputs
+        // Apply number formatting to amount inputs with decimal support
         document.querySelectorAll('.currency-amount-input').forEach(input => {
-            input.addEventListener('keyup', function(e) {
-                this.value = formatNumber(unformatNumber(this.value));
+            input.addEventListener('keydown', function(e) {
+                // Allow: backspace, delete, tab, escape, enter
+                // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+                if ([46, 8, 9, 27, 13].indexOf(e.keyCode) !== -1 ||
+                    (e.keyCode === 65 && e.ctrlKey === true) || // Ctrl+A
+                    (e.keyCode === 67 && e.ctrlKey === true) || // Ctrl+C
+                    (e.keyCode === 86 && e.ctrlKey === true) || // Ctrl+V
+                    (e.keyCode === 88 && e.ctrlKey === true) || // Ctrl+X
+                    (e.keyCode === 65 && e.metaKey === true) || // Cmd+A (Mac)
+                    (e.keyCode === 67 && e.metaKey === true) || // Cmd+C (Mac)
+                    (e.keyCode === 86 && e.metaKey === true) || // Cmd+V (Mac)
+                    (e.keyCode === 88 && e.metaKey === true)    // Cmd+X (Mac)
+                ) {
+                    return;
+                }
+                
+                // Ensure that it is a number and stop the keypress if not
+                if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && 
+                    (e.keyCode < 96 || e.keyCode > 105) && 
+                    e.keyCode !== 110 && e.keyCode !== 190 && e.keyCode !== 188) {
+                    e.preventDefault();
+                }
+                
+                // Allow only one decimal point
+                if ((e.keyCode === 110 || e.keyCode === 190 || e.keyCode === 188) && 
+                    this.value.includes('.')) {
+                    e.preventDefault();
+                }
             });
+            
+            input.addEventListener('keyup', function(e) {
+                // Format the number as user types
+                let value = this.value;
+                
+                // Replace comma with dot for decimal
+                value = value.replace(',', '.');
+                
+                // Allow only numbers and one decimal point
+                value = value.replace(/[^0-9.]/g, '');
+                
+                // Ensure only one decimal point
+                const parts = value.split('.');
+                if (parts.length > 2) {
+                    value = parts[0] + '.' + parts.slice(1).join('');
+                }
+                
+                // Limit to 2 decimal places
+                if (parts.length === 2 && parts[1].length > 2) {
+                    value = parts[0] + '.' + parts[1].substring(0, 2);
+                }
+                
+                this.value = value;
+            });
+            
             input.addEventListener('blur', function() {
                 if (this.value === '' || this.value === '0') {
                     this.value = '';
                 } else {
-                    this.value = formatNumber(unformatNumber(this.value));
+                    // Format with thousand separators and 2 decimal places
+                    const numValue = unformatNumber(this.value);
+                    this.value = formatNumber(numValue);
                 }
             });
+            
+            // Format initial value if exists
             if (input.value && input.value !== '0') {
-                input.value = formatNumber(unformatNumber(input.value));
+                const numValue = unformatNumber(input.value);
+                input.value = formatNumber(numValue);
             }
         });
 
