@@ -1104,13 +1104,21 @@
         }
 
         // --- Number Formatting Functions ---
-        function formatNumber(num) {
+        function formatNumber(num, currency = 'IDR') {
             if (num === null || num === undefined || isNaN(num)) return '';
             
             // Convert to number if it's a string
             const number = typeof num === 'string' ? parseFloat(num.replace(/\./g, '').replace(',', '.')) : num;
             
-            // Format with thousand separators and 2 decimal places
+            // Untuk USD dan EUR, gunakan format dengan titik sebagai ribu dan koma sebagai desimal
+            if (currency === 'USD' || currency === 'EUR' || currency === 'GBP') {
+                return number.toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            }
+            
+            // Untuk IDR, MYR, SGD gunakan format dengan titik sebagai ribu dan koma sebagai desimal
             return number.toLocaleString('id-ID', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
@@ -1120,16 +1128,32 @@
         function unformatNumber(formattedNum) {
             if (!formattedNum || formattedNum === '') return 0;
             
-            // Remove thousand separators (dots) and replace comma with dot for decimal
+            // Untuk format US/EU (1,234.56) -> 1234.56
+            if (formattedNum.includes(',') && formattedNum.includes('.')) {
+                // Format seperti 1,234.56
+                if (formattedNum.lastIndexOf(',') < formattedNum.lastIndexOf('.')) {
+                    // Koma sebagai ribu, titik sebagai desimal
+                    const cleaned = formattedNum.toString()
+                        .replace(/,/g, '')           // Hapus koma (ribuan)
+                        .replace(/\./, 'x')          // Simpan titik desimal sementara
+                        .replace(/\./g, '')          // Hapus semua titik lainnya
+                        .replace('x', '.');          // Kembalikan titik desimal
+                    return parseFloat(cleaned) || 0;
+                }
+            }
+            
+            // Untuk format Indonesia/Eropa (1.234,56) -> 1234.56
             const cleaned = formattedNum.toString()
-                .replace(/\./g, '')           // Remove thousand separators
-                .replace(',', '.');           // Replace comma with dot for decimal
+                .replace(/\./g, '')           // Hapus titik (ribuan)
+                .replace(',', '.');           // Ganti koma dengan titik untuk desimal
             
             return parseFloat(cleaned) || 0;
         }
 
         // Apply number formatting to amount inputs with decimal support
         document.querySelectorAll('.currency-amount-input').forEach(input => {
+            const currencySelect = input.parentElement.querySelector('.currency-dropdown');
+            
             input.addEventListener('keydown', function(e) {
                 // Allow: backspace, delete, tab, escape, enter
                 // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
@@ -1146,58 +1170,107 @@
                     return;
                 }
                 
-                // Ensure that it is a number and stop the keypress if not
-                if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && 
-                    (e.keyCode < 96 || e.keyCode > 105) && 
-                    e.keyCode !== 110 && e.keyCode !== 190 && e.keyCode !== 188) {
-                    e.preventDefault();
-                }
+                // Dapatkan currency yang dipilih
+                const currency = currencySelect ? currencySelect.value : 'IDR';
                 
-                // Allow only one decimal point
-                if ((e.keyCode === 110 || e.keyCode === 190 || e.keyCode === 188) && 
-                    this.value.includes('.')) {
-                    e.preventDefault();
+                // Untuk USD/EUR/GBP: titik sebagai desimal, koma sebagai ribu
+                if (currency === 'USD' || currency === 'EUR' || currency === 'GBP') {
+                    // Allow: numbers, decimal point (.), comma (,), minus (-)
+                    if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && 
+                        (e.keyCode < 96 || e.keyCode > 105) && 
+                        e.keyCode !== 190 && e.keyCode !== 188 && e.keyCode !== 109 && e.keyCode !== 189) {
+                        e.preventDefault();
+                        return;
+                    }
+                    
+                    // Untuk format US: hanya satu titik untuk desimal
+                    if (e.keyCode === 190 && this.value.includes('.')) {
+                        e.preventDefault();
+                    }
+                } else {
+                    // Untuk IDR/MYR/SGD: koma sebagai desimal, titik sebagai ribu
+                    // Allow: numbers, decimal point (.), comma (,), minus (-)
+                    if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && 
+                        (e.keyCode < 96 || e.keyCode > 105) && 
+                        e.keyCode !== 190 && e.keyCode !== 188 && e.keyCode !== 109 && e.keyCode !== 189) {
+                        e.preventDefault();
+                        return;
+                    }
+                    
+                    // Untuk format ID: hanya satu koma untuk desimal
+                    if (e.keyCode === 188 && this.value.includes(',')) {
+                        e.preventDefault();
+                    }
                 }
             });
             
             input.addEventListener('keyup', function(e) {
-                // Format the number as user types
+                const currency = currencySelect ? currencySelect.value : 'IDR';
                 let value = this.value;
                 
-                // Replace comma with dot for decimal
-                value = value.replace(',', '.');
-                
-                // Allow only numbers and one decimal point
-                value = value.replace(/[^0-9.]/g, '');
-                
-                // Ensure only one decimal point
-                const parts = value.split('.');
-                if (parts.length > 2) {
-                    value = parts[0] + '.' + parts.slice(1).join('');
-                }
-                
-                // Limit to 2 decimal places
-                if (parts.length === 2 && parts[1].length > 2) {
-                    value = parts[0] + '.' + parts[1].substring(0, 2);
+                if (currency === 'USD' || currency === 'EUR' || currency === 'GBP') {
+                    // Untuk US format: 1,234.56
+                    // Hapus semua karakter non-numerik kecuali titik dan koma
+                    value = value.replace(/[^0-9.,]/g, '');
+                    
+                    // Pastikan hanya satu titik desimal
+                    const parts = value.split('.');
+                    if (parts.length > 2) {
+                        value = parts[0] + '.' + parts.slice(1).join('');
+                    }
+                    
+                    // Batasi 2 angka desimal
+                    if (parts.length === 2 && parts[1].length > 2) {
+                        value = parts[0] + '.' + parts[1].substring(0, 2);
+                    }
+                } else {
+                    // Untuk ID format: 1.234,56
+                    // Hapus semua karakter non-numerik kecuali titik dan koma
+                    value = value.replace(/[^0-9.,]/g, '');
+                    
+                    // Pastikan hanya satu koma desimal
+                    const parts = value.split(',');
+                    if (parts.length > 2) {
+                        value = parts[0] + ',' + parts.slice(1).join('');
+                    }
+                    
+                    // Batasi 2 angka desimal
+                    if (parts.length === 2 && parts[1].length > 2) {
+                        value = parts[0] + ',' + parts[1].substring(0, 2);
+                    }
                 }
                 
                 this.value = value;
             });
             
             input.addEventListener('blur', function() {
+                const currency = currencySelect ? currencySelect.value : 'IDR';
+                
                 if (this.value === '' || this.value === '0') {
                     this.value = '';
                 } else {
-                    // Format with thousand separators and 2 decimal places
+                    // Format dengan thousand separators dan 2 decimal places
                     const numValue = unformatNumber(this.value);
-                    this.value = formatNumber(numValue);
+                    this.value = formatNumber(numValue, currency);
                 }
             });
             
-            // Format initial value if exists
+            // Format initial value jika ada
             if (input.value && input.value !== '0') {
+                const currency = currencySelect ? currencySelect.value : 'IDR';
                 const numValue = unformatNumber(input.value);
-                input.value = formatNumber(numValue);
+                input.value = formatNumber(numValue, currency);
+            }
+            
+            // Tambahkan event listener untuk currency dropdown
+            if (currencySelect) {
+                currencySelect.addEventListener('change', function() {
+                    const inputField = this.parentElement.querySelector('.currency-amount-input');
+                    if (inputField.value && inputField.value !== '0') {
+                        const numValue = unformatNumber(inputField.value);
+                        inputField.value = formatNumber(numValue, this.value);
+                    }
+                });
             }
         });
 
@@ -1663,13 +1736,17 @@
             const card = document.createElement('div');
             card.className = 'deal-card relative';
             card.setAttribute('data-id', monitoring.id);
-
+        
             const documentTypeFull = monitoring.documentType || 'N/A';
             const initialValue = monitoring.initialValue || 0;
             const changedValue = monitoring.changedValue || 0;
             const initialCurrency = monitoring.initialCurrency || 'IDR';
             const changedCurrency = monitoring.changedCurrency || 'IDR';
-
+        
+            // Format nilai dengan currency yang sesuai
+            const formattedInitialValue = formatNumber(initialValue, initialCurrency);
+            const formattedChangedValue = formatNumber(changedValue, changedCurrency);
+        
             card.innerHTML = `
                 <span class="monitoring-card-number">${sequentialNumber}</span>
                 <h3 class="text-lg font-bold text-gray-900 mb-2">${monitoring.documentNumber || 'N/A'}</h3>
@@ -1677,6 +1754,8 @@
                     <p><i class="fas fa-calendar-alt"></i> Change Date: ${monitoring.changeDate || 'N/A'}</p>
                     <p><i class="fas fa-user"></i> Requested By: ${monitoring.requestedBy || 'N/A'}</p>
                     <p><i class="fas fa-user-edit"></i> Changed By: ${monitoring.changedBy || 'N/A'}</p>
+                    <p><i class="fas fa-money-bill-wave"></i> Initial Value: ${initialCurrency} ${formattedInitialValue}</p>
+                    <p><i class="fas fa-money-bill-wave"></i> Changed Value: ${changedCurrency} ${formattedChangedValue}</p>
                 </div>
                 <div class="deal-footer">
                     <div class="deal-footer-left">
@@ -1732,6 +1811,10 @@
                     const initialCurrency = data.initialCurrency || 'IDR';
                     const changedCurrency = data.changedCurrency || 'IDR';
                     
+                    // Format nilai dengan currency yang sesuai
+                    const formattedInitialValue = formatNumber(initialValue, initialCurrency);
+                    const formattedChangedValue = formatNumber(changedValue, changedCurrency);
+                    
                     document.getElementById('detailRequestedBy').textContent = data.requestedBy || '-';
                     document.getElementById('detailChangedBy').textContent = data.changedBy || '-';
                     document.getElementById('detailDocumentType').textContent = data.documentType || '-';
@@ -1741,9 +1824,9 @@
                     document.getElementById('detailColumnToChange').textContent = data.columnToChange || '-';
                     document.getElementById('detailChangeTo').textContent = data.changeTo || '-';
                     document.getElementById('detailReasonForChange').textContent = data.reasonForChange || '-';
-                    document.getElementById('detailInitialValue').textContent = `${formatNumber(initialValue)} ${initialCurrency}`;
-                    document.getElementById('detailChangedValue').textContent = `${formatNumber(changedValue)} ${changedCurrency}`;
-
+                    document.getElementById('detailInitialValue').textContent = `${initialCurrency} ${formattedInitialValue}`;
+                    document.getElementById('detailChangedValue').textContent = `${changedCurrency} ${formattedChangedValue}`;
+        
                     toggleModal('monitoringDetailModal', true);
                 } else {
                     alert("Monitoring not found.");
@@ -1780,10 +1863,13 @@
                     document.getElementById('initialCurrency').value = data.initialCurrency || 'IDR';
                     document.getElementById('changedCurrency').value = data.changedCurrency || 'IDR';
                     
-                    // Set amount values with formatting
-                    document.getElementById('initialValue').value = formatNumber(data.initialValue || 0);
-                    document.getElementById('changedValue').value = formatNumber(data.changedValue || 0);
-
+                    // Set amount values with proper formatting based on currency
+                    const initialCurrency = data.initialCurrency || 'IDR';
+                    const changedCurrency = data.changedCurrency || 'IDR';
+                    
+                    document.getElementById('initialValue').value = formatNumber(data.initialValue || 0, initialCurrency);
+                    document.getElementById('changedValue').value = formatNumber(data.changedValue || 0, changedCurrency);
+        
                     toggleModal('monitoringModal', true);
                 } else {
                     alert("Monitoring not found for editing.");
