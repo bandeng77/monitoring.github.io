@@ -34,8 +34,8 @@
         }
 
         html, body {
-            height: 100%; /* Important for fullscreen modal */
-            width: 100%; /* Important for fullscreen modal */
+            height: 100%;
+            width: 100%;
             margin: 0;
             padding: 0;
         }
@@ -50,14 +50,14 @@
         /* Header Styling */
         .header {
             background-color: #ffffff;
-            border-radius: 1rem; /* More rounded */
-            box-shadow: 0 8px 20px var(--shadow-light); /* Softer shadow */
+            border-radius: 1rem;
+            box-shadow: 0 8px 20px var(--shadow-light);
             padding: 1.75rem 2rem;
-            position: relative; /* For logout button placement */
+            position: relative;
         }
         .header h1 {
             color: var(--text-dark);
-            font-size: 2.25rem; /* Larger */
+            font-size: 2.25rem;
             font-weight: 800;
         }
         .header button {
@@ -74,8 +74,8 @@
         }
         .header button.bg-blue-600 { background-color: var(--primary-blue); }
         .header button.bg-blue-600:hover { background-color: var(--primary-dark-blue); }
-        .header button.bg-green-500 { background-color: var(--accent-green); } /* Using accent-green */
-        .header button.bg-green-500:hover { background-color: #16a34a; } /* Darker green */
+        .header button.bg-green-500 { background-color: var(--accent-green); }
+        .header button.bg-green-500:hover { background-color: #16a34a; }
         .header button.bg-red-500 { background-color: #ef4444; }
         .header button.bg-red-500:hover { background-color: #dc2626; }
         .header button.bg-gray-500 { background-color: #6b7280; }
@@ -117,36 +117,36 @@
             min-height: 480px;
             max-height: 600px;
             transition: all 0.4s ease-out;
-            border-radius: 1rem; /* More rounded */
+            border-radius: 1rem;
             overflow: hidden;
             display: flex;
             flex-direction: column;
             background-color: #ffffff;
-            box-shadow: 0 12px 30px var(--shadow-light); /* Deeper shadow */
+            box-shadow: 0 12px 30px var(--shadow-light);
             box-sizing: border-box;
         }
         .pipeline-stage-header {
             padding: 1.25rem 1.5rem;
             border-bottom: 1px solid var(--bg-medium);
-            background-image: linear-gradient(to right, var(--primary-blue), var(--accent-teal)); /* Animation: Gradient on header */
-            color: white; /* Animation: Text color for gradient contrast */
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1); /* Animation: Shadow on header */
+            background-image: linear-gradient(to right, var(--primary-blue), var(--accent-teal));
+            color: white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 0.25rem;
         }
         .pipeline-stage-header h3 {
-            font-size: 1.2rem; /* Larger */
+            font-size: 1.2rem;
             font-weight: 700;
-            color: white; /* Animation: Ensure title text remains white */
+            color: white;
             flex-shrink: 0;
             text-align: center;
             width: 100%;
         }
         .pipeline-stage-content {
             flex-grow: 1;
-            padding: 1.25rem; /* Larger padding */
+            padding: 1.25rem;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
             min-height: 100px;
@@ -155,26 +155,26 @@
             flex-wrap: wrap;
             gap: 1rem;
             align-content: flex-start;
-            background-image: linear-gradient(to bottom right, var(--bg-light), var(--bg-soft)); /* Animation: Soft gradient on content */
+            background-image: linear-gradient(to bottom right, var(--bg-light), var(--bg-soft));
         }
 
         /* Deal Card */
         .deal-card {
-            transition: transform 0.4s ease-out, opacity 0.4s ease-out, box-shadow 0.3s ease-out; /* Animation: Smoother transition */
+            transition: transform 0.4s ease-out, opacity 0.4s ease-out, box-shadow 0.3s ease-out;
             cursor: grab;
             position: relative;
             background-color: #ffffff;
             border: 1px solid var(--bg-medium);
-            border-radius: 0.85rem; /* More rounded */
-            padding: 1.1rem; /* Larger padding */
+            border-radius: 0.85rem;
+            padding: 1.1rem;
             margin-bottom: 0;
-            box-shadow: 0 6px 15px var(--shadow-light); /* Clearer shadow */
+            box-shadow: 0 6px 15px var(--shadow-light);
             font-size: 0.875rem;
-            width: calc(25% - 0.75rem); /* Adjusted for 4 columns */
+            width: calc(25% - 0.75rem);
             box-sizing: border-box;
-            opacity: 0; /* Animation: Start invisible */
-            transform: translateY(20px); /* Animation: Start slightly below */
-            display: flex; /* Using flexbox for internal layout */
+            opacity: 0;
+            transform: translateY(20px);
+            display: flex;
             flex-direction: column;
             justify-content: space-between;
         }
@@ -183,28 +183,28 @@
             transform: translateY(0);
         }
         .deal-card:hover {
-            transform: translateY(-7px) scale(1.02); /* Animation: More dramatic hover effect (lift and enlarge) */
-            box-shadow: 0 15px 35px var(--shadow-medium); /* Stronger hover shadow */
+            transform: translateY(-7px) scale(1.02);
+            box-shadow: 0 15px 35px var(--shadow-medium);
         }
         .deal-card:active {
             cursor: grabbing;
         }
         .deal-card h3 {
-            font-size: 1.05rem; /* Slightly larger font size */
+            font-size: 1.05rem;
             font-weight: 700;
             color: var(--text-dark);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             max-width: calc(100% - 60px);
-            margin-bottom: 0.5rem; /* Space below title */
+            margin-bottom: 0.5rem;
         }
         .deal-details {
-            flex-grow: 1; /* Allow details to fill space */
-            margin-bottom: 1rem; /* Space below details */
+            flex-grow: 1;
+            margin-bottom: 1rem;
         }
         .deal-details p {
-            font-size: 0.85rem; /* Slightly larger font size */
+            font-size: 0.85rem;
             margin-top: 0.3rem;
             white-space: nowrap;
             overflow: hidden;
@@ -216,22 +216,22 @@
         .deal-details p i {
             font-size: 0.8rem;
             color: var(--text-light);
-            margin-right: 0.5rem; /* Space between icon and text */
-            width: 1rem; /* Fixed width for icon */
+            margin-right: 0.5rem;
+            width: 1rem;
             text-align: center;
         }
         .deal-actions {
             display: flex;
-            justify-content: flex-end; /* Action buttons to the right */
-            gap: 0.5rem; /* Space between action buttons */
+            justify-content: flex-end;
+            gap: 0.5rem;
         }
         .deal-actions button {
             padding: 0.3rem 0.6rem;
             font-size: 0.8rem;
             border-radius: 0.5rem;
             transition: background-color 0.2s ease-out, transform 0.2s ease-out;
-            color: var(--text-medium); /* Default icon color */
-            background-color: var(--bg-light); /* Action button background */
+            color: var(--text-medium);
+            background-color: var(--bg-light);
             border: 1px solid var(--border-color);
         }
         .deal-actions button:hover {
@@ -239,39 +239,37 @@
             background-color: var(--bg-medium);
         }
         .deal-actions button.text-blue-600:hover { color: var(--primary-blue); }
-        .deal-actions button.text-green-600:hover { color: #22c55e; } /* Using accent-green */
+        .deal-actions button.text-green-600:hover { color: #22c55e; }
         .deal-actions button.text-red-600:hover { color: #ef4444; }
 
         .deal-footer {
             margin-top: 1rem;
             padding-top: 0.75rem;
             border-top: 1px solid var(--bg-medium);
-            display: flex; /* Add this for flexbox */
-            justify-content: space-between; /* To place status on the left and actions on the right */
-            align-items: center; /* To align vertically */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         /* Scrollbar */
         .pipeline-stage-content::-webkit-scrollbar {
-            width: 8px; /* Animation: Scrollbar width */
+            width: 8px;
         }
         .pipeline-stage-content::-webkit-scrollbar-track {
-            background: var(--bg-soft); /* Animation: Track color */
+            background: var(--bg-soft);
             border-radius: 10px;
         }
         .pipeline-stage-content::-webkit-scrollbar-thumb {
-            background: var(--primary-blue); /* Animation: Thumb color */
+            background: var(--primary-blue);
             border-radius: 10px;
-            border: 2px solid var(--bg-soft); /* Animation: Border for better appearance */
+            border: 2px solid var(--bg-soft);
         }
         .pipeline-stage-content::-webkit-scrollbar-thumb:hover {
-            background: var(--primary-dark-blue); /* Animation: Thumb color on hover */
+            background: var(--primary-dark-blue);
         }
 
         /* Modals */
-        /* Remove transition property to remove animation */
         .modal-content-enter-active, .modal-content-leave-active {
-            /* transition: opacity 0.15s cubic-bezier(0.25, 0.8, 0.25, 1), transform 0.15s cubic-bezier(0.25, 0.8, 0.25, 1); */
         }
         #monitoringModalContent, #monitoringDetailModalContent, #deleteModalContent, #filterPanelContent, #successAlertModalContent, #uploadDocumentModalContent, #documentInfoModalContent {
             background-color: #ffffff;
@@ -282,19 +280,19 @@
 
         /* Fullscreen PO Modal */
         #monitoringModalContent {
-            width: 98vw; /* Almost fullscreen */
-            height: 98vh; /* Almost fullscreen */
-            max-width: 98vw; /* Ensure it doesn't exceed viewport */
-            max-height: 98vh; /* Ensure it doesn't exceed viewport */
+            width: 98vw;
+            height: 98vh;
+            max-width: 98vw;
+            max-height: 98vh;
             border-radius: 1rem;
             display: flex;
             flex-direction: column;
-            padding: 1rem; /* Adjust padding to not be too large */
+            padding: 1rem;
         }
         #monitoringModalContent .monitoring-form-container {
             flex-grow: 1;
-            overflow-y: auto; /* Scrollbar only inside the form if content is too long */
-            padding-right: 0.5rem; /* Space for scrollbar */
+            overflow-y: auto;
+            padding-right: 0.5rem;
         }
         #monitoringModalContent .monitoring-form-container::-webkit-scrollbar {
             width: 8px;
@@ -312,66 +310,62 @@
             background: var(--primary-dark-blue);
         }
 
-
         #monitoringModalContent h2, #monitoringDetailModalContent h2, #deleteModalContent h2, #filterPanelContent h2, #successAlertModalContent h2, #uploadDocumentModalContent h2, #documentInfoModalContent h2 {
             color: var(--text-dark);
             font-weight: 800;
-            font-size: 1.75rem; /* Smaller */
-            margin-bottom: 1rem; /* Smaller */
+            font-size: 1.75rem;
+            margin-bottom: 1rem;
         }
         #monitoringForm label, #uploadDocumentForm label {
             color: var(--text-dark);
             font-weight: 600;
-            font-size: 0.75rem; /* Smaller */
-            margin-bottom: 0.25rem; /* Smaller */
+            font-size: 0.75rem;
+            margin-bottom: 0.25rem;
         }
         #monitoringForm input, #monitoringForm select, #monitoringForm textarea, #uploadDocumentForm input, #uploadDocumentForm select, #uploadDocumentForm textarea {
             border-radius: 0.5rem;
-            padding: 0.5rem 0.75rem; /* Smaller */
-            font-size: 0.85rem; /* Smaller */
+            padding: 0.5rem 0.75rem;
+            font-size: 0.85rem;
         }
-        #monitoringForm textarea, #uploadDocumentForm textarea { height: 80px; } /* Slightly shorter */
+        #monitoringForm textarea, #uploadDocumentForm textarea { height: 80px; }
 
         /* Detail Grid */
         #monitoringDetailModalContent .detail-grid {
-            display: grid; /* Ensure this is a grid */
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* Tighter */
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 1rem;
         }
-        /* Modification for 3 columns on PO details */
-        @media (min-width: 768px) { /* For tablets and desktops */
+        @media (min-width: 768px) {
             #monitoringDetailModalContent .detail-grid {
-                grid-template-columns: repeat(3, 1fr); /* 3 columns */
+                grid-template-columns: repeat(3, 1fr);
             }
         }
-        /* Modification for 4 columns on PO details */
-        @media (min-width: 1024px) { /* For desktops */
+        @media (min-width: 1024px) {
             #monitoringDetailModalContent .detail-grid {
-                grid-template-columns: repeat(4, 1fr); /* 4 columns */
+                grid-template-columns: repeat(4, 1fr);
             }
         }
-        #monitoringDetailModalContent .detail-item p { /* Combine these two rules */
-            color: #000000; /* Set to black */
-            font-size: 0.9rem; /* Desired font size */
+        #monitoringDetailModalContent .detail-item p {
+            color: #000000;
+            font-size: 0.9rem;
             font-weight: 500;
         }
         #monitoringDetailModalContent .detail-item p:first-child {
-            color: #000000; /* Set to black for labels as well */
-            font-weight: 600; /* Make labels slightly bolder */
+            color: #000000;
+            font-weight: 600;
         }
         #monitoringDetailModalContent .detail-item ul,
         #monitoringDetailModalContent .detail-item li {
-            font-size: 0.9rem; /* Match other detail font sizes */
-            color: #000000; /* Set to black */
-            font-weight: 500; /* Match other detail text weight */
+            font-size: 0.9rem;
+            color: #000000;
+            font-weight: 500;
         }
 
-        /* Additional rules for dynamic content within the detail modal */
         #detailDocumentChecklist p,
         #detailDocumentChecklist span,
         #detailItemsList p,
         #detailItemsList span {
-            color: #000000 !important; /* Ensure black for these sections, use !important if needed to override Tailwind */
+            color: #000000 !important;
         }
 
         /* Loading Spinner */
@@ -379,13 +373,17 @@
             border: 4px solid rgba(0, 0, 0, 0.1);
             border-left-color: var(--primary-blue);
             border-radius: 50%;
-            width: 40px; /* Larger */
+            width: 40px;
             height: 40px;
             animation: spin 1s linear infinite;
         }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
         /* Global Loading Overlay */
         #global-loading-overlay.show {
-            display: flex; /* Ensure overlay is visible when 'show' */
+            display: flex;
         }
 
         /* Empty State */
@@ -413,30 +411,30 @@
         .monitoring-card-number {
             position: absolute;
             top: 0.6rem;
-            right: 0.6rem; /* Move to top right */
-            left: unset; /* Ensure no conflicting left property */
-            font-size: 0.8rem; /* Slightly larger */
+            right: 0.6rem;
+            left: unset;
+            font-size: 0.8rem;
             font-weight: 700;
-            color: var(--text-dark); /* Darker text color */
+            color: var(--text-dark);
             background-color: var(--bg-medium);
             padding: 0.15rem 0.5rem;
             border-radius: 0.35rem;
-            z-index: 10; /* Ensure on top of other content */
+            z-index: 10;
         }
 
-        /* Status Colors - Adjusted to match button colors */
-        .status-on-order { background-color: var(--primary-blue); color: white; } /* Primary blue */
-        .status-waiting { background-color: #facc15; color: #333; } /* Yellow */
-        .status-picked-up { background-color: var(--accent-green); color: white; } /* Accent green */
-        .status-on-delivery { background-color: #a78bfa; color: white; } /* Purple */
-        .status-delivered { background-color: #10b981; color: white; } /* Emerald green */
-        .status-partial-delivered { background-color: #fbbf24; color: #333; } /* Amber */
-        .status-delayed { background-color: #ef4444; color: white; } /* Red */
-        .status-on-hold { background-color: #9ca3af; color: white; } /* Gray */
+        /* Status Colors */
+        .status-on-order { background-color: var(--primary-blue); color: white; }
+        .status-waiting { background-color: #facc15; color: #333; }
+        .status-picked-up { background-color: var(--accent-green); color: white; }
+        .status-on-delivery { background-color: #a78bfa; color: white; }
+        .status-delivered { background-color: #10b981; color: white; }
+        .status-partial-delivered { background-color: #fbbf24; color: #333; }
+        .status-delayed { background-color: #ef4444; color: white; }
+        .status-on-hold { background-color: #9ca3af; color: white; }
 
         /* Styling for status dropdown in deal-card */
         .status-dropdown {
-            appearance: none; /* Remove default browser styling */
+            appearance: none;
             background-color: var(--primary-blue);
             border: 1px solid var(--border-color);
             border-radius: 0.5rem;
@@ -446,13 +444,13 @@
             cursor: pointer;
             transition: all 0.2s ease;
             text-align: center;
-            min-width: 100px; /* To prevent it from being too small */
+            min-width: 100px;
             max-width: 120px;
             overflow: hidden;
             white-space: nowrap;
             text-overflow: ellipsis;
             position: relative;
-            padding-right: 1.5rem; /* Space for arrow icon */
+            padding-right: 1.5rem;
         }
         .status-dropdown:hover {
             background-color: var(--primary-blue);
@@ -462,9 +460,8 @@
             border-color: var(--primary-blue);
             box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
         }
-        /* Custom arrow for dropdown */
         .status-dropdown::after {
-            content: '\f078'; /* FontAwesome chevron-down icon */
+            content: '\f078';
             font-family: 'Font Awesome 6 Free';
             font-weight: 900;
             position: absolute;
@@ -476,26 +473,23 @@
         }
 
         /* Media Queries for responsiveness */
-        /* Media queries for .deal-card have been removed to force 4 columns and allow shrinking */
-
-        @media (max-width: 1024px) { /* For tablets, 2 columns */
-            /* Adjust main PO form grid columns for tablets */
+        @media (max-width: 1024px) {
             #monitoringModalContent .grid.grid-cols-1.sm\:grid-cols-2.md\:grid-cols-3.lg\:grid-cols-4 > div {
-                grid-column: span 1; /* Default 1 column */
+                grid-column: span 1;
             }
-            @media (min-width: 640px) { /* sm breakpoint */
+            @media (min-width: 640px) {
                 #monitoringModalContent .grid.grid-cols-1.sm\:grid-cols-2.md\:grid-cols-3.lg\:grid-cols-4 > div {
-                    grid-column: span 1; /* 2 columns */
+                    grid-column: span 1;
                 }
             }
-            @media (min-width: 768px) { /* md breakpoint */
+            @media (min-width: 768px) {
                 #monitoringModalContent .grid.grid-cols-1.sm\:grid-cols-2.md\:grid-cols-3.lg\:grid-cols-4 > div {
-                    grid-column: span 1; /* 3 columns */
+                    grid-column: span 1;
                 }
             }
         }
 
-        @media (max-width: 768px) { /* For mobile, 1 column */
+        @media (max-width: 768px) {
             .max-w-7xl {
                 padding-left: 1rem;
                 padding-right: 1rem;
@@ -508,7 +502,7 @@
             .header h1 {
                 font-size: 1.75rem;
             }
-            .header > div:last-child { /* This is the div containing buttons below the title */
+            .header > div:last-child {
                 margin-top: 1rem;
                 width: 100%;
                 flex-direction: column;
@@ -528,14 +522,13 @@
                 width: 100%;
             }
             #monitoringModalContent {
-                padding: 1rem; /* Smaller padding for mobile */
+                padding: 1rem;
             }
             #monitoringModalContent h2 {
                 font-size: 1.5rem;
             }
-            /* Adjust main PO form grid columns for mobile */
             #monitoringModalContent .grid.grid-cols-1.sm\:grid-cols-2.md\:grid-cols-3.lg\:grid-cols-4 > div {
-                grid-column: span 1; /* 1 column */
+                grid-column: span 1;
             }
         }
 
@@ -546,15 +539,14 @@
             border-bottom: none;
             border-top: none;
             z-index: 99;
-            /*position the autocomplete items to be the same width as the container:*/
             top: 100%;
             left: 0;
             right: 0;
-            max-height: 200px; /* Limit dropdown height */
-            overflow-y: auto; /* Add scroll if too many items */
-            background-color: #fff; /* Ensure white background */
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Add shadow for better visibility */
-            border-radius: 0 0 0.5rem 0.5rem; /* Rounded bottom corners */
+            max-height: 200px;
+            overflow-y: auto;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border-radius: 0 0 0.5rem 0.5rem;
         }
 
         .autocomplete-items div {
@@ -565,12 +557,10 @@
         }
 
         .autocomplete-items div:hover {
-            /*when hovering an item:*/
             background-color: #e9e9e9;
         }
 
         .autocomplete-active {
-            /*when navigating through the items using the arrow keys:*/
             background-color: DodgerBlue !important;
             color: #ffffff;
         }
@@ -579,34 +569,30 @@
         .item-row-container {
             display: flex;
             flex-direction: column;
-            gap: 0.75rem; /* Space between item rows, tighter */
-            margin-top: 1rem; /* Add top margin to prevent being too close */
-            padding-top: 1rem; /* Add top padding */
-            border-top: 1px solid var(--border-color); /* Add separator line */
+            gap: 0.75rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
         }
 
         .item-row {
             display: grid;
-            /* Default for mobile: 1 column */
             grid-template-columns: 1fr;
-            gap: 0.4rem; /* Space between inputs in a row, tighter */
-            align-items: end; /* Align items at the bottom */
+            gap: 0.4rem;
+            align-items: end;
             border: 1px solid var(--border-color);
             border-radius: 0.5rem;
-            padding: 0.6rem; /* Smaller */
+            padding: 0.6rem;
             background-color: var(--bg-light);
         }
 
-        /* For larger screens, adjust item-row columns */
-        @media (min-width: 640px) { /* sm breakpoint */
+        @media (min-width: 640px) {
             .item-row {
-                /* PID (1.5fr), Description (3fr), Qty (0.8fr), COO (1.2fr), HS Code (1.5fr), Revised HS Code (1.5fr), Actions (0.5fr) */
                 grid-template-columns: 1.5fr 3fr 0.8fr 1.2fr 1.5fr 1.5fr 0.5fr;
             }
         }
-        @media (min-width: 1024px) { /* lg breakpoint */
+        @media (min-width: 1024px) {
             .item-row {
-                /* PID (1.5fr), Description (3fr), Qty (0.8fr), COO (1.2fr), HS Code (1.5fr), Revised HS Code (1.5fr), Actions (0.5fr) */
                 grid-template-columns: 1.5fr 3fr 0.8fr 1.2fr 1.5fr 1.5fr 0.5fr;
             }
         }
@@ -625,16 +611,16 @@
 
         /* Checkmark icon for uploaded documents */
         .document-uploaded-checkmark {
-            color: var(--accent-green); /* Green color for checkmark */
-            font-size: 1.2rem; /* Slightly larger icon */
-            margin-right: 0.5rem; /* Space between checkmark and action buttons */
+            color: var(--accent-green);
+            font-size: 1.2rem;
+            margin-right: 0.5rem;
         }
 
         /* New container for status/checkmark on the left side of the footer */
         .deal-footer-left {
             display: flex;
             align-items: center;
-            gap: 0.5rem; /* Space between elements in the left footer */
+            gap: 0.5rem;
         }
 
         /* Currency Input Group */
@@ -651,6 +637,21 @@
 
         .currency-amount-input {
             width: 100%;
+        }
+        
+        /* Custom styles for number input */
+        .number-input-clean {
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.85rem;
+            width: 100%;
+        }
+        
+        .number-input-clean:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+            outline: none;
         }
     </style>
 </head>
@@ -1050,7 +1051,6 @@
                 </div>
             </div>
         </div>
-
     </div>
 
 <script>
@@ -1068,8 +1068,8 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const monitoringsCollection = db.collection('monitorings');
-    const purchaseOrdersCollection = db.collection('purchaseOrders'); // Assuming you have a 'purchaseOrders' collection
-    const documentUploadsCollection = db.collection('documentUploads'); // New collection for document upload status
+    const purchaseOrdersCollection = db.collection('purchaseOrders');
+    const documentUploadsCollection = db.collection('documentUploads');
 
     // Appwrite Configuration
     const client = new Appwrite.Client();
@@ -1084,7 +1084,7 @@
     const APPWRITE_BUCKET_ID = '68d0d72500025b188805';
 
     // Global variable for sort order
-    let sortOrder = 'desc'; // 'asc' or 'desc'
+    let sortOrder = 'desc';
 
     document.addEventListener('DOMContentLoaded', function() {
         // --- Generic function to toggle modal visibility ---
@@ -1105,174 +1105,82 @@
 
         // --- Number Formatting Functions ---
         function formatNumber(num, currency = 'IDR') {
-            if (num === null || num === undefined || isNaN(num)) return '';
+            if (num === null || num === undefined || num === '' || isNaN(num)) return '';
             
-            // Convert to number if it's a string
-            const number = typeof num === 'string' ? parseFloat(num.replace(/\./g, '').replace(',', '.')) : num;
+            const number = typeof num === 'string' ? parseFloat(num) : num;
             
-            // Untuk USD dan EUR, gunakan format dengan titik sebagai ribu dan koma sebagai desimal
+            if (isNaN(number)) return '';
+            
             if (currency === 'USD' || currency === 'EUR' || currency === 'GBP') {
                 return number.toLocaleString('en-US', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
                 });
-            }
-            
-            // Untuk IDR, MYR, SGD gunakan format dengan titik sebagai ribu dan koma sebagai desimal
-            return number.toLocaleString('id-ID', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            });
-        }
-        
-        function unformatNumber(formattedNum) {
-            if (!formattedNum || formattedNum === '') return 0;
-            
-            // Untuk format US/EU (1,234.56) -> 1234.56
-            if (formattedNum.includes(',') && formattedNum.includes('.')) {
-                // Format seperti 1,234.56
-                if (formattedNum.lastIndexOf(',') < formattedNum.lastIndexOf('.')) {
-                    // Koma sebagai ribu, titik sebagai desimal
-                    const cleaned = formattedNum.toString()
-                        .replace(/,/g, '')           // Hapus koma (ribuan)
-                        .replace(/\./, 'x')          // Simpan titik desimal sementara
-                        .replace(/\./g, '')          // Hapus semua titik lainnya
-                        .replace('x', '.');          // Kembalikan titik desimal
-                    return parseFloat(cleaned) || 0;
-                }
-            }
-            
-            // Untuk format Indonesia/Eropa (1.234,56) -> 1234.56
-            const cleaned = formattedNum.toString()
-                .replace(/\./g, '')           // Hapus titik (ribuan)
-                .replace(',', '.');           // Ganti koma dengan titik untuk desimal
-            
-            return parseFloat(cleaned) || 0;
-        }
-
-        // Apply number formatting to amount inputs with decimal support
-        document.querySelectorAll('.currency-amount-input').forEach(input => {
-            const currencySelect = input.parentElement.querySelector('.currency-dropdown');
-            
-            input.addEventListener('keydown', function(e) {
-                // Allow: backspace, delete, tab, escape, enter
-                // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
-                if ([46, 8, 9, 27, 13].indexOf(e.keyCode) !== -1 ||
-                    (e.keyCode === 65 && e.ctrlKey === true) || // Ctrl+A
-                    (e.keyCode === 67 && e.ctrlKey === true) || // Ctrl+C
-                    (e.keyCode === 86 && e.ctrlKey === true) || // Ctrl+V
-                    (e.keyCode === 88 && e.ctrlKey === true) || // Ctrl+X
-                    (e.keyCode === 65 && e.metaKey === true) || // Cmd+A (Mac)
-                    (e.keyCode === 67 && e.metaKey === true) || // Cmd+C (Mac)
-                    (e.keyCode === 86 && e.metaKey === true) || // Cmd+V (Mac)
-                    (e.keyCode === 88 && e.metaKey === true)    // Cmd+X (Mac)
-                ) {
-                    return;
-                }
-                
-                // Dapatkan currency yang dipilih
-                const currency = currencySelect ? currencySelect.value : 'IDR';
-                
-                // Untuk USD/EUR/GBP: titik sebagai desimal, koma sebagai ribu
-                if (currency === 'USD' || currency === 'EUR' || currency === 'GBP') {
-                    // Allow: numbers, decimal point (.), comma (,), minus (-)
-                    if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && 
-                        (e.keyCode < 96 || e.keyCode > 105) && 
-                        e.keyCode !== 190 && e.keyCode !== 188 && e.keyCode !== 109 && e.keyCode !== 189) {
-                        e.preventDefault();
-                        return;
-                    }
-                    
-                    // Untuk format US: hanya satu titik untuk desimal
-                    if (e.keyCode === 190 && this.value.includes('.')) {
-                        e.preventDefault();
-                    }
-                } else {
-                    // Untuk IDR/MYR/SGD: koma sebagai desimal, titik sebagai ribu
-                    // Allow: numbers, decimal point (.), comma (,), minus (-)
-                    if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && 
-                        (e.keyCode < 96 || e.keyCode > 105) && 
-                        e.keyCode !== 190 && e.keyCode !== 188 && e.keyCode !== 109 && e.keyCode !== 189) {
-                        e.preventDefault();
-                        return;
-                    }
-                    
-                    // Untuk format ID: hanya satu koma untuk desimal
-                    if (e.keyCode === 188 && this.value.includes(',')) {
-                        e.preventDefault();
-                    }
-                }
-            });
-            
-            input.addEventListener('keyup', function(e) {
-                const currency = currencySelect ? currencySelect.value : 'IDR';
-                let value = this.value;
-                
-                if (currency === 'USD' || currency === 'EUR' || currency === 'GBP') {
-                    // Untuk US format: 1,234.56
-                    // Hapus semua karakter non-numerik kecuali titik dan koma
-                    value = value.replace(/[^0-9.,]/g, '');
-                    
-                    // Pastikan hanya satu titik desimal
-                    const parts = value.split('.');
-                    if (parts.length > 2) {
-                        value = parts[0] + '.' + parts.slice(1).join('');
-                    }
-                    
-                    // Batasi 2 angka desimal
-                    if (parts.length === 2 && parts[1].length > 2) {
-                        value = parts[0] + '.' + parts[1].substring(0, 2);
-                    }
-                } else {
-                    // Untuk ID format: 1.234,56
-                    // Hapus semua karakter non-numerik kecuali titik dan koma
-                    value = value.replace(/[^0-9.,]/g, '');
-                    
-                    // Pastikan hanya satu koma desimal
-                    const parts = value.split(',');
-                    if (parts.length > 2) {
-                        value = parts[0] + ',' + parts.slice(1).join('');
-                    }
-                    
-                    // Batasi 2 angka desimal
-                    if (parts.length === 2 && parts[1].length > 2) {
-                        value = parts[0] + ',' + parts[1].substring(0, 2);
-                    }
-                }
-                
-                this.value = value;
-            });
-            
-            input.addEventListener('blur', function() {
-                const currency = currencySelect ? currencySelect.value : 'IDR';
-                
-                if (this.value === '' || this.value === '0') {
-                    this.value = '';
-                } else {
-                    // Format dengan thousand separators dan 2 decimal places
-                    const numValue = unformatNumber(this.value);
-                    this.value = formatNumber(numValue, currency);
-                }
-            });
-            
-            // Format initial value jika ada
-            if (input.value && input.value !== '0') {
-                const currency = currencySelect ? currencySelect.value : 'IDR';
-                const numValue = unformatNumber(input.value);
-                input.value = formatNumber(numValue, currency);
-            }
-            
-            // Tambahkan event listener untuk currency dropdown
-            if (currencySelect) {
-                currencySelect.addEventListener('change', function() {
-                    const inputField = this.parentElement.querySelector('.currency-amount-input');
-                    if (inputField.value && inputField.value !== '0') {
-                        const numValue = unformatNumber(inputField.value);
-                        inputField.value = formatNumber(numValue, this.value);
-                    }
+            } else {
+                return number.toLocaleString('id-ID', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
                 });
             }
-        });
+        }
+        
+        function unformatNumber(formattedNum, currency = 'IDR') {
+            if (!formattedNum || formattedNum === '') return 0;
+            
+            let cleaned;
+            
+            if (currency === 'USD' || currency === 'EUR' || currency === 'GBP') {
+                cleaned = formattedNum.toString().replace(/,/g, '');
+            } else {
+                cleaned = formattedNum.toString()
+                    .replace(/\./g, '')
+                    .replace(',', '.');
+            }
+            
+            const result = parseFloat(cleaned);
+            return isNaN(result) ? 0 : result;
+        }
+
+        // --- Initialize number formatting for input fields ---
+        function initializeNumberFormatting() {
+            document.querySelectorAll('.currency-amount-input').forEach(input => {
+                const currencySelect = input.parentElement.querySelector('.currency-dropdown');
+                
+                // Format on blur
+                input.addEventListener('blur', function() {
+                    const currency = currencySelect ? currencySelect.value : 'IDR';
+                    const value = this.value.trim();
+                    
+                    if (value === '' || value === '0') {
+                        this.value = '';
+                        return;
+                    }
+                    
+                    const numValue = unformatNumber(value, currency);
+                    this.value = formatNumber(numValue, currency);
+                });
+                
+                // Format initial value if exists
+                if (input.value && input.value !== '0') {
+                    const currency = currencySelect ? currencySelect.value : 'IDR';
+                    const numValue = unformatNumber(input.value, currency);
+                    input.value = formatNumber(numValue, currency);
+                }
+                
+                // When currency changes, reformat the value
+                if (currencySelect) {
+                    currencySelect.addEventListener('change', function() {
+                        const inputField = this.parentElement.querySelector('.currency-amount-input');
+                        if (inputField.value && inputField.value !== '0') {
+                            const oldCurrency = inputField.dataset.lastCurrency || 'IDR';
+                            const numValue = unformatNumber(inputField.value, oldCurrency);
+                            inputField.value = formatNumber(numValue, this.value);
+                            inputField.dataset.lastCurrency = this.value;
+                        }
+                    });
+                }
+            });
+        }
 
         // --- Event Listeners for Modals ---
 
@@ -1281,10 +1189,10 @@
             document.getElementById('modalTitle').textContent = 'Add New Changes';
             document.getElementById('monitoringId').value = '';
             document.getElementById('monitoringForm').reset();
-            // Set default currency to Rupiah
             document.getElementById('initialCurrency').value = 'IDR';
             document.getElementById('changedCurrency').value = 'IDR';
             toggleModal('monitoringModal', true);
+            setTimeout(initializeNumberFormatting, 100);
         });
 
         // Sort Toggle Button
@@ -1309,6 +1217,16 @@
 
             const monitoringId = document.getElementById('monitoringId').value;
             const documentNumber = document.getElementById('documentNumber').value;
+            
+            const initialCurrency = document.getElementById('initialCurrency').value;
+            const changedCurrency = document.getElementById('changedCurrency').value;
+            
+            const initialValueInput = document.getElementById('initialValue').value;
+            const changedValueInput = document.getElementById('changedValue').value;
+            
+            const initialValue = unformatNumber(initialValueInput, initialCurrency);
+            const changedValue = unformatNumber(changedValueInput, changedCurrency);
+
             const data = {
                 requestedBy: document.getElementById('requestedBy').value,
                 changedBy: document.getElementById('changedBy').value,
@@ -1319,11 +1237,11 @@
                 columnToChange: document.getElementById('columnToChange').value,
                 changeTo: document.getElementById('changeTo').value,
                 reasonForChange: document.getElementById('reasonForChange').value,
-                initialCurrency: document.getElementById('initialCurrency').value,
-                initialValue: unformatNumber(document.getElementById('initialValue').value),
-                changedCurrency: document.getElementById('changedCurrency').value,
-                changedValue: unformatNumber(document.getElementById('changedValue').value),
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                initialCurrency: initialCurrency,
+                initialValue: initialValue,
+                changedCurrency: changedCurrency,
+                changedValue: changedValue,
+                createdAt: monitoringId ? firebase.firestore.FieldValue.serverTimestamp() : firebase.firestore.FieldValue.serverTimestamp(),
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
 
@@ -1337,8 +1255,8 @@
                 }
                 toggleModal('monitoringModal', false);
                 toggleModal('successAlertModal', true);
-                loadMonitorings(); // Reload data after save
-                fetchAllDocumentNumbers(); // Update autocomplete list
+                loadMonitorings();
+                fetchAllDocumentNumbers();
             } catch (error) {
                 console.error("Error saving changes: ", error);
                 alert("Failed to save changes. Please try again.");
@@ -1435,7 +1353,7 @@
                 document.getElementById('successAlertMessage').textContent = `Document files for Document Number ${documentNumber} saved successfully!`;
                 toggleModal('uploadDocumentModal', false);
                 toggleModal('successAlertModal', true);
-                loadMonitorings(); // Reload data to update checkmark status
+                loadMonitorings();
             } catch (error) {
                 console.error("Error saving document upload status or uploading files: ", error);
                 alert(`Failed to save document upload status or upload files. Error: ${error.message}. Please try again.`);
@@ -1507,7 +1425,6 @@
 
                 if (uploadDoc.exists) {
                     const data = uploadDoc.data();
-                    console.log("Document Upload Data for monitoringId", monitoringId, ":", data);
 
                     if (data.document1FileName && data.document1FileId && data.document1Url) {
                         document1FileNameDisplay.textContent = `File: ${data.document1FileName}`;
@@ -1532,12 +1449,11 @@
 
         // Apply Filters Button
         document.getElementById('applyFiltersBtn').addEventListener('click', () => {
-            // Store current filter values in dataset for persistence
             document.getElementById('filterDocumentType').dataset.currentValue = document.getElementById('filterDocumentType').value;
             document.getElementById('filterChangedBy').dataset.currentValue = document.getElementById('filterChangedBy').value;
             document.getElementById('filterStartDate').dataset.currentValue = document.getElementById('filterStartDate').value;
             document.getElementById('filterEndDate').dataset.currentValue = document.getElementById('filterEndDate').value;
-            loadMonitorings(); // Reload data with new filters
+            loadMonitorings();
             toggleModal('filterPanel', false);
         });
 
@@ -1547,12 +1463,11 @@
             document.getElementById('filterStartDate').value = '';
             document.getElementById('filterEndDate').value = '';
             document.getElementById('filterChangedBy').value = 'all';
-            // Clear stored filter values
             delete document.getElementById('filterDocumentType').dataset.currentValue;
             delete document.getElementById('filterChangedBy').dataset.currentValue;
             delete document.getElementById('filterStartDate').dataset.currentValue;
             delete document.getElementById('filterEndDate').dataset.currentValue;
-            loadMonitorings(); // Reload data without filters
+            loadMonitorings();
             toggleModal('filterPanel', false);
         });
 
@@ -1620,9 +1535,9 @@
                         'Change To': monitoring.changeTo || '',
                         'Reason for Change': monitoring.reasonForChange || '',
                         'Initial Currency': monitoring.initialCurrency || 'IDR',
-                        'Initial Value': formatNumber(initialValue),
+                        'Initial Value': formatNumber(initialValue, monitoring.initialCurrency || 'IDR'),
                         'Changed Currency': monitoring.changedCurrency || 'IDR',
-                        'Changed Value': formatNumber(changedValue),
+                        'Changed Value': formatNumber(changedValue, monitoring.changedCurrency || 'IDR'),
                         'Created At': monitoring.createdAt ? new Date(monitoring.createdAt.toDate()).toLocaleString() : '',
                         'Updated At': monitoring.updatedAt ? new Date(monitoring.updatedAt.toDate()).toLocaleString() : ''
                     });
@@ -1659,37 +1574,26 @@
             try {
                 let query = monitoringsCollection.orderBy('createdAt', sortOrder);
 
-                // Ambil semua data terlebih dahulu untuk populasi filter
                 const snapshot = await query.get();
                 let allMonitorings = [];
                 snapshot.forEach(doc => {
                     allMonitorings.push({ id: doc.id, ...doc.data() });
                 });
 
-                // Panggil populateFilterOptions DENGAN SEMUA DATA YANG DIAMBIL
                 populateFilterOptions(allMonitorings);
 
-                // Ambil nilai filter dari UI
                 const filterDocType = document.getElementById('filterDocumentType').value;
                 const filterStartDate = document.getElementById('filterStartDate').value;
                 const filterEndDate = document.getElementById('filterEndDate').value;
                 const filterChangedBy = document.getElementById('filterChangedBy').value;
                 const searchTerm = document.getElementById('searchMonitorings').value.toLowerCase();
 
-                // Terapkan filter pada data yang sudah diambil
                 let filteredMonitorings = allMonitorings.filter(monitoring => {
-                    // Filter Document Type
                     const matchesDocType = filterDocType === 'all' || (monitoring.documentType && monitoring.documentType === filterDocType);
-
-                    // Filter Changed By
                     const matchesChangedBy = filterChangedBy === 'all' || (monitoring.changedBy && monitoring.changedBy === filterChangedBy);
-
-                    // Filter Date Range (menggunakan changeDate)
                     const changeDate = monitoring.changeDate;
                     const matchesDate = (!filterStartDate || (changeDate && changeDate >= filterStartDate)) &&
                                         (!filterEndDate || (changeDate && changeDate <= filterEndDate));
-
-                    // Filter Search Term
                     const matchesSearch = searchTerm === '' ||
                                           (monitoring.documentType && monitoring.documentType.toLowerCase().includes(searchTerm)) ||
                                           (monitoring.documentNumber && monitoring.documentNumber.toLowerCase().includes(searchTerm)) ||
@@ -1743,7 +1647,6 @@
             const initialCurrency = monitoring.initialCurrency || 'IDR';
             const changedCurrency = monitoring.changedCurrency || 'IDR';
         
-            // Format nilai dengan currency yang sesuai
             const formattedInitialValue = formatNumber(initialValue, initialCurrency);
             const formattedChangedValue = formatNumber(changedValue, changedCurrency);
         
@@ -1811,7 +1714,6 @@
                     const initialCurrency = data.initialCurrency || 'IDR';
                     const changedCurrency = data.changedCurrency || 'IDR';
                     
-                    // Format nilai dengan currency yang sesuai
                     const formattedInitialValue = formatNumber(initialValue, initialCurrency);
                     const formattedChangedValue = formatNumber(changedValue, changedCurrency);
                     
@@ -1869,8 +1771,15 @@
                     
                     document.getElementById('initialValue').value = formatNumber(data.initialValue || 0, initialCurrency);
                     document.getElementById('changedValue').value = formatNumber(data.changedValue || 0, changedCurrency);
+                    
+                    // Store last currency for formatting
+                    document.getElementById('initialValue').dataset.lastCurrency = initialCurrency;
+                    document.getElementById('changedValue').dataset.lastCurrency = changedCurrency;
         
                     toggleModal('monitoringModal', true);
+                    
+                    // Initialize number formatting
+                    setTimeout(initializeNumberFormatting, 100);
                 } else {
                     alert("Monitoring not found for editing.");
                 }
@@ -1930,16 +1839,12 @@
             const filterChangedBySelect = document.getElementById('filterChangedBy');
             const changedByFormSelect = document.getElementById('changedBy');
 
-            // Preserve current selections if they exist
             const currentFilterDocType = filterDocumentTypeSelect.dataset.currentValue || 'all';
             const currentFilterChangedBy = filterChangedBySelect.dataset.currentValue || 'all';
             const currentFormChangedBy = changedByFormSelect.value || '';
 
-            // Clear existing options for Document Type
             filterDocumentTypeSelect.innerHTML = '<option value="all">All Document Types</option>';
-            // Clear existing options for Changed By (filter)
             filterChangedBySelect.innerHTML = '<option value="all">All Persons</option>';
-            // Clear existing options for Changed By (form)
             changedByFormSelect.innerHTML = '<option value="">Select Person</option>';
 
             const uniqueDocumentTypes = new Set();
@@ -1954,7 +1859,6 @@
                 }
             });
 
-            // Add unique document types to the filter dropdown
             Array.from(uniqueDocumentTypes).sort().forEach(type => {
                 const option = document.createElement('option');
                 option.value = type;
@@ -1962,7 +1866,6 @@
                 filterDocumentTypeSelect.appendChild(option);
             });
 
-            // Add unique Changed By persons to both filter and form dropdowns
             Array.from(uniqueChangedBy).sort().forEach(person => {
                 const filterOption = document.createElement('option');
                 filterOption.value = person;
@@ -1975,7 +1878,6 @@
                 changedByFormSelect.appendChild(formOption);
             });
 
-            // Re-apply previous selections
             filterDocumentTypeSelect.value = currentFilterDocType;
             filterChangedBySelect.value = currentFilterChangedBy;
             changedByFormSelect.value = currentFormChangedBy;
@@ -2018,7 +1920,6 @@
 
                 if (uploadDoc.exists) {
                     const data = uploadDoc.data();
-                    console.log("Document Info Modal Data for monitoringId", monitoringId, ":", data);
 
                     if (data.document1FileName && data.document1FileId && data.document1Url) {
                         docInfo_doc1Name.textContent = data.document1FileName;
@@ -2027,8 +1928,6 @@
                     if (data.document2FileName && data.document2FileId && data.document2Url) {
                         docInfo_doc2Name.textContent = data.document2FileName;
                     }
-                } else {
-                    console.log("No document upload entry found for monitoringId", monitoringId, "in Document Info Modal.");
                 }
 
                 toggleModal('documentInfoModal', true);
@@ -2047,6 +1946,9 @@
         document.getElementById('searchMonitorings').addEventListener('input', () => {
             loadMonitorings();
         });
+
+        // Initialize number formatting on page load
+        initializeNumberFormatting();
 
         // --- Initial Load ---
         loadMonitorings();
